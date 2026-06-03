@@ -1266,11 +1266,16 @@ tr.is-selected {
     }
 }
 
-/* Accordion da sidebar de tópicos */
-.sidebar-accordion-toggle {
+/* Dropdown flutuante de tópicos */
+.topic-dropdown-wrap {
+    position: relative;
+}
+
+.topic-dropdown-trigger {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
     width: 100%;
     padding: 14px 18px;
     border-radius: var(--radius-md);
@@ -1282,15 +1287,62 @@ tr.is-selected {
     font-weight: 700;
     cursor: pointer;
     transition: background 0.2s ease;
+    text-align: left;
 }
 
-.sidebar-accordion-toggle:hover {
-    background: rgba(0, 95, 115, 0.12);
+.topic-dropdown-trigger:hover {
+    background: rgba(0, 95, 115, 0.13);
 }
 
-.sidebar-accordion-icon {
-    font-size: 0.75rem;
-    transition: transform 0.2s ease;
+.topic-dropdown-arrow {
+    font-size: 0.7rem;
+    flex-shrink: 0;
+}
+
+.topic-dropdown-list {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: var(--paper-strong);
+    border: 1px solid rgba(0, 95, 115, 0.15);
+    border-radius: var(--radius-md);
+    box-shadow: 0 16px 40px rgba(7, 24, 38, 0.14);
+    max-height: 340px;
+    overflow-y: auto;
+    animation: rise-in 0.2s ease-out;
+}
+
+.topic-dropdown-list.is-open {
+    display: flex;
+}
+
+.topic-dropdown-item {
+    padding: 12px 16px;
+    color: var(--ink);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.92rem;
+    text-decoration: none;
+    border-bottom: 1px solid var(--line);
+    transition: background 0.15s ease;
+}
+
+.topic-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.topic-dropdown-item:hover {
+    background: rgba(0, 95, 115, 0.06);
+    color: var(--accent);
+}
+
+.topic-dropdown-item.is-active {
+    background: rgba(0, 95, 115, 0.09);
+    color: var(--accent);
+    font-weight: 600;
 }
 
 /* Caixa de descrição/observação do tópico */

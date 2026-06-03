@@ -33,28 +33,19 @@
 
         <section class="workspace-grid builder-grid">
             <article class="workspace-card builder-sidebar">
-                <button type="button" class="sidebar-accordion-toggle" id="topics-toggle" aria-expanded="true">
-                    <span>Tópicos cadastrados</span>
-                    <span class="sidebar-accordion-icon">▲</span>
-                </button>
-                <div class="topic-list" id="topics-list">
-                    {% if topics %}
+                <div class="topic-dropdown-wrap">
+                    <button type="button" class="topic-dropdown-trigger" id="topics-trigger">
+                        <span>{{ selected_topic.name|default:"Selecionar tópico" }}</span>
+                        <span class="topic-dropdown-arrow">▼</span>
+                    </button>
+                    <div class="topic-dropdown-list" id="topics-dropdown">
                         {% for topic in topics %}
                             <a
                                 href="{% url 'budget_product_create' %}?topic={{ topic.id }}"
-                                class="topic-card {% if selected_topic and selected_topic.id == topic.id %}is-active{% endif %}"
-                            >
-                                <span class="topic-card-badge">Tópico</span>
-                                <strong>{{ topic.name }}</strong>
-                                <small>{{ topic.fields.count }} campo(s) cadastrado(s)</small>
-                            </a>
+                                class="topic-dropdown-item {% if selected_topic and selected_topic.id == topic.id %}is-active{% endif %}"
+                            >{{ topic.name }}</a>
                         {% endfor %}
-                    {% else %}
-                        <div class="empty-state">
-                            <strong>Nenhum tópico cadastrado.</strong>
-                            <p>Use o botão <em>Cadastrar tópico</em> para começar.</p>
-                        </div>
-                    {% endif %}
+                    </div>
                 </div>
             </article>
 
@@ -414,15 +405,18 @@
             button.addEventListener('click', () => closeModal(button.dataset.closeModal));
         });
 
-        // Accordion da sidebar
-        const topicsToggle = document.getElementById('topics-toggle');
-        const topicsList = document.getElementById('topics-list');
-        if (topicsToggle && topicsList) {
-            topicsToggle.addEventListener('click', () => {
-                const open = topicsToggle.getAttribute('aria-expanded') === 'true';
-                topicsToggle.setAttribute('aria-expanded', !open);
-                topicsList.style.display = open ? 'none' : 'grid';
-                topicsToggle.querySelector('.sidebar-accordion-icon').textContent = open ? '▼' : '▲';
+        // Dropdown de tópicos
+        const trigger = document.getElementById('topics-trigger');
+        const dropdown = document.getElementById('topics-dropdown');
+        if (trigger && dropdown) {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const open = dropdown.classList.toggle('is-open');
+                trigger.querySelector('.topic-dropdown-arrow').textContent = open ? '▲' : '▼';
+            });
+            document.addEventListener('click', () => {
+                dropdown.classList.remove('is-open');
+                trigger.querySelector('.topic-dropdown-arrow').textContent = '▼';
             });
         }
 
