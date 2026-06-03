@@ -54,6 +54,10 @@
   - quantidade
   - 3 orçamentos com valor e link
   - orçamento selecionado para a soma
+- Exceção específica para `a) Material permanente`:
+  - manter apenas `Nome do produto`
+  - em cada um dos 3 orçamentos informar `link`, `preço`, `quantidade` e `frete`
+  - total considerado = `(preço × quantidade) + frete` do orçamento selecionado
 - Serviços de terceiros:
   - serviço solicitado
   - justificativa
@@ -160,4 +164,5 @@
 - Tela `Cadastrar custos` refinada com seletor visual e ativação dinâmica dos campos por categoria
 - Área lateral da tela de cadastro ajustada para acompanhar a categoria selecionada e listar seus itens salvos
 - Campos não relacionados à categoria escolhida passam a ser ocultados completamente
+- Categoria `a)` simplificada visualmente para mostrar apenas os campos solicitados
 - Regra definida para manter mensagens de commit sempre em português

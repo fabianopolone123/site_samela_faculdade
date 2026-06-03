@@ -53,7 +53,11 @@
                                     {% if entry.data.education_level %}<p><strong>Formação exigida:</strong> {{ entry.data.education_level }}</p>{% endif %}
                                     {% if entry.data.weekly_dedication %}<p><strong>Dedicação semanal:</strong> {{ entry.data.weekly_dedication }}</p>{% endif %}
                                 {% else %}
-                                    <p><strong>Quantidade:</strong> {{ entry.quantity }}{% if entry.unit %} {{ entry.unit }}{% endif %}</p>
+                                    {% if entry.section.code == 'a' and entry.selected_quote %}
+                                        <p><strong>Produto:</strong> {{ entry.title }}</p>
+                                    {% else %}
+                                        <p><strong>Quantidade:</strong> {{ entry.quantity }}{% if entry.unit %} {{ entry.unit }}{% endif %}</p>
+                                    {% endif %}
                                 {% endif %}
 
                                 {% if entry.quotes.exists %}
@@ -62,6 +66,10 @@
                                             <tr>
                                                 <th>Orçamento</th>
                                                 <th>Valor</th>
+                                                {% if entry.section.code == 'a' %}
+                                                    <th>Quantidade</th>
+                                                    <th>Frete</th>
+                                                {% endif %}
                                                 <th>Link</th>
                                             </tr>
                                         </thead>
@@ -70,6 +78,10 @@
                                                 <tr{% if entry.selected_quote_number == quote.quote_number %} class="is-selected"{% endif %}>
                                                     <td>{{ quote.quote_number }}</td>
                                                     <td>R$ {{ quote.amount }}</td>
+                                                    {% if entry.section.code == 'a' %}
+                                                        <td>{{ quote.quantity }}</td>
+                                                        <td>R$ {{ quote.freight }}</td>
+                                                    {% endif %}
                                                     <td><a href="{{ quote.link }}" target="_blank" rel="noreferrer">Abrir</a></td>
                                                 </tr>
                                             {% endfor %}

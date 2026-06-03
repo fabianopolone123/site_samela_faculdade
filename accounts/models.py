@@ -124,6 +124,8 @@ class BudgetCostEntry(models.Model):
             quote = self.selected_quote
             if not quote:
                 return 0
+            if code == 'a':
+                return quote.total_with_freight
             quantity = self.quantity or 1
             return quote.amount * quantity
         if code == 'd.2':
@@ -149,6 +151,8 @@ class BudgetCostQuote(models.Model):
     )
     quote_number = models.PositiveSmallIntegerField('orcamento')
     amount = models.DecimalField('valor', max_digits=12, decimal_places=2)
+    quantity = models.PositiveIntegerField('quantidade', null=True, blank=True)
+    freight = models.DecimalField('frete', max_digits=12, decimal_places=2, null=True, blank=True)
     link = models.URLField('link')
 
     class Meta:
@@ -157,6 +161,12 @@ class BudgetCostQuote(models.Model):
 
     def __str__(self):
         return f'{self.entry.title} - orçamento {self.quote_number}'
+
+    @property
+    def total_with_freight(self):
+        quantity = self.quantity or 0
+        freight = self.freight or 0
+        return (self.amount * quantity) + freight
 
 
 class SignupCode(models.Model):

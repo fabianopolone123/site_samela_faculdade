@@ -106,6 +106,8 @@ def budget_product_create_view(request):
                         entry=entry,
                         quote_number=quote_number,
                         amount=form.cleaned_data[f'quote_{quote_number}_amount'],
+                        quantity=form.cleaned_data.get(f'quote_{quote_number}_quantity'),
+                        freight=form.cleaned_data.get(f'quote_{quote_number}_freight'),
                         link=form.cleaned_data[f'quote_{quote_number}_link'],
                     )
 

@@ -99,6 +99,16 @@
                                     {{ form.quote_1_link }}
                                     {% if form.quote_1_link.errors %}<div class="field-errors">{{ form.quote_1_link.errors }}</div>{% endif %}
                                 </div>
+                                <div class="field" data-field-name="quote_1_quantity">
+                                    <label for="{{ form.quote_1_quantity.id_for_label }}">{{ form.quote_1_quantity.label }}</label>
+                                    {{ form.quote_1_quantity }}
+                                    {% if form.quote_1_quantity.errors %}<div class="field-errors">{{ form.quote_1_quantity.errors }}</div>{% endif %}
+                                </div>
+                                <div class="field" data-field-name="quote_1_freight">
+                                    <label for="{{ form.quote_1_freight.id_for_label }}">{{ form.quote_1_freight.label }}</label>
+                                    {{ form.quote_1_freight }}
+                                    {% if form.quote_1_freight.errors %}<div class="field-errors">{{ form.quote_1_freight.errors }}</div>{% endif %}
+                                </div>
                             </div>
                             <div class="quote-card">
                                 <h4>Orçamento 2</h4>
@@ -112,6 +122,16 @@
                                     {{ form.quote_2_link }}
                                     {% if form.quote_2_link.errors %}<div class="field-errors">{{ form.quote_2_link.errors }}</div>{% endif %}
                                 </div>
+                                <div class="field" data-field-name="quote_2_quantity">
+                                    <label for="{{ form.quote_2_quantity.id_for_label }}">{{ form.quote_2_quantity.label }}</label>
+                                    {{ form.quote_2_quantity }}
+                                    {% if form.quote_2_quantity.errors %}<div class="field-errors">{{ form.quote_2_quantity.errors }}</div>{% endif %}
+                                </div>
+                                <div class="field" data-field-name="quote_2_freight">
+                                    <label for="{{ form.quote_2_freight.id_for_label }}">{{ form.quote_2_freight.label }}</label>
+                                    {{ form.quote_2_freight }}
+                                    {% if form.quote_2_freight.errors %}<div class="field-errors">{{ form.quote_2_freight.errors }}</div>{% endif %}
+                                </div>
                             </div>
                             <div class="quote-card">
                                 <h4>Orçamento 3</h4>
@@ -124,6 +144,16 @@
                                     <label for="{{ form.quote_3_link.id_for_label }}">{{ form.quote_3_link.label }}</label>
                                     {{ form.quote_3_link }}
                                     {% if form.quote_3_link.errors %}<div class="field-errors">{{ form.quote_3_link.errors }}</div>{% endif %}
+                                </div>
+                                <div class="field" data-field-name="quote_3_quantity">
+                                    <label for="{{ form.quote_3_quantity.id_for_label }}">{{ form.quote_3_quantity.label }}</label>
+                                    {{ form.quote_3_quantity }}
+                                    {% if form.quote_3_quantity.errors %}<div class="field-errors">{{ form.quote_3_quantity.errors }}</div>{% endif %}
+                                </div>
+                                <div class="field" data-field-name="quote_3_freight">
+                                    <label for="{{ form.quote_3_freight.id_for_label }}">{{ form.quote_3_freight.label }}</label>
+                                    {{ form.quote_3_freight }}
+                                    {% if form.quote_3_freight.errors %}<div class="field-errors">{{ form.quote_3_freight.errors }}</div>{% endif %}
                                 </div>
                             </div>
                         </div>
@@ -251,6 +281,9 @@
                                         <h4>{{ entry.title }}</h4>
                                         {% if entry.details %}<p>{{ entry.details }}</p>{% endif %}
                                         {% if entry.justification %}<p><strong>Justificativa:</strong> {{ entry.justification }}</p>{% endif %}
+                                        {% if entry.section.code == 'a' and entry.selected_quote %}
+                                            <p><strong>Selecionado:</strong> preço R$ {{ entry.selected_quote.amount }}, quantidade {{ entry.selected_quote.quantity }}, frete R$ {{ entry.selected_quote.freight }}</p>
+                                        {% endif %}
                                         <p><strong>Total considerado:</strong> R$ {{ entry.total_considered }}</p>
                                     </article>
                                 {% empty %}
@@ -280,7 +313,9 @@
                                 <ul>
                                     {% for quote in entry.quotes.all %}
                                         <li>
-                                            Orçamento {{ quote.quote_number }}: R$ {{ quote.amount }} -
+                                            Orçamento {{ quote.quote_number }}: R$ {{ quote.amount }}
+                                            {% if quote.quantity %} | quantidade {{ quote.quantity }}{% endif %}
+                                            {% if quote.freight %} | frete R$ {{ quote.freight }}{% endif %} -
                                             <a href="{{ quote.link }}" target="_blank" rel="noreferrer">abrir link</a>
                                             {% if entry.selected_quote_number == quote.quote_number %}<strong> selecionado</strong>{% endif %}
                                         </li>
@@ -307,6 +342,14 @@
             'd.2': ['base', 'daily'],
             'e': ['base', 'scholarship']
         };
+        const categoryFieldVisibility = {
+            'a': ['title', 'selected_quote', 'quote_1_amount', 'quote_1_link', 'quote_1_quantity', 'quote_1_freight', 'quote_2_amount', 'quote_2_link', 'quote_2_quantity', 'quote_2_freight', 'quote_3_amount', 'quote_3_link', 'quote_3_quantity', 'quote_3_freight'],
+            'b': ['title', 'details', 'quantity', 'selected_quote', 'quote_1_amount', 'quote_1_link', 'quote_2_amount', 'quote_2_link', 'quote_3_amount', 'quote_3_link'],
+            'c': ['title', 'justification', 'quantity', 'unit', 'selected_quote', 'quote_1_amount', 'quote_1_link', 'quote_2_amount', 'quote_2_link', 'quote_3_amount', 'quote_3_link'],
+            'd.1': ['title', 'selected_quote', 'quote_1_amount', 'quote_1_link', 'quote_2_amount', 'quote_2_link', 'quote_3_amount', 'quote_3_link', 'transport_mode', 'origin', 'destination', 'purpose', 'people_count', 'period'],
+            'd.2': ['title', 'daily_type', 'location', 'people_count', 'days_count', 'unit_value'],
+            'e': ['title', 'justification', 'quantity', 'scholarship_modality', 'duration_months', 'monthly_value', 'education_level', 'weekly_dedication']
+        };
 
         const hiddenSelect = document.getElementById('id_section_code');
         const groups = Array.from(document.querySelectorAll('[data-section-group]'));
@@ -320,11 +363,17 @@
 
         function applyCategory(category) {
             const activeGroups = categoryMap[category] || [];
+            const visibleFields = categoryFieldVisibility[category] || [];
             groups.forEach((group) => {
                 const enabled = activeGroups.includes(group.dataset.sectionGroup);
                 group.classList.toggle('is-hidden', !enabled);
                 group.classList.toggle('is-enabled', enabled);
                 setFieldsEnabled(group, enabled);
+            });
+
+            document.querySelectorAll('[data-field-name]').forEach((fieldBlock) => {
+                const visible = visibleFields.includes(fieldBlock.dataset.fieldName);
+                fieldBlock.classList.toggle('is-hidden', !visible);
             });
 
             document.querySelectorAll('[data-category-entries]').forEach((block) => {

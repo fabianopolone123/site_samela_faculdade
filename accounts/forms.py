@@ -132,10 +132,16 @@ class BudgetCostForm(forms.Form):
     )
 
     quote_1_amount = forms.DecimalField(label='Valor orçamento 1', required=False, decimal_places=2, max_digits=12, min_value=0)
+    quote_1_quantity = forms.IntegerField(label='Quantidade orçamento 1', required=False, min_value=1)
+    quote_1_freight = forms.DecimalField(label='Frete orçamento 1', required=False, decimal_places=2, max_digits=12, min_value=0)
     quote_1_link = forms.URLField(label='Link orçamento 1', required=False)
     quote_2_amount = forms.DecimalField(label='Valor orçamento 2', required=False, decimal_places=2, max_digits=12, min_value=0)
+    quote_2_quantity = forms.IntegerField(label='Quantidade orçamento 2', required=False, min_value=1)
+    quote_2_freight = forms.DecimalField(label='Frete orçamento 2', required=False, decimal_places=2, max_digits=12, min_value=0)
     quote_2_link = forms.URLField(label='Link orçamento 2', required=False)
     quote_3_amount = forms.DecimalField(label='Valor orçamento 3', required=False, decimal_places=2, max_digits=12, min_value=0)
+    quote_3_quantity = forms.IntegerField(label='Quantidade orçamento 3', required=False, min_value=1)
+    quote_3_freight = forms.DecimalField(label='Frete orçamento 3', required=False, decimal_places=2, max_digits=12, min_value=0)
     quote_3_link = forms.URLField(label='Link orçamento 3', required=False)
 
     transport_mode = forms.ChoiceField(label='Meio de transporte', choices=TRANSPORT_CHOICES, required=False)
@@ -160,7 +166,10 @@ class BudgetCostForm(forms.Form):
         cleaned_data = super().clean()
         code = cleaned_data.get('section_code')
 
-        if code in {'a', 'b'}:
+        if code == 'a':
+            self._require_fields(cleaned_data, ['title', 'selected_quote'])
+            self._require_quote_fields(cleaned_data, require_quantity=True, require_freight=True)
+        elif code == 'b':
             self._require_fields(cleaned_data, ['title', 'quantity', 'selected_quote'])
             self._require_quote_fields(cleaned_data)
         elif code == 'c':
@@ -186,12 +195,18 @@ class BudgetCostForm(forms.Form):
             if value in [None, '', []]:
                 self.add_error(field_name, 'Este campo é obrigatório para a categoria selecionada.')
 
-    def _require_quote_fields(self, cleaned_data):
+    def _require_quote_fields(self, cleaned_data, require_quantity=False, require_freight=False):
         for quote_number in range(1, 4):
             amount = cleaned_data.get(f'quote_{quote_number}_amount')
+            quantity = cleaned_data.get(f'quote_{quote_number}_quantity')
+            freight = cleaned_data.get(f'quote_{quote_number}_freight')
             link = cleaned_data.get(f'quote_{quote_number}_link')
             if amount in [None, '']:
                 self.add_error(f'quote_{quote_number}_amount', 'Informe o valor deste orçamento.')
+            if require_quantity and quantity in [None, '']:
+                self.add_error(f'quote_{quote_number}_quantity', 'Informe a quantidade deste orçamento.')
+            if require_freight and freight in [None, '']:
+                self.add_error(f'quote_{quote_number}_freight', 'Informe o frete deste orçamento.')
             if link in [None, '']:
                 self.add_error(f'quote_{quote_number}_link', 'Informe o link deste orçamento.')
 

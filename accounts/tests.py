@@ -62,14 +62,18 @@ class BudgetFlowTests(TestCase):
             {
                 'section_code': 'a',
                 'title': 'Notebook',
-                'details': 'Equipamento para coleta de dados',
-                'quantity': '2',
                 'selected_quote': '2',
                 'quote_1_amount': '1000.00',
+                'quote_1_quantity': '1',
+                'quote_1_freight': '50.00',
                 'quote_1_link': 'https://example.com/1',
                 'quote_2_amount': '1200.00',
+                'quote_2_quantity': '2',
+                'quote_2_freight': '80.00',
                 'quote_2_link': 'https://example.com/2',
                 'quote_3_amount': '1300.00',
+                'quote_3_quantity': '3',
+                'quote_3_freight': '90.00',
                 'quote_3_link': 'https://example.com/3',
             },
         )
@@ -77,11 +81,11 @@ class BudgetFlowTests(TestCase):
         self.assertRedirects(response, reverse('budget_product_create'))
         entry = BudgetCostEntry.objects.get(title='Notebook')
         self.assertEqual(entry.section.code, 'a')
-        self.assertEqual(entry.total_considered, 2400)
+        self.assertEqual(entry.total_considered, 2480)
 
         ready = self.client.get(reverse('budget_ready'))
         self.assertContains(ready, 'Notebook')
-        self.assertContains(ready, 'R$ 2400')
+        self.assertContains(ready, 'R$ 2480')
 
     def test_create_daily_entry(self):
         response = self.client.post(
