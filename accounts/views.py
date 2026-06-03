@@ -219,6 +219,9 @@ def create_topic_record_view(request):
 
 @login_required
 def budget_ready_view(request):
+    all_topics = list(CostTopic.objects.prefetch_related('fields', 'records__values__field').all())
+    all_topics_total = sum(calculate_topic_total(t) for t in all_topics)
+
     sections = list(
         BudgetSection.objects.prefetch_related('cost_entries__quotes').order_by('code')
     )
@@ -255,6 +258,7 @@ def budget_ready_view(request):
         'section_blocks': section_blocks,
         'category_totals': category_totals,
         'general_total': general_total,
+        'all_topics_total': all_topics_total,
     }
     return render(request, 'accounts/budget_ready.html', context)
 

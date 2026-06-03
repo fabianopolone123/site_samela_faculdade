@@ -18,6 +18,15 @@
                 <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
                 <a href="{% url 'budget_product_create' %}" class="button-primary">Cadastrar custos</a>
             </div>
+            <div class="budget-grand-total-bar">
+                <div class="budget-grand-total-label">
+                    <span class="eyebrow">Total geral de custos</span>
+                    <small>Soma de todos os tópicos cadastrados</small>
+                </div>
+                <div class="budget-grand-total-value">
+                    R$&nbsp;{{ all_topics_total|floatformat:2 }}
+                </div>
+            </div>
         </section>
 
         {% for block in section_blocks %}
