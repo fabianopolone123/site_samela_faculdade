@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, send_mail
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -52,6 +52,17 @@ PROJECT_BUDGET_DESCRIPTION = (
     'O orçamento do projeto de pesquisa apresentado à FAPESP deverá ser detalhado e '
     'cada item justificado especificamente em termos dos objetivos do projeto proposto.'
 )
+
+
+def _send_utf8_mail(subject, body, to):
+    msg = EmailMessage(
+        subject=subject,
+        body=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=to,
+    )
+    msg.encoding = 'utf-8'
+    msg.send(fail_silently=False)
 
 
 class ProjectLoginView(LoginView):
@@ -296,16 +307,14 @@ def signup_email_view(request):
         expires_at=SignupCode.expiration_time(),
     )
 
-    send_mail(
+    _send_utf8_mail(
         subject='Seu código de acesso ao portal NEEVY - UFSCar',
-        message=(
+        body=(
             f'Seu código de verificação é: {signup_code.code}\n\n'
             f'Validade: {settings.SIGNUP_CODE_EXPIRATION_MINUTES} minutos.\n'
             'Se você não solicitou este cadastro, ignore esta mensagem.'
         ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[email],
-        fail_silently=False,
+        to=[email],
     )
 
     persist_signup_state(
@@ -393,17 +402,15 @@ def signup_password_view(request):
     )
     signup_code.mark_consumed()
 
-    send_mail(
+    _send_utf8_mail(
         subject='Conta criada com sucesso no portal NEEVY - UFSCar',
-        message=(
+        body=(
             'Seu cadastro foi concluído com sucesso.\n\n'
             f'E-mail de acesso: {user.email}\n'
             f'Data de criação: {timezone.localtime().strftime("%d/%m/%Y %H:%M")}\n'
             'A partir de agora você já pode fazer login no portal.'
         ),
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[user.email],
-        fail_silently=False,
+        to=[user.email],
     )
 
     clear_signup_state(request)
