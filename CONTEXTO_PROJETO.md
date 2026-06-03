@@ -144,3 +144,4 @@
 - Adicionada view `delete_topic_field_view` e rota `cadastrar-campos/campos/<id>/excluir/` para exclusão de campos
 - Botão `Novo custo` fica desabilitado enquanto não houver campos cadastrados no tópico
 - Novos estilos CSS: `.modal-content--wide`, `.topic-action-header`, `.campos-modal-body`, `.campos-add-grid`, `.icon-button--danger`, `.action-badge`, entre outros
+- No formulário "Novo custo", campos raiz que possuem subcampos são renderizados apenas como cabeçalho de grupo, sem input de texto — evita campo redundante nos agrupadores como "Orçamento 1", "Orçamento 2", "Orçamento 3"
