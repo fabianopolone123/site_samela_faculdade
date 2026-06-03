@@ -154,4 +154,4 @@
 - `build_record_cards()` atualizado para retornar tupla `(records, grand_total)`
 - `build_topic_groups()` atualizado para incluir `field_role` (preco/frete) e `has_price_calc` por grupo
 - Tópico `Material de consumo adquirido no país e importado` criado com estrutura idêntica ao de Material permanente: Nome do produto, Orçamento 1/2/3 (Preço, Link, Quantidade, Frete), Selecionar para orçar
-- Tópico `Serviços de Terceiros contratados no país e no exterior` criado: Nome do serviço, Orçamento 1/2/3 (Preço, Link, Frete — sem Quantidade), Selecionar para orçar
+- Tópico `Serviços de Terceiros contratados no país e no exterior` criado: Nome do serviço, Orçamento 1/2/3 (Preço, Link, Quantidade, Frete), Selecionar para orçar
