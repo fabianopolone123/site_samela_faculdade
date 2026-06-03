@@ -107,6 +107,8 @@
 - Modal de cadastro mantido integrado ao fluxo principal
 - Credenciais seeded mantidas apenas no backend, sem exibição visual na tela de login
 - Regra definida para manter textos em português sempre com acentuação correta
+- Seletor de categorias de `Cadastrar custos` transformado em cards visuais
+- Ao selecionar uma categoria, o formulário habilita dinamicamente apenas os campos correspondentes
 
 ## Mensagens e comportamento
 
@@ -153,4 +155,5 @@
 - Contas seeded criadas para `adm / 123` e `fabiano / 123`
 - Painel pós-login simplificado para exibir apenas os botões principais
 - Módulo de orçamento expandido para materiais, serviços, transporte, diárias e bolsas
+- Tela `Cadastrar custos` refinada com seletor visual e ativação dinâmica dos campos por categoria
 - Regra definida para manter mensagens de commit sempre em português
