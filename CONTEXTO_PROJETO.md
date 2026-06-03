@@ -162,3 +162,4 @@
 - Tópico `Despesas de Transporte e Diárias` criado: Nome do meio de transporte, Origem, Destino, Orçamento 1/2/3 (Preço, Link — sem Frete/Quantidade), Selecionar para orçar
 - Tópico `Bolsas como Item Orçamentário` criado: Modalidade da bolsa, Valor orçamentário (por estudante), Quantidade de estudantes, Duração em meses — sem orçamentos comparativos pois valor é tabelado pela FAPESP
 - Tópico `Bolsas — Iniciação Científica` criado: Valor orçamentário (por estudante), Quantidade de estudantes, Duração em meses; descrição específica da modalidade IC
+- Tópico `Bolsas — Mestrado` criado: mesmos campos; descrição específica da modalidade Mestrado
