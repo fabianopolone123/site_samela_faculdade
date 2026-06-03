@@ -10,7 +10,8 @@ Projeto Django com SQLite para o portal acadêmico NEEVY - UFSCar.
 - Envio de código curto por e-mail
 - Criação de senha com confirmação
 - E-mail final de confirmação após cadastro
-- Painel autenticado inicial após login
+- Painel autenticado após login
+- Módulo inicial de orçamento no tópico `5.1`
 
 ## Requisitos
 
@@ -61,6 +62,7 @@ python manage.py runserver
 - franciscofn@estudante.ufscar.br
 - merteles@estudante.ufscar.br
 - priscila.mattos@usp.br
+- fabianopolone@hotmail.com
 
 ## Testes
 

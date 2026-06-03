@@ -24,27 +24,27 @@ SIGNUP_EMAIL_SESSION_KEY = 'signup_email'
 SIGNUP_STEP_SESSION_KEY = 'signup_step'
 SIGNUP_CODE_SESSION_KEY = 'signup_code_id'
 PROJECT_INFO = {
-    'title': 'Orcamento - FAPESP - Fundacao Bracell Fundacao Itau',
-    'subtitle': 'Auxilio a Pesquisa para o Fortalecimento da Educacao na Pre-Escola',
+    'title': 'Orçamento - FAPESP - Fundação Bracell Fundação Itaú',
+    'subtitle': 'Auxílio à Pesquisa para o Fortalecimento da Educação na Pré-Escola',
     'edition': '06/2026',
     'organization': 'NEEVY - UFSCar',
 }
 PROJECT_BUDGET_TITLE = (
-    'INDICADORES E CRITERIOS DE AVALIACAO DE DESENVOLVIMENTO CULTURAL '
-    'DE CRIANCAS DE PRE-ESCOLA NA THC'
+    'INDICADORES E CRITÉRIOS DE AVALIAÇÃO DE DESENVOLVIMENTO CULTURAL '
+    'DE CRIANÇAS DE PRÉ-ESCOLA NA THC'
 )
 PROJECT_BUDGET_DESCRIPTION = (
-    'A FAPESP, conforme estabelecido no convenio celebrado com a Fundacao Bracell '
-    'e a Fundacao Itau, cobrira os custos do projeto de pesquisa segundo normas '
-    'e orientacoes para Auxilio a Pesquisa Regular (para projetos com teto '
-    'orcamentario de R$ 600 mil) ou para Projeto Tematico (sem teto orcamentario). '
-    'Serao aprovadas propostas ate o limite orcamentario da Chamada '
-    '(total de R$ 6.400.000,00). O orcamento do projeto de pesquisa apresentado '
-    'a FAPESP devera ser detalhado e cada item justificado especificamente em '
+    'A FAPESP, conforme estabelecido no convênio celebrado com a Fundação Bracell '
+    'e a Fundação Itaú, cobrirá os custos do projeto de pesquisa segundo normas '
+    'e orientações para Auxílio à Pesquisa Regular (para projetos com teto '
+    'orçamentário de R$ 600 mil) ou para Projeto Temático (sem teto orçamentário). '
+    'Serão aprovadas propostas até o limite orçamentário da Chamada '
+    '(total de R$ 6.400.000,00). O orçamento do projeto de pesquisa apresentado '
+    'à FAPESP deverá ser detalhado e cada item justificado especificamente em '
     'termos dos objetivos do projeto proposto. Destaca-se nessa modalidade que '
-    'poderao ser custeadas atividades relacionadas ao desenvolvimento da pesquisa '
+    'poderão ser custeadas atividades relacionadas ao desenvolvimento da pesquisa '
     'em outros estados, incluindo trabalhos de campo, desde que o Pesquisador '
-    'Responsavel seja vinculado a uma Instituicao Sede do Estado de Sao Paulo.'
+    'Responsável seja vinculado a uma Instituição Sede do Estado de São Paulo.'
 )
 
 
@@ -99,7 +99,7 @@ def budget_product_create_view(request):
                     is_selected=selected_quote == quote_number,
                 )
 
-            messages.success(request, 'Produto cadastrado com sucesso no topico 5.1.')
+            messages.success(request, 'Produto cadastrado com sucesso no tópico 5.1.')
             return redirect('budget_product_create')
     else:
         form = BudgetProductForm()
@@ -161,7 +161,7 @@ def budget_ready_view(request):
 
 def logout_view(request):
     logout(request)
-    messages.success(request, 'Sessao encerrada com sucesso.')
+    messages.success(request, 'Sessão encerrada com sucesso.')
     return redirect('login')
 
 
@@ -177,12 +177,12 @@ def signup_email_view(request):
     email = normalize_email(form.cleaned_data['email'])
 
     if email not in settings.ALLOWED_SIGNUP_EMAILS:
-        form.add_error('email', 'Este e-mail nao esta autorizado para cadastro.')
+        form.add_error('email', 'Este e-mail não está autorizado para cadastro.')
         persist_signup_state(request, step='email')
         return render_login_with_forms(request, email_form=form)
 
     if User.objects.filter(email=email).exists():
-        form.add_error('email', 'Ja existe uma conta criada para este e-mail.')
+        form.add_error('email', 'Já existe uma conta criada para este e-mail.')
         persist_signup_state(request, step='email')
         return render_login_with_forms(request, email_form=form)
 
@@ -193,11 +193,11 @@ def signup_email_view(request):
     )
 
     send_mail(
-        subject='Seu codigo de acesso ao portal NEEVY - UFSCar',
+        subject='Seu código de acesso ao portal NEEVY - UFSCar',
         message=(
-            f'Seu codigo de verificacao e: {signup_code.code}\n\n'
+            f'Seu código de verificação é: {signup_code.code}\n\n'
             f'Validade: {settings.SIGNUP_CODE_EXPIRATION_MINUTES} minutos.\n'
-            'Se voce nao solicitou este cadastro, ignore esta mensagem.'
+            'Se você não solicitou este cadastro, ignore esta mensagem.'
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[email],
@@ -213,8 +213,8 @@ def signup_email_view(request):
     messages.success(
         request,
         (
-            f'Codigo enviado para {email}. '
-            'Se nao encontrar na caixa de entrada, verifique tambem Spam e Lixo eletronico.'
+            f'Código enviado para {email}. '
+            'Se não encontrar na caixa de entrada, verifique também Spam e Lixo eletrônico.'
         ),
     )
     return redirect('login')
@@ -226,7 +226,7 @@ def signup_code_view(request):
 
     signup_code = get_active_signup_code(request)
     if signup_code is None:
-        messages.error(request, 'Solicite um novo codigo para continuar.')
+        messages.error(request, 'Solicite um novo código para continuar.')
         clear_signup_state(request)
         return redirect('login')
 
@@ -237,7 +237,7 @@ def signup_code_view(request):
 
     submitted_code = form.cleaned_data['code'].strip()
     if submitted_code != signup_code.code:
-        form.add_error('code', 'Codigo invalido. Verifique o e-mail informado.')
+        form.add_error('code', 'Código inválido. Verifique o e-mail informado.')
         persist_signup_state(request, email=signup_code.email, step='code', code_id=signup_code.id)
         return render_login_with_forms(request, code_form=form)
 
@@ -248,7 +248,7 @@ def signup_code_view(request):
         step='password',
         code_id=signup_code.id,
     )
-    messages.success(request, 'Codigo validado. Agora defina sua senha.')
+    messages.success(request, 'Código validado. Agora defina sua senha.')
     return redirect('login')
 
 
@@ -258,7 +258,7 @@ def signup_password_view(request):
 
     signup_code = get_active_signup_code(request)
     if signup_code is None or signup_code.verified_at is None:
-        messages.error(request, 'Valide o codigo antes de criar sua senha.')
+        messages.error(request, 'Valide o código antes de criar sua senha.')
         clear_signup_state(request)
         return redirect('login')
 
@@ -277,10 +277,10 @@ def signup_password_view(request):
     send_mail(
         subject='Conta criada com sucesso no portal NEEVY - UFSCar',
         message=(
-            'Seu cadastro foi concluido com sucesso.\n\n'
+            'Seu cadastro foi concluído com sucesso.\n\n'
             f'E-mail de acesso: {user.email}\n'
-            f'Data de criacao: {timezone.localtime().strftime("%d/%m/%Y %H:%M")}\n'
-            'A partir de agora voce ja pode fazer login no portal.'
+            f'Data de criação: {timezone.localtime().strftime("%d/%m/%Y %H:%M")}\n'
+            'A partir de agora você já pode fazer login no portal.'
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user.email],
@@ -288,7 +288,7 @@ def signup_password_view(request):
     )
 
     clear_signup_state(request)
-    messages.success(request, 'Conta criada com sucesso. Faca login para continuar.')
+    messages.success(request, 'Conta criada com sucesso. Faça login para continuar.')
     return redirect('login')
 
 

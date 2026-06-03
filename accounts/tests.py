@@ -14,7 +14,7 @@ class SignupFlowTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'nao esta autorizado', html=False)
+        self.assertContains(response, 'não está autorizado', html=False)
         self.assertEqual(SignupCode.objects.count(), 0)
 
     def test_full_signup_flow_creates_user_and_sends_emails(self):

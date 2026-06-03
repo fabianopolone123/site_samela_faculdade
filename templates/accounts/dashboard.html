@@ -12,21 +12,21 @@
         <section class="dashboard-hero">
             <span class="eyebrow">Ambiente autenticado</span>
             <h1>Portal NEEVY - UFSCar</h1>
-            <p>Conta autenticada com sucesso. Agora voce pode cadastrar os campos do topico 5.1 e acompanhar o orcamento consolidado do projeto.</p>
+            <p>Conta autenticada com sucesso. Agora você pode cadastrar os campos do tópico 5.1 e acompanhar o orçamento consolidado do projeto.</p>
         </section>
 
         <section class="dashboard-card">
             <h2>Bem-vindo</h2>
-            <p><strong>Usuario:</strong> {{ request.user.login_name|default:request.user.email }}</p>
+            <p><strong>Usuário:</strong> {{ request.user.login_name|default:request.user.email }}</p>
             <p><strong>Projeto:</strong> {{ project_budget_title }}</p>
             <div class="dashboard-actions">
                 <a href="{% url 'budget_product_create' %}" class="button-primary">Cadastrar campos</a>
-                <a href="{% url 'budget_ready' %}" class="button-secondary dashboard-secondary">Acessar orcamento pronto</a>
+                <a href="{% url 'budget_ready' %}" class="button-secondary dashboard-secondary">Acessar orçamento pronto</a>
             </div>
             <div class="dashboard-topic-card">
                 <span class="dashboard-topic-code">{{ budget_section.code }}</span>
                 <strong>{{ budget_section.title }}</strong>
-                <p>Primeiro topico ativo para cadastro de produtos com tres orcamentos e selecao para a soma total.</p>
+                <p>Primeiro tópico ativo para cadastro de produtos com três orçamentos e seleção para a soma total.</p>
             </div>
             <a href="{% url 'logout' %}" class="button-primary logout-link">Sair</a>
         </section>

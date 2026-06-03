@@ -12,10 +12,10 @@
         <section class="workspace-header">
             <span class="eyebrow">Cadastrar campos</span>
             <h1>{{ budget_section.code }}. {{ budget_section.title }}</h1>
-            <p>Cadastre o nome do produto e os tres orcamentos. Um deles sera marcado para entrar na soma do orcamento total.</p>
+            <p>Cadastre o nome do produto e os três orçamentos. Um deles será marcado para entrar na soma do orçamento total.</p>
             <div class="workspace-links">
                 <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
-                <a href="{% url 'budget_ready' %}" class="button-primary">Ver orcamento pronto</a>
+                <a href="{% url 'budget_ready' %}" class="button-primary">Ver orçamento pronto</a>
             </div>
         </section>
 
@@ -54,7 +54,7 @@
                                 <ul>
                                     {% for quote in product.quotes.all %}
                                         <li>
-                                            Orcamento {{ quote.quote_number }}:
+                                            Orçamento {{ quote.quote_number }}:
                                             R$ {{ quote.price }} x {{ quote.quantity }}
                                             {% if quote.is_selected %}<strong> selecionado</strong>{% endif %}
                                         </li>

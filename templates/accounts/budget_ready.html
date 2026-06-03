@@ -4,15 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orcamento Pronto | NEEVY - UFSCar</title>
+    <title>Orçamento Pronto | NEEVY - UFSCar</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body class="dashboard-body">
     <main class="budget-shell">
         <section class="workspace-header">
-            <span class="eyebrow">Orcamento pronto</span>
+            <span class="eyebrow">Orçamento pronto</span>
             <h1>PROJETO: {{ project_budget_title }}</h1>
-            <h2>ORCAMENTO</h2>
+            <h2>ORÇAMENTO</h2>
             <p>{{ project_budget_description }}</p>
             <div class="workspace-links">
                 <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
@@ -40,8 +40,8 @@
                             <table class="budget-table">
                                 <thead>
                                     <tr>
-                                        <th>Orcamento</th>
-                                        <th>Preco</th>
+                                        <th>Orçamento</th>
+                                        <th>Preço</th>
                                         <th>Quantidade</th>
                                         <th>Total</th>
                                         <th>Link</th>
@@ -61,7 +61,7 @@
                             </table>
                             {% if item.selected_quote %}
                                 <p class="selected-summary">
-                                    Selecionado para o total: Orcamento {{ item.selected_quote.quote_number }}
+                                    Selecionado para o total: Orçamento {{ item.selected_quote.quote_number }}
                                     com subtotal de R$ {{ item.selected_quote.total }}.
                                 </p>
                             {% endif %}
@@ -69,7 +69,7 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <p>Ainda nao ha produtos cadastrados para o topico 5.1.</p>
+                <p>Ainda não há produtos cadastrados para o tópico 5.1.</p>
             {% endif %}
         </section>
     </main>

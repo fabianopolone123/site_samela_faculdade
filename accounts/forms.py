@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(
-        label='Usuario',
+        label='Usuário',
         widget=forms.TextInput(
             attrs={
                 'placeholder': 'Digite seu login ou e-mail',
@@ -38,7 +38,7 @@ class SignupEmailForm(forms.Form):
 
 class SignupCodeForm(forms.Form):
     code = forms.CharField(
-        label='Codigo de verificacao',
+        label='Código de verificação',
         min_length=6,
         max_length=6,
         widget=forms.TextInput(
@@ -56,26 +56,26 @@ class BudgetProductForm(forms.Form):
         label='Nome do produto',
         max_length=255,
         widget=forms.TextInput(
-            attrs={'placeholder': 'Ex.: tablet educacional, impressora, camera'}
+            attrs={'placeholder': 'Ex.: tablet educacional, impressora, câmera'}
         ),
     )
     selected_quote = forms.ChoiceField(
-        label='Orcamento selecionado para a soma total',
-        choices=[('1', 'Orcamento 1'), ('2', 'Orcamento 2'), ('3', 'Orcamento 3')],
+        label='Orçamento selecionado para a soma total',
+        choices=[('1', 'Orçamento 1'), ('2', 'Orçamento 2'), ('3', 'Orçamento 3')],
         widget=forms.RadioSelect,
     )
 
-    quote_1_price = forms.DecimalField(label='Preco orcamento 1', decimal_places=2, max_digits=12, min_value=0)
-    quote_1_quantity = forms.IntegerField(label='Quantidade orcamento 1', min_value=1)
-    quote_1_link = forms.URLField(label='Link orcamento 1')
+    quote_1_price = forms.DecimalField(label='Preço orçamento 1', decimal_places=2, max_digits=12, min_value=0)
+    quote_1_quantity = forms.IntegerField(label='Quantidade orçamento 1', min_value=1)
+    quote_1_link = forms.URLField(label='Link orçamento 1')
 
-    quote_2_price = forms.DecimalField(label='Preco orcamento 2', decimal_places=2, max_digits=12, min_value=0)
-    quote_2_quantity = forms.IntegerField(label='Quantidade orcamento 2', min_value=1)
-    quote_2_link = forms.URLField(label='Link orcamento 2')
+    quote_2_price = forms.DecimalField(label='Preço orçamento 2', decimal_places=2, max_digits=12, min_value=0)
+    quote_2_quantity = forms.IntegerField(label='Quantidade orçamento 2', min_value=1)
+    quote_2_link = forms.URLField(label='Link orçamento 2')
 
-    quote_3_price = forms.DecimalField(label='Preco orcamento 3', decimal_places=2, max_digits=12, min_value=0)
-    quote_3_quantity = forms.IntegerField(label='Quantidade orcamento 3', min_value=1)
-    quote_3_link = forms.URLField(label='Link orcamento 3')
+    quote_3_price = forms.DecimalField(label='Preço orçamento 3', decimal_places=2, max_digits=12, min_value=0)
+    quote_3_quantity = forms.IntegerField(label='Quantidade orçamento 3', min_value=1)
+    quote_3_link = forms.URLField(label='Link orçamento 3')
 
 
 class SignupPasswordForm(forms.Form):
@@ -106,7 +106,7 @@ class SignupPasswordForm(forms.Form):
         password2 = cleaned_data.get('password2')
 
         if password1 and password2 and password1 != password2:
-            raise forms.ValidationError('As senhas informadas nao coincidem.')
+            raise forms.ValidationError('As senhas informadas não coincidem.')
 
         if password1 and len(password1) < 8:
             raise forms.ValidationError('A senha precisa ter pelo menos 8 caracteres.')
