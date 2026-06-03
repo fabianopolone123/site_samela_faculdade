@@ -159,3 +159,4 @@
 - Caixa de observação exibida na área principal de cada tópico; botão "✎" abre modal para editar
 - Tópicos sem descrição exibem link "+ Adicionar observação ao tópico"
 - Descrições pre-populadas para Material permanente e Serviços de Terceiros
+- Tópico `Despesas de Transporte e Diárias` criado: Nome do meio de transporte, Origem, Destino, Orçamento 1/2/3 (Preço, Link — sem Frete/Quantidade), Selecionar para orçar
