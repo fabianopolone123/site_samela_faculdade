@@ -94,6 +94,7 @@ def budget_product_create_view(request):
         selected_topic = topics[0]
 
     selected_rows = build_topic_rows(selected_topic) if selected_topic else []
+    selected_groups = build_topic_groups(selected_topic) if selected_topic else []
     selected_records = (
         build_record_cards(selected_topic, selected_rows) if selected_topic else []
     )
@@ -104,6 +105,7 @@ def budget_product_create_view(request):
         'topic_form': TopicForm(),
         'field_form': TopicFieldForm(topic=selected_topic),
         'selected_rows': selected_rows,
+        'selected_groups': selected_groups,
         'selected_records': selected_records,
     }
     return render(request, 'accounts/budget_product_form.html', context)
@@ -467,6 +469,27 @@ def build_topic_rows(topic):
         walk(root, 0)
 
     return rows
+
+
+def build_topic_groups(topic):
+    if topic is None:
+        return []
+
+    rows = build_topic_rows(topic)
+    groups = []
+    current_group = None
+
+    for row in rows:
+        if row['level'] == 0:
+            current_group = {
+                'root': row,
+                'children': [],
+            }
+            groups.append(current_group)
+        elif current_group is not None:
+            current_group['children'].append(row)
+
+    return groups
 
 
 def build_record_cards(topic, selected_rows):

@@ -948,6 +948,26 @@ body {
         linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(245, 250, 251, 0.9));
 }
 
+.builder-panel-highlight {
+    border-color: rgba(10, 147, 150, 0.18);
+    box-shadow: 0 20px 36px rgba(0, 95, 115, 0.08);
+}
+
+.builder-tip {
+    display: grid;
+    gap: 6px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(215, 240, 239, 0.72), rgba(255, 255, 255, 0.96));
+    border: 1px solid rgba(10, 147, 150, 0.16);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.builder-tip p,
+.builder-tip strong {
+    margin: 0;
+}
+
 .structure-item {
     display: flex;
     align-items: center;
@@ -979,9 +999,52 @@ body {
     gap: 4px;
 }
 
+.structure-group-list {
+    display: grid;
+    gap: 18px;
+}
+
+.structure-group-card,
+.cost-group-card {
+    display: grid;
+    gap: 18px;
+    padding: 20px;
+    border-radius: 24px;
+    border: 1px solid rgba(0, 95, 115, 0.12);
+    background: rgba(255, 255, 255, 0.88);
+}
+
+.structure-group-header,
+.cost-group-header,
+.subfield-zone-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.structure-group-header h4,
+.cost-group-header h4 {
+    margin: 10px 0 4px;
+    font-size: 1.12rem;
+}
+
+.structure-group-header p,
+.cost-group-header p,
+.subfield-zone-header span,
+.empty-inline-note {
+    margin: 0;
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
 .dynamic-form-grid {
     display: grid;
     gap: 16px;
+}
+
+.grouped-form-grid {
+    gap: 22px;
 }
 
 .dynamic-entry-field {
@@ -989,6 +1052,35 @@ body {
     border-radius: 18px;
     border: 1px solid rgba(0, 95, 115, 0.1);
     background: rgba(255, 255, 255, 0.76);
+}
+
+.root-entry-field {
+    background: linear-gradient(180deg, rgba(247, 251, 252, 0.96), rgba(255, 255, 255, 0.98));
+    border-color: rgba(10, 147, 150, 0.18);
+}
+
+.subfield-zone {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 20px;
+    background: rgba(243, 248, 249, 0.94);
+    border: 1px dashed rgba(0, 95, 115, 0.18);
+}
+
+.subfield-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.subfield-entry {
+    background: rgba(255, 255, 255, 0.96);
+}
+
+.empty-inline-note {
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(247, 251, 252, 0.9);
 }
 
 .dynamic-entry-field label {

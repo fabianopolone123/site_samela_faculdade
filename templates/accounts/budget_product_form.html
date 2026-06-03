@@ -79,18 +79,34 @@
                             <span>{{ selected_rows|length }} item(ns) na estrutura</span>
                         </div>
 
-                        {% if selected_rows %}
-                            <div class="structure-list">
-                                {% for row in selected_rows %}
-                                    <article class="structure-item level-{{ row.level }}">
-                                        <div class="structure-item-copy">
-                                            <strong>{{ row.field.name }}</strong>
-                                            <small>{{ row.type_label }}</small>
+                        {% if selected_groups %}
+                            <div class="structure-group-list">
+                                {% for group in selected_groups %}
+                                    <article class="structure-group-card">
+                                        <div class="structure-group-header">
+                                            <div>
+                                                <span class="topic-card-badge">Campo principal</span>
+                                                <h4>{{ group.root.field.name }}</h4>
+                                                <p>{{ group.root.type_label }}</p>
+                                            </div>
                                         </div>
-                                        {% if row.level > 0 %}
-                                            <span class="structure-tag">Subcampo</span>
+
+                                        {% if group.children %}
+                                            <div class="structure-list">
+                                                {% for row in group.children %}
+                                                    <article class="structure-item level-{{ row.level }}">
+                                                        <div class="structure-item-copy">
+                                                            <strong>{{ row.field.name }}</strong>
+                                                            <small>{{ row.type_label }}</small>
+                                                        </div>
+                                                        <span class="structure-tag">Subcampo</span>
+                                                    </article>
+                                                {% endfor %}
+                                            </div>
                                         {% else %}
-                                            <span class="structure-tag">Campo</span>
+                                            <div class="empty-inline-note">
+                                                Este campo principal ainda não possui subcampos.
+                                            </div>
                                         {% endif %}
                                     </article>
                                 {% endfor %}
@@ -103,36 +119,86 @@
                         {% endif %}
                     </section>
 
-                    <section class="builder-panel">
+                    <section class="builder-panel builder-panel-highlight">
                         <div class="builder-panel-header">
                             <h3>Novo custo</h3>
                             <span>Preencha os campos do tópico selecionado</span>
                         </div>
 
-                        {% if selected_rows %}
+                        <div class="builder-tip">
+                            <strong>Como preencher</strong>
+                            <p>
+                                Cada bloco abaixo representa um campo principal. Se esse campo tiver
+                                subcampos, eles aparecerão logo abaixo dentro do mesmo bloco.
+                            </p>
+                        </div>
+
+                        {% if selected_groups %}
                             <form method="post" action="{% url 'create_topic_record' %}" class="form-stack">
                                 {% csrf_token %}
                                 <input type="hidden" name="topic_id" value="{{ selected_topic.id }}">
-                                <div class="dynamic-form-grid">
-                                    {% for row in selected_rows %}
-                                        <div class="field dynamic-entry-field level-{{ row.level }}">
-                                            <label for="field_{{ row.field.id }}">
-                                                {{ row.field.name }}
-                                                <small>{{ row.type_label }}</small>
-                                            </label>
 
-                                            {% if row.field.field_type == 'texto' %}
-                                                <input type="text" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
-                                            {% elif row.field.field_type == 'numero' %}
-                                                <input type="number" step="1" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
-                                            {% elif row.field.field_type == 'link' %}
-                                                <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
-                                            {% elif row.field.field_type == 'valor' %}
-                                                <input type="number" step="0.01" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                <div class="dynamic-form-grid grouped-form-grid">
+                                    {% for group in selected_groups %}
+                                        <article class="cost-group-card">
+                                            <div class="cost-group-header">
+                                                <div>
+                                                    <span class="topic-card-badge">Campo principal</span>
+                                                    <h4>{{ group.root.field.name }}</h4>
+                                                    <p>{{ group.root.type_label }}</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="field dynamic-entry-field root-entry-field">
+                                                <label for="field_{{ group.root.field.id }}">
+                                                    {{ group.root.field.name }}
+                                                    <small>{{ group.root.type_label }}</small>
+                                                </label>
+
+                                                {% if group.root.field.field_type == 'texto' %}
+                                                    <input type="text" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                                {% elif group.root.field.field_type == 'numero' %}
+                                                    <input type="number" step="1" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                                {% elif group.root.field.field_type == 'link' %}
+                                                    <input type="url" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                                {% elif group.root.field.field_type == 'valor' %}
+                                                    <input type="number" step="0.01" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                                {% endif %}
+                                            </div>
+
+                                            {% if group.children %}
+                                                <div class="subfield-zone">
+                                                    <div class="subfield-zone-header">
+                                                        <strong>Subcampos deste bloco</strong>
+                                                        <span>{{ group.children|length }} item(ns)</span>
+                                                    </div>
+
+                                                    <div class="subfield-grid">
+                                                        {% for row in group.children %}
+                                                            <div class="field dynamic-entry-field subfield-entry level-{{ row.level }}">
+                                                                <label for="field_{{ row.field.id }}">
+                                                                    {{ row.field.name }}
+                                                                    <small>{{ row.type_label }}</small>
+                                                                </label>
+
+                                                                {% if row.field.field_type == 'texto' %}
+                                                                    <input type="text" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                                {% elif row.field.field_type == 'numero' %}
+                                                                    <input type="number" step="1" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                                {% elif row.field.field_type == 'link' %}
+                                                                    <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                                {% elif row.field.field_type == 'valor' %}
+                                                                    <input type="number" step="0.01" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                                {% endif %}
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
                                             {% endif %}
-                                        </div>
+                                        </article>
                                     {% endfor %}
                                 </div>
+
                                 <button type="submit" class="button-primary">Salvar novo custo</button>
                             </form>
                         {% else %}

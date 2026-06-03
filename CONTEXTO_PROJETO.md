@@ -83,6 +83,7 @@
   - cards de estrutura do tópico
   - formulário dinâmico para novo custo
   - cards de registros salvos
+  - seção `Novo custo` organizada por blocos de campo principal, com subcampos agrupados visualmente no mesmo bloco
 
 ## Mensagens e comportamento
 
@@ -131,3 +132,4 @@
 - Painel pós-login simplificado para exibir apenas os botões principais
 - O fluxo antigo de categorias em `Cadastrar custos` foi substituído por um construtor dinâmico de tópicos, campos e subcampos
 - A tela `Cadastrar custos` agora permite montar a estrutura e registrar novos custos com base no tópico selecionado
+- A área de `Novo custo` foi reorganizada para ficar mais clara, separando cada campo principal em um bloco próprio e mantendo os subcampos logo abaixo
