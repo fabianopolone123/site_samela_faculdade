@@ -253,12 +253,29 @@
             </article>
 
             <article class="workspace-card">
-                <h2>Categorias disponíveis</h2>
-                <div class="product-list">
-                    {% for section in sections %}
-                        <div class="product-item">
-                            <h3>{{ section.code }}. {{ section.title }}</h3>
-                            <p>{{ section.description }}</p>
+                <h2>Itens já cadastrados na categoria</h2>
+                <div class="product-list" id="category-entry-list">
+                    {% for item in sections_with_entries %}
+                        <div class="category-entry-block" data-category-entries="{{ item.section.code }}">
+                            <div class="category-entry-header">
+                                <span class="dashboard-topic-code">{{ item.section.code }}</span>
+                                <h3>{{ item.section.title }}</h3>
+                                <p>{{ item.section.description }}</p>
+                            </div>
+                            <div class="category-entry-items">
+                                {% for entry in item.entries %}
+                                    <article class="product-item">
+                                        <h4>{{ entry.title }}</h4>
+                                        {% if entry.details %}<p>{{ entry.details }}</p>{% endif %}
+                                        {% if entry.justification %}<p><strong>Justificativa:</strong> {{ entry.justification }}</p>{% endif %}
+                                        <p><strong>Total considerado:</strong> R$ {{ entry.total_considered }}</p>
+                                    </article>
+                                {% empty %}
+                                {% endfor %}
+                            </div>
+                            {% if not item.entries %}
+                                <p class="empty-category-message">Nenhum item cadastrado nesta categoria.</p>
+                            {% endif %}
                         </div>
                     {% endfor %}
                 </div>
@@ -333,6 +350,11 @@
                 group.classList.toggle('is-disabled', !enabled);
                 group.classList.toggle('is-enabled', enabled);
                 setFieldsEnabled(group, enabled);
+            });
+
+            document.querySelectorAll('[data-category-entries]').forEach((block) => {
+                const visible = block.dataset.categoryEntries === category;
+                block.classList.toggle('is-visible', visible);
             });
         }
 

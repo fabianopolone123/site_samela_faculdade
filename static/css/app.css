@@ -764,6 +764,27 @@ body {
     gap: 18px;
 }
 
+.category-entry-block {
+    display: none;
+    gap: 14px;
+}
+
+.category-entry-block.is-visible {
+    display: grid;
+}
+
+.category-entry-header p,
+.empty-category-message {
+    margin: 0;
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.category-entry-items {
+    display: grid;
+    gap: 14px;
+}
+
 .product-item,
 .budget-product-card {
     padding: 18px;

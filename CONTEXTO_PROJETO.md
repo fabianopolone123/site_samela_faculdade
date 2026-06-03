@@ -109,6 +109,7 @@
 - Regra definida para manter textos em português sempre com acentuação correta
 - Seletor de categorias de `Cadastrar custos` transformado em cards visuais
 - Ao selecionar uma categoria, o formulário habilita dinamicamente apenas os campos correspondentes
+- O painel lateral de `Cadastrar custos` passou a mostrar os itens já cadastrados da categoria selecionada
 
 ## Mensagens e comportamento
 
@@ -156,4 +157,5 @@
 - Painel pós-login simplificado para exibir apenas os botões principais
 - Módulo de orçamento expandido para materiais, serviços, transporte, diárias e bolsas
 - Tela `Cadastrar custos` refinada com seletor visual e ativação dinâmica dos campos por categoria
+- Área lateral da tela de cadastro ajustada para acompanhar a categoria selecionada e listar seus itens salvos
 - Regra definida para manter mensagens de commit sempre em português

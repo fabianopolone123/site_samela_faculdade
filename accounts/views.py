@@ -114,11 +114,20 @@ def budget_product_create_view(request):
     else:
         form = BudgetCostForm()
 
-    entries = (
+    entries = list(
         BudgetCostEntry.objects.select_related('section')
         .prefetch_related('quotes')
         .order_by('section__code', '-created_at')
     )
+    sections_with_entries = []
+    for section in sections:
+        section_entries = [entry for entry in entries if entry.section.code == section.code]
+        sections_with_entries.append(
+            {
+                'section': section,
+                'entries': section_entries,
+            }
+        )
     return render(
         request,
         'accounts/budget_product_form.html',
@@ -126,6 +135,7 @@ def budget_product_create_view(request):
             'form': form,
             'sections': sections,
             'entries': entries,
+            'sections_with_entries': sections_with_entries,
         },
     )
 
