@@ -167,3 +167,4 @@
 - Tópico `Bolsas — Doutorado` criado: mesmos campos; mesma descrição do Mestrado
 - Tópico `Bolsas — Pós-Doutorado` criado: mesmos campos; descrição específica com exigência de processo seletivo internacional
 - Tópico `Bolsas — Jornalismo Científico (JC)` criado: mesmos campos; descrição padrão fapesp.br/bco
+- Tópico `Bolsas — Treinamento Técnico e Participação em Curso` criado: mesmos campos
