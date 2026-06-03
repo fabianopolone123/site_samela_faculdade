@@ -133,7 +133,7 @@
 
 - Sempre que houver alteração no projeto:
   - atualizar este documento com o novo contexto
-  - criar um novo commit
+  - criar um novo commit com mensagem em português
   - enviar `push` para o GitHub
 
 ## Histórico de contexto
@@ -153,3 +153,4 @@
 - Contas seeded criadas para `adm / 123` e `fabiano / 123`
 - Painel pós-login simplificado para exibir apenas os botões principais
 - Módulo de orçamento expandido para materiais, serviços, transporte, diárias e bolsas
+- Regra definida para manter mensagens de commit sempre em português
