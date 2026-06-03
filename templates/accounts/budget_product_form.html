@@ -54,10 +54,10 @@
                     </div>
 
                     <div class="form-section-group" data-section-group="base">
-                        <h3>Informações principais</h3>
+                        <h3 id="base-group-title">Informações principais</h3>
                         <div class="field-grid two-columns">
                             <div class="field" data-field-name="title">
-                                <label for="{{ form.title.id_for_label }}">{{ form.title.label }}</label>
+                                <label for="{{ form.title.id_for_label }}" id="title-field-label">{{ form.title.label }}</label>
                                 {{ form.title }}
                                 {% if form.title.errors %}<div class="field-errors">{{ form.title.errors }}</div>{% endif %}
                             </div>
@@ -353,6 +353,9 @@
 
         const hiddenSelect = document.getElementById('id_section_code');
         const groups = Array.from(document.querySelectorAll('[data-section-group]'));
+        const baseGroupTitle = document.getElementById('base-group-title');
+        const titleFieldLabel = document.getElementById('title-field-label');
+        const titleInput = document.getElementById('id_title');
 
         function setFieldsEnabled(group, enabled) {
             group.querySelectorAll('input, select, textarea').forEach((field) => {
@@ -362,6 +365,7 @@
         }
 
         function applyCategory(category) {
+            hiddenSelect.value = category;
             const activeGroups = categoryMap[category] || [];
             const visibleFields = categoryFieldVisibility[category] || [];
             groups.forEach((group) => {
@@ -380,6 +384,32 @@
                 const visible = block.dataset.categoryEntries === category;
                 block.classList.toggle('is-visible', visible);
             });
+
+            if (category === 'a') {
+                baseGroupTitle.textContent = 'Produto';
+                titleFieldLabel.textContent = 'Nome do produto';
+                titleInput.placeholder = 'Digite o nome do produto';
+            } else if (category === 'b') {
+                baseGroupTitle.textContent = 'Material';
+                titleFieldLabel.textContent = 'Descrição do material';
+                titleInput.placeholder = 'Digite a descrição do material';
+            } else if (category === 'c') {
+                baseGroupTitle.textContent = 'Serviço';
+                titleFieldLabel.textContent = 'Serviço solicitado';
+                titleInput.placeholder = 'Digite o serviço solicitado';
+            } else if (category === 'd.1') {
+                baseGroupTitle.textContent = 'Transporte';
+                titleFieldLabel.textContent = 'Descrição do deslocamento';
+                titleInput.placeholder = 'Digite uma descrição do deslocamento';
+            } else if (category === 'd.2') {
+                baseGroupTitle.textContent = 'Diária';
+                titleFieldLabel.textContent = 'Descrição da diária';
+                titleInput.placeholder = 'Digite uma descrição da diária';
+            } else if (category === 'e') {
+                baseGroupTitle.textContent = 'Bolsa';
+                titleFieldLabel.textContent = 'Descrição da bolsa';
+                titleInput.placeholder = 'Digite uma descrição da bolsa';
+            }
         }
 
         hiddenSelect.addEventListener('change', (event) => applyCategory(event.target.value));

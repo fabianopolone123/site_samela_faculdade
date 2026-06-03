@@ -102,10 +102,10 @@ class SignupCodeForm(forms.Form):
 class BudgetCostForm(forms.Form):
     section_code = forms.ChoiceField(label='Categoria', choices=SECTION_CHOICES)
     title = forms.CharField(
-        label='Descrição principal',
+        label='Nome do produto',
         max_length=255,
         widget=forms.TextInput(
-            attrs={'placeholder': 'Nome do produto, material, serviço ou item'}
+            attrs={'placeholder': 'Digite o nome do produto'}
         ),
     )
     details = forms.CharField(

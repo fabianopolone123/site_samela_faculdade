@@ -58,6 +58,7 @@
   - manter apenas `Nome do produto`
   - em cada um dos 3 orçamentos informar `link`, `preço`, `quantidade` e `frete`
   - total considerado = `(preço × quantidade) + frete` do orçamento selecionado
+  - rótulos visuais da categoria `a)` ajustados para remover nomenclatura genérica
 - Serviços de terceiros:
   - serviço solicitado
   - justificativa
