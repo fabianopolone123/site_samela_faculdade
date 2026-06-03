@@ -636,52 +636,22 @@ body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.category-card-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-}
-
-.category-card {
-    padding: 18px;
-    border-radius: 20px;
-    border: 1px solid rgba(0, 95, 115, 0.12);
-    background: rgba(255, 255, 255, 0.88);
-    text-align: left;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.category-card:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 12px 28px rgba(0, 95, 115, 0.12);
-}
-
-.category-card.is-active {
-    border-color: var(--accent-strong);
-    box-shadow: 0 14px 30px rgba(10, 147, 150, 0.18);
-    background: linear-gradient(180deg, rgba(215, 240, 239, 0.7), rgba(255, 255, 255, 0.95));
-}
-
-.category-card strong,
-.category-card small,
-.category-code {
-    display: block;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.category-code {
-    margin-bottom: 8px;
-    color: var(--accent);
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.category-card small {
-    margin-top: 8px;
-    color: var(--muted);
-    line-height: 1.45;
+.category-select-field select {
+    appearance: none;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 251, 251, 0.96));
+    border: 1px solid rgba(0, 95, 115, 0.18);
+    box-shadow: 0 12px 24px rgba(0, 95, 115, 0.08);
+    font-weight: 600;
+    padding-right: 48px;
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--accent) 50%),
+        linear-gradient(135deg, var(--accent) 50%, transparent 50%);
+    background-position:
+        calc(100% - 22px) calc(50% - 3px),
+        calc(100% - 16px) calc(50% - 3px);
+    background-size: 6px 6px, 6px 6px;
+    background-repeat: no-repeat;
 }
 
 .form-section-group {
@@ -697,9 +667,8 @@ body {
     box-shadow: 0 12px 26px rgba(0, 95, 115, 0.08);
 }
 
-.form-section-group.is-disabled {
-    opacity: 0.45;
-    filter: grayscale(0.12);
+.form-section-group.is-hidden {
+    display: none;
 }
 
 .form-section-group h3 {
@@ -744,18 +713,6 @@ body {
     padding-left: 18px;
     display: grid;
     gap: 8px;
-}
-
-.visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
 }
 
 .product-list,
@@ -869,7 +826,6 @@ tr.is-selected {
         flex-direction: column;
     }
 
-    .category-card-grid,
     .field-grid.two-columns,
     .quote-grid,
     .workspace-grid-wide {

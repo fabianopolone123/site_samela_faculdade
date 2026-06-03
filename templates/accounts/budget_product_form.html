@@ -42,32 +42,15 @@
                     <div class="category-selector">
                         <div class="category-selector-header">
                             <span class="eyebrow">Categorias</span>
-                            <strong>Selecione uma categoria para habilitar os campos</strong>
+                            <strong>Selecione uma categoria para exibir os campos correspondentes</strong>
                         </div>
-                        <div class="category-card-grid" id="category-card-grid">
-                            {% for value, label in form.section_code.field.choices %}
-                                {% for section in sections %}
-                                    {% if section.code == value %}
-                                        <button
-                                            type="button"
-                                            class="category-card"
-                                            data-category-card="{{ value }}"
-                                            aria-pressed="{% if form.section_code.value == value %}true{% else %}false{% endif %}"
-                                        >
-                                            <span class="category-code">{{ section.code }}</span>
-                                            <strong>{{ section.title }}</strong>
-                                            <small>{{ section.description }}</small>
-                                        </button>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endfor %}
-                        </div>
-                        <div class="visually-hidden">
+                        <div class="field category-select-field">
+                            <label for="{{ form.section_code.id_for_label }}">{{ form.section_code.label }}</label>
                             {{ form.section_code }}
+                            {% if form.section_code.errors %}
+                                <div class="field-errors">{{ form.section_code.errors }}</div>
+                            {% endif %}
                         </div>
-                        {% if form.section_code.errors %}
-                            <div class="field-errors">{{ form.section_code.errors }}</div>
-                        {% endif %}
                     </div>
 
                     <div class="form-section-group" data-section-group="base">
@@ -326,7 +309,6 @@
         };
 
         const hiddenSelect = document.getElementById('id_section_code');
-        const cards = Array.from(document.querySelectorAll('[data-category-card]'));
         const groups = Array.from(document.querySelectorAll('[data-section-group]'));
 
         function setFieldsEnabled(group, enabled) {
@@ -337,17 +319,10 @@
         }
 
         function applyCategory(category) {
-            hiddenSelect.value = category;
-            cards.forEach((card) => {
-                const active = card.dataset.categoryCard === category;
-                card.classList.toggle('is-active', active);
-                card.setAttribute('aria-pressed', active ? 'true' : 'false');
-            });
-
             const activeGroups = categoryMap[category] || [];
             groups.forEach((group) => {
                 const enabled = activeGroups.includes(group.dataset.sectionGroup);
-                group.classList.toggle('is-disabled', !enabled);
+                group.classList.toggle('is-hidden', !enabled);
                 group.classList.toggle('is-enabled', enabled);
                 setFieldsEnabled(group, enabled);
             });
@@ -358,9 +333,7 @@
             });
         }
 
-        cards.forEach((card) => {
-            card.addEventListener('click', () => applyCategory(card.dataset.categoryCard));
-        });
+        hiddenSelect.addEventListener('change', (event) => applyCategory(event.target.value));
 
         applyCategory(hiddenSelect.value || 'a');
     </script>
