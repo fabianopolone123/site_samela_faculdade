@@ -26,7 +26,7 @@ class ProjectLoginView(LoginView):
         context = super().get_context_data(**kwargs)
         context.update(build_signup_context(self.request))
         context['project_info'] = {
-            'title': 'Orçamento - FAPESP – Fundação Bracell – Fundação Itaú',
+            'title': 'Orçamento - FAPESP',
             'subtitle': 'Auxílio à Pesquisa para o Fortalecimento da Educação na Pré-Escola',
             'edition': '06/2026',
             'organization': 'NEEVY - UFSCar',
@@ -190,7 +190,7 @@ def render_login_with_forms(request, email_form=None, code_form=None, password_f
             'code_form': code_form or SignupCodeForm(),
             'password_form': password_form or SignupPasswordForm(),
             'project_info': {
-                'title': 'Orçamento - FAPESP – Fundação Bracell – Fundação Itaú',
+                'title': 'Orçamento - FAPESP',
                 'subtitle': 'Auxílio à Pesquisa para o Fortalecimento da Educação na Pré-Escola',
                 'edition': '06/2026',
                 'organization': 'NEEVY - UFSCar',
