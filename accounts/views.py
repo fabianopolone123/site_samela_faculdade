@@ -57,10 +57,6 @@ class ProjectLoginView(LoginView):
         context = super().get_context_data(**kwargs)
         context.update(build_signup_context(self.request))
         context['project_info'] = PROJECT_INFO
-        context['demo_access'] = [
-            {'label': 'ADM', 'value': 'adm / 123'},
-            {'label': 'Teste', 'value': 'fabiano / 123'},
-        ]
         return context
 
 
@@ -311,10 +307,6 @@ def render_login_with_forms(request, email_form=None, code_form=None, password_f
             'code_form': code_form or SignupCodeForm(),
             'password_form': password_form or SignupPasswordForm(),
             'project_info': PROJECT_INFO,
-            'demo_access': [
-                {'label': 'ADM', 'value': 'adm / 123'},
-                {'label': 'Teste', 'value': 'fabiano / 123'},
-            ],
         }
     )
     return render(request, 'accounts/login.html', context)

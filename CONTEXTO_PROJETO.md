@@ -53,7 +53,6 @@
 - Pagina inicial redesenhada com layout mais moderno
 - Area institucional centralizada
 - Bloco institucional reduzido para dar mais destaque ao login
-- Credenciais de acesso seeded exibidas visualmente na tela inicial
 - Modal de cadastro mantido integrado ao fluxo principal
 
 ## Mensagens e comportamento
@@ -98,5 +97,6 @@
 - Etapa de digitacao do codigo atualizada para exibir tambem o aviso sobre verificar Spam e Lixo eletronico
 - Autenticacao ampliada para aceitar login por alias ou e-mail
 - Contas seeded criadas para `adm / 123` e `fabiano / 123`
+- Credenciais seeded mantidas apenas no backend, sem exibicao visual na tela de login
 - Painel pos-login criado com botoes para `Cadastrar campos` e `Acessar orcamento pronto`
 - Topico `5.1. Custeio do projeto de pesquisa` implementado com cadastro de produto, 3 orcamentos e selecao para soma total

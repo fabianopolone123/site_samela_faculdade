@@ -42,14 +42,6 @@
                 <span class="eyebrow">Acesso ao sistema</span>
                 <h2>Entrar</h2>
                 <p class="login-copy">Use seu login ou e-mail autorizado e a senha cadastrada para acessar o portal.</p>
-                <div class="demo-access">
-                    {% for item in demo_access %}
-                        <div class="demo-pill">
-                            <span>{{ item.label }}</span>
-                            <strong>{{ item.value }}</strong>
-                        </div>
-                    {% endfor %}
-                </div>
 
                 {% if messages %}
                     <div class="messages">
