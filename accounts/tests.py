@@ -3,7 +3,7 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import BudgetCostEntry, BudgetSection, SignupCode, User
+from .models import CostField, CostRecord, CostRecordValue, CostTopic, SignupCode, User
 
 
 class SignupFlowTests(TestCase):
@@ -47,60 +47,101 @@ class SeededAccessTests(TestCase):
         self.assertRedirects(response, reverse('dashboard'))
 
 
-class BudgetFlowTests(TestCase):
+class DynamicTopicBudgetTests(TestCase):
     def setUp(self):
         self.client.post(reverse('login'), {'username': 'fabiano', 'password': '123'})
 
-    def test_sections_seeded(self):
-        self.assertTrue(BudgetSection.objects.filter(code='a').exists())
-        self.assertTrue(BudgetSection.objects.filter(code='d.1').exists())
-        self.assertTrue(BudgetSection.objects.filter(code='e').exists())
-
-    def test_create_material_cost_entry(self):
+    def test_can_create_topic(self):
         response = self.client.post(
-            reverse('budget_product_create'),
+            reverse('create_topic'),
+            {'name': 'Material permanente'},
+        )
+
+        topic = CostTopic.objects.get(name='Material permanente')
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}",
+        )
+
+    def test_can_create_field_and_subfield(self):
+        topic = CostTopic.objects.create(name='Transporte')
+
+        response = self.client.post(
+            reverse('create_topic_field'),
             {
-                'section_code': 'a',
-                'title': 'Notebook',
-                'selected_quote': '2',
-                'quote_1_amount': '1000.00',
-                'quote_1_quantity': '1',
-                'quote_1_freight': '50.00',
-                'quote_1_link': 'https://example.com/1',
-                'quote_2_amount': '1200.00',
-                'quote_2_quantity': '2',
-                'quote_2_freight': '80.00',
-                'quote_2_link': 'https://example.com/2',
-                'quote_3_amount': '1300.00',
-                'quote_3_quantity': '3',
-                'quote_3_freight': '90.00',
-                'quote_3_link': 'https://example.com/3',
+                'topic_id': topic.id,
+                'name': 'Destino',
+                'field_type': 'texto',
+                'parent_id': '',
+            },
+        )
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}",
+        )
+
+        parent = CostField.objects.get(topic=topic, name='Destino')
+        response = self.client.post(
+            reverse('create_topic_field'),
+            {
+                'topic_id': topic.id,
+                'name': 'Link da passagem',
+                'field_type': 'link',
+                'parent_id': parent.id,
+            },
+        )
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}",
+        )
+
+        child = CostField.objects.get(topic=topic, name='Link da passagem')
+        self.assertEqual(child.parent, parent)
+
+    def test_can_create_dynamic_cost_record(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        product = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        quote = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='valor')
+        link = CostField.objects.create(
+            topic=topic,
+            parent=quote,
+            name='Link do orçamento',
+            field_type='link',
+        )
+
+        response = self.client.post(
+            reverse('create_topic_record'),
+            {
+                'topic_id': topic.id,
+                f'field_{product.id}': 'Notebook Dell',
+                f'field_{quote.id}': '4500.90',
+                f'field_{link.id}': 'https://example.com/notebook',
             },
         )
 
-        self.assertRedirects(response, reverse('budget_product_create'))
-        entry = BudgetCostEntry.objects.get(title='Notebook')
-        self.assertEqual(entry.section.code, 'a')
-        self.assertEqual(entry.total_considered, 2480)
-
-        ready = self.client.get(reverse('budget_ready'))
-        self.assertContains(ready, 'Notebook')
-        self.assertContains(ready, 'R$ 2480')
-
-    def test_create_daily_entry(self):
-        response = self.client.post(
-            reverse('budget_product_create'),
-            {
-                'section_code': 'd.2',
-                'title': 'Diária para campo',
-                'daily_type': 'Diária no país',
-                'location': 'Campinas',
-                'people_count': '2',
-                'days_count': '3',
-                'unit_value': '150.00',
-            },
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}",
+        )
+        record = CostRecord.objects.get(topic=topic)
+        self.assertEqual(record.values.count(), 3)
+        self.assertTrue(
+            CostRecordValue.objects.filter(
+                record=record,
+                field=product,
+                value='Notebook Dell',
+            ).exists()
         )
 
-        self.assertRedirects(response, reverse('budget_product_create'))
-        entry = BudgetCostEntry.objects.get(title='Diária para campo')
-        self.assertEqual(entry.total_considered, 900)
+    def test_budget_page_shows_dynamic_builder(self):
+        topic = CostTopic.objects.create(name='Bolsas')
+        CostField.objects.create(topic=topic, name='Modalidade', field_type='texto')
+
+        response = self.client.get(
+            reverse('budget_product_create'),
+            {'topic': topic.id},
+        )
+
+        self.assertContains(response, 'Monte os tópicos, campos e subcampos do orçamento')
+        self.assertContains(response, 'Bolsas')
+        self.assertContains(response, 'Modalidade')

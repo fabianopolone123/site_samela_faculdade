@@ -4,7 +4,7 @@
 
 - Nome do repositório: `site_samela_faculdade`
 - Base técnica: `Django + Python + SQLite`
-- Objetivo atual: portal acadêmico com autenticação controlada e módulo de orçamento por categorias
+- Objetivo atual: portal acadêmico com autenticação controlada e módulo de orçamento em construção
 
 ## Escopo implementado
 
@@ -17,9 +17,8 @@
 - Painel autenticado com dois acessos principais:
   - `Cadastrar custos`
   - `Acessar orçamento pronto`
-- Tela inicial autenticada simplificada para exibir apenas um card central com os botões principais
 
-## Logins de acesso seeded
+## Logins seeded
 
 - Login ADM: `adm`
 - Senha ADM: `123`
@@ -31,93 +30,59 @@
 - Apenas e-mails autorizados podem criar conta
 - A lista de e-mails autorizados fica no backend em `site_samela/settings.py`
 - A lista visível de e-mails autorizados foi removida da interface
-- O e-mail `fabianopolone@hotmail.com` foi adicionado à whitelist
+- O e-mail `fabianopolone@hotmail.com` está liberado para cadastro
 
-## Estrutura atual do orçamento
+## Módulo Cadastrar Custos
 
-- O projeto exibido em `Orçamento pronto` é:
-  - `INDICADORES E CRITÉRIOS DE AVALIAÇÃO DE DESENVOLVIMENTO CULTURAL DE CRIANÇAS DE PRÉ-ESCOLA NA THC`
-- O texto institucional de orçamento já aparece na tela pronta
-- O módulo `Cadastrar custos` agora aceita estas categorias:
-  - `a) Material permanente adquirido no país ou importado`
-  - `b) Material de consumo adquirido no país ou importado`
-  - `c) Serviços de terceiros contratados no país ou no exterior`
-  - `d.1) Transporte`
-  - `d.2) Diárias`
-  - `e) Bolsas como item orçamentário`
+- A rota `http://127.0.0.1:8000/cadastrar-campos/` foi refeita para um modelo dinâmico
+- O fluxo atual funciona assim:
+  - botão `Cadastrar tópico`
+  - modal para informar o nome do tópico
+  - o tópico salvo aparece na lista lateral
+  - ao abrir um tópico, existe a opção `Criar campos`
+  - cada campo pode ter:
+    - nome
+    - tipo
+    - vínculo opcional com campo pai para virar subcampo
+  - tipos disponíveis:
+    - `Texto`
+    - `Número`
+    - `Link`
+    - `Valor`
+  - os subcampos usam os mesmos tipos dos campos principais
+  - a seção `Novo custo` renderiza automaticamente os campos e subcampos do tópico selecionado
+  - a seção `Custos já registrados` mostra os registros salvos no tópico atual
 
-## Campos e comportamento do orçamento
+## Modelos dinâmicos do novo fluxo
 
-- Materiais permanentes e de consumo:
-  - descrição principal
-  - detalhes
-  - quantidade
-  - 3 orçamentos com valor e link
-  - orçamento selecionado para a soma
-- Exceção específica para `a) Material permanente`:
-  - manter apenas `Nome do produto`
-  - em cada um dos 3 orçamentos informar `link`, `preço`, `quantidade` e `frete`
-  - total considerado = `(preço × quantidade) + frete` do orçamento selecionado
-  - rótulos visuais da categoria `a)` ajustados para remover nomenclatura genérica
-- Serviços de terceiros:
-  - serviço solicitado
-  - justificativa
-  - quantidade
-  - unidade
-  - 3 orçamentos com valor e link
-  - orçamento selecionado
-- Transporte:
-  - meio de transporte
-  - origem
-  - destino
-  - finalidade
-  - quantidade de pessoas
-  - 3 orçamentos com valor e link
-  - orçamento selecionado
-- Diárias:
-  - tipo de diária
-  - localidade
-  - quantidade de pessoas
-  - número de dias
-  - valor unitário
-- Bolsas:
-  - modalidade
-  - quantidade
-  - duração em meses quando aplicável
-  - valor mensal ou valor do curso
-  - justificativa
-  - formação exigida e dedicação semanal quando a modalidade for Ensino Público
+- `CostTopic`
+  - representa um tópico de orçamento
+- `CostField`
+  - representa campo ou subcampo de um tópico
+- `CostRecord`
+  - representa um novo custo salvo em um tópico
+- `CostRecordValue`
+  - guarda o valor preenchido para cada campo do registro
 
-## Regras de cálculo atuais
+## Orçamento pronto
 
-- Categorias com 3 orçamentos:
-  - o sistema considera o orçamento selecionado
-  - o total é calculado com base no valor selecionado e na quantidade
-- Diárias:
-  - total = quantidade de pessoas × número de dias × valor unitário
-- Bolsas:
-  - total = quantidade × duração × valor mensal
-  - para `Participação em Curso`, total = quantidade × valor do curso
-- A tela `Orçamento pronto` mostra:
-  - cada seção individual
-  - total por seção
-  - síntese por categoria
-  - total geral do projeto
+- A tela `Orçamento pronto` continua disponível
+- Ela ainda usa a estrutura anterior de seções e itens de orçamento
+- O texto institucional do projeto continua exibido nessa tela
+- A integração completa entre o construtor dinâmico de tópicos e a tela `Orçamento pronto` ainda não foi iniciada
 
 ## Ajustes visuais e textuais
 
-- Página inicial redesenhada com layout mais moderno
-- Área institucional centralizada
-- Bloco institucional reduzido para dar mais destaque ao login
-- Modal de cadastro mantido integrado ao fluxo principal
-- Credenciais seeded mantidas apenas no backend, sem exibição visual na tela de login
-- Regra definida para manter textos em português sempre com acentuação correta
-- Seletor de categorias de `Cadastrar custos` transformado em cards visuais
-- Ao selecionar uma categoria, o formulário habilita dinamicamente apenas os campos correspondentes
-- O painel lateral de `Cadastrar custos` passou a mostrar os itens já cadastrados da categoria selecionada
-- O seletor voltou para lista suspensa estilizada e os campos não relacionados agora ficam invisíveis
-- A área de `Orçamento selecionado` foi redesenhada com opções em cards e resumo visual da escolha ativa
-- As opções de orçamento selecionado agora têm texto de apoio e hierarquia visual mais clara
+- Página inicial refinada com visual acadêmico moderno
+- Área institucional centralizada e reduzida para dar destaque ao login
+- Credenciais seeded ficam apenas no backend, sem exibição visual
+- Regra definida para manter textos em português com acentuação correta
+- A tela `Cadastrar custos` agora usa:
+  - cabeçalho mais forte
+  - lista lateral de tópicos
+  - cards de estrutura do tópico
+  - formulário dinâmico para novo custo
+  - cards de registros salvos
 
 ## Mensagens e comportamento
 
@@ -132,8 +97,9 @@
 - `accounts/views.py`
 - `accounts/forms.py`
 - `accounts/models.py`
-- `accounts/migrations/0002_budget_and_login_name.py`
-- `accounts/migrations/0003_budget_cost_entry.py`
+- `accounts/admin.py`
+- `accounts/tests.py`
+- `accounts/migrations/0005_dynamic_topics_fields.py`
 - `templates/accounts/login.html`
 - `templates/accounts/dashboard.html`
 - `templates/accounts/budget_product_form.html`
@@ -163,10 +129,5 @@
 - Autenticação ampliada para aceitar login por alias ou e-mail
 - Contas seeded criadas para `adm / 123` e `fabiano / 123`
 - Painel pós-login simplificado para exibir apenas os botões principais
-- Módulo de orçamento expandido para materiais, serviços, transporte, diárias e bolsas
-- Tela `Cadastrar custos` refinada com seletor visual e ativação dinâmica dos campos por categoria
-- Área lateral da tela de cadastro ajustada para acompanhar a categoria selecionada e listar seus itens salvos
-- Campos não relacionados à categoria escolhida passam a ser ocultados completamente
-- Categoria `a)` simplificada visualmente para mostrar apenas os campos solicitados
-- Bloco de seleção do orçamento destacado visualmente para facilitar a decisão do usuário
-- Regra definida para manter mensagens de commit sempre em português
+- O fluxo antigo de categorias em `Cadastrar custos` foi substituído por um construtor dinâmico de tópicos, campos e subcampos
+- A tela `Cadastrar custos` agora permite montar a estrutura e registrar novos custos com base no tópico selecionado

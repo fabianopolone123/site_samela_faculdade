@@ -7,6 +7,10 @@ from .models import (
     BudgetProduct,
     BudgetQuote,
     BudgetSection,
+    CostField,
+    CostRecord,
+    CostRecordValue,
+    CostTopic,
     SignupCode,
     User,
 )
@@ -19,8 +23,11 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('email', 'login_name', 'full_name')
     fieldsets = (
         (None, {'fields': ('email', 'login_name', 'password')}),
-        ('Informacoes pessoais', {'fields': ('full_name',)}),
-        ('Permissoes', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('Informações pessoais', {'fields': ('full_name',)}),
+        (
+            'Permissões',
+            {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')},
+        ),
         ('Datas importantes', {'fields': ('last_login', 'date_joined')}),
     )
     add_fieldsets = (
@@ -42,7 +49,7 @@ class SignupCodeAdmin(admin.ModelAdmin):
 
 @admin.register(BudgetSection)
 class BudgetSectionAdmin(admin.ModelAdmin):
-    list_display = ('code', 'title')
+    list_display = ('code', 'title', 'parent')
     search_fields = ('code', 'title')
 
 
@@ -70,3 +77,35 @@ class BudgetCostEntryAdmin(admin.ModelAdmin):
     list_filter = ('section',)
     search_fields = ('title', 'details', 'justification')
     inlines = [BudgetCostQuoteInline]
+
+
+class CostFieldInline(admin.TabularInline):
+    model = CostField
+    extra = 0
+    fields = ('name', 'field_type', 'parent')
+
+
+@admin.register(CostTopic)
+class CostTopicAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at')
+    search_fields = ('name',)
+    inlines = [CostFieldInline]
+
+
+@admin.register(CostField)
+class CostFieldAdmin(admin.ModelAdmin):
+    list_display = ('name', 'topic', 'field_type', 'parent', 'created_at')
+    list_filter = ('topic', 'field_type')
+    search_fields = ('name',)
+
+
+class CostRecordValueInline(admin.TabularInline):
+    model = CostRecordValue
+    extra = 0
+
+
+@admin.register(CostRecord)
+class CostRecordAdmin(admin.ModelAdmin):
+    list_display = ('topic', 'created_at')
+    list_filter = ('topic',)
+    inlines = [CostRecordValueInline]

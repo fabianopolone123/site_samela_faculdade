@@ -24,9 +24,9 @@ class User(AbstractUser):
 
 
 class BudgetSection(models.Model):
-    code = models.CharField('codigo', max_length=20, unique=True)
-    title = models.CharField('titulo', max_length=255)
-    description = models.TextField('descricao', blank=True)
+    code = models.CharField('código', max_length=20, unique=True)
+    title = models.CharField('título', max_length=255)
+    description = models.TextField('descrição', blank=True)
     parent = models.ForeignKey(
         'self',
         on_delete=models.CASCADE,
@@ -72,8 +72,8 @@ class BudgetQuote(models.Model):
         on_delete=models.CASCADE,
         related_name='quotes',
     )
-    quote_number = models.PositiveSmallIntegerField('orcamento')
-    price = models.DecimalField('preco', max_digits=12, decimal_places=2)
+    quote_number = models.PositiveSmallIntegerField('orçamento')
+    price = models.DecimalField('preço', max_digits=12, decimal_places=2)
     quantity = models.PositiveIntegerField('quantidade')
     link = models.URLField('link')
     is_selected = models.BooleanField('selecionado', default=False)
@@ -83,7 +83,7 @@ class BudgetQuote(models.Model):
         unique_together = [('product', 'quote_number')]
 
     def __str__(self):
-        return f'{self.product.name} - orcamento {self.quote_number}'
+        return f'{self.product.name} - orçamento {self.quote_number}'
 
     @property
     def total(self):
@@ -96,12 +96,16 @@ class BudgetCostEntry(models.Model):
         on_delete=models.CASCADE,
         related_name='cost_entries',
     )
-    title = models.CharField('titulo', max_length=255)
+    title = models.CharField('título', max_length=255)
     details = models.TextField('detalhes', blank=True)
     justification = models.TextField('justificativa', blank=True)
     quantity = models.PositiveIntegerField('quantidade', null=True, blank=True)
     unit = models.CharField('unidade', max_length=100, blank=True)
-    selected_quote_number = models.PositiveSmallIntegerField('orcamento selecionado', null=True, blank=True)
+    selected_quote_number = models.PositiveSmallIntegerField(
+        'orçamento selecionado',
+        null=True,
+        blank=True,
+    )
     data = models.JSONField('dados extras', default=dict, blank=True)
     created_at = models.DateTimeField('criado em', auto_now_add=True)
 
@@ -149,7 +153,7 @@ class BudgetCostQuote(models.Model):
         on_delete=models.CASCADE,
         related_name='quotes',
     )
-    quote_number = models.PositiveSmallIntegerField('orcamento')
+    quote_number = models.PositiveSmallIntegerField('orçamento')
     amount = models.DecimalField('valor', max_digits=12, decimal_places=2)
     quantity = models.PositiveIntegerField('quantidade', null=True, blank=True)
     freight = models.DecimalField('frete', max_digits=12, decimal_places=2, null=True, blank=True)
@@ -169,9 +173,84 @@ class BudgetCostQuote(models.Model):
         return (self.amount * quantity) + freight
 
 
+class CostTopic(models.Model):
+    name = models.CharField('nome', max_length=255)
+    created_at = models.DateTimeField('criado em', auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class CostField(models.Model):
+    TYPE_TEXT = 'texto'
+    TYPE_NUMBER = 'numero'
+    TYPE_LINK = 'link'
+    TYPE_CURRENCY = 'valor'
+    TYPE_CHOICES = [
+        (TYPE_TEXT, 'Texto'),
+        (TYPE_NUMBER, 'Número'),
+        (TYPE_LINK, 'Link'),
+        (TYPE_CURRENCY, 'Valor'),
+    ]
+
+    topic = models.ForeignKey(
+        CostTopic,
+        on_delete=models.CASCADE,
+        related_name='fields',
+    )
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='children',
+    )
+    name = models.CharField('nome', max_length=255)
+    field_type = models.CharField('tipo', max_length=20, choices=TYPE_CHOICES)
+    created_at = models.DateTimeField('criado em', auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return self.name
+
+
+class CostRecord(models.Model):
+    topic = models.ForeignKey(
+        CostTopic,
+        on_delete=models.CASCADE,
+        related_name='records',
+    )
+    created_at = models.DateTimeField('criado em', auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class CostRecordValue(models.Model):
+    record = models.ForeignKey(
+        CostRecord,
+        on_delete=models.CASCADE,
+        related_name='values',
+    )
+    field = models.ForeignKey(
+        CostField,
+        on_delete=models.CASCADE,
+        related_name='record_values',
+    )
+    value = models.TextField('valor', blank=True)
+
+    class Meta:
+        unique_together = [('record', 'field')]
+
+
 class SignupCode(models.Model):
     email = models.EmailField('e-mail')
-    code = models.CharField('codigo', max_length=6)
+    code = models.CharField('código', max_length=6)
     created_at = models.DateTimeField('criado em', auto_now_add=True)
     expires_at = models.DateTimeField('expira em')
     verified_at = models.DateTimeField('verificado em', null=True, blank=True)

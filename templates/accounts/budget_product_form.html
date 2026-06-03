@@ -4,468 +4,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastrar Custos | NEEVY - UFSCar</title>
+    <title>Cadastrar custos | NEEVY - UFSCar</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body class="dashboard-body">
     <main class="workspace-shell">
-        <section class="workspace-header">
-            <span class="eyebrow">Cadastrar custos</span>
-            <h1>Cadastro de novos custos, orçamentos, transportes, diárias e bolsas</h1>
-            <p>Selecione a categoria e o sistema habilitará apenas os campos correspondentes. O orçamento pronto será atualizado com base nos dados salvos aqui.</p>
+        <section class="workspace-header builder-hero">
+            <div class="builder-hero-copy">
+                <span class="eyebrow">Cadastrar custos</span>
+                <h1>Monte os tópicos, campos e subcampos do orçamento</h1>
+                <p>
+                    Primeiro crie o tópico. Depois abra o tópico desejado, crie os campos e subcampos e,
+                    por fim, registre um novo custo usando exatamente a estrutura que você montou.
+                </p>
+            </div>
             <div class="workspace-links">
                 <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
-                <a href="{% url 'budget_ready' %}" class="button-primary">Acessar orçamento pronto</a>
+                <button type="button" class="button-primary" data-open-modal="topic-modal">Cadastrar tópico</button>
             </div>
         </section>
 
-        <section class="workspace-grid workspace-grid-wide">
-            <article class="workspace-card">
-                <div class="form-header-row">
-                    <div>
-                        <h2>Novo custo</h2>
-                        <p class="section-helper">Escolha a categoria antes de preencher o restante do formulário.</p>
-                    </div>
+        {% if messages %}
+            <section class="workspace-card">
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <section class="workspace-grid builder-grid">
+            <article class="workspace-card builder-sidebar">
+                <div class="builder-sidebar-header">
+                    <h2>Tópicos cadastrados</h2>
+                    <p>Clique em um tópico para abrir a estrutura e registrar novos custos nele.</p>
                 </div>
 
-                {% if messages %}
-                    <div class="messages">
-                        {% for message in messages %}
-                            <div class="message {{ message.tags }}">{{ message }}</div>
+                <div class="topic-list">
+                    {% if topics %}
+                        {% for topic in topics %}
+                            <a
+                                href="{% url 'budget_product_create' %}?topic={{ topic.id }}"
+                                class="topic-card {% if selected_topic and selected_topic.id == topic.id %}is-active{% endif %}"
+                            >
+                                <span class="topic-card-badge">Tópico</span>
+                                <strong>{{ topic.name }}</strong>
+                                <small>{{ topic.fields.count }} campo(s) cadastrado(s)</small>
+                            </a>
                         {% endfor %}
-                    </div>
-                {% endif %}
-
-                <form method="post" class="form-stack" id="cost-form">
-                    {% csrf_token %}
-
-                    <div class="category-selector">
-                        <div class="category-selector-header">
-                            <span class="eyebrow">Categorias</span>
-                            <strong>Selecione uma categoria para exibir os campos correspondentes</strong>
+                    {% else %}
+                        <div class="empty-state">
+                            <strong>Nenhum tópico cadastrado.</strong>
+                            <p>Use o botão <em>Cadastrar tópico</em> para começar a montar o orçamento.</p>
                         </div>
-                        <div class="field category-select-field">
-                            <label for="{{ form.section_code.id_for_label }}">{{ form.section_code.label }}</label>
-                            {{ form.section_code }}
-                            {% if form.section_code.errors %}
-                                <div class="field-errors">{{ form.section_code.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="form-section-group" data-section-group="base">
-                        <h3 id="base-group-title">Informações principais</h3>
-                        <div class="field-grid two-columns">
-                            <div class="field" data-field-name="title">
-                                <label for="{{ form.title.id_for_label }}" id="title-field-label">{{ form.title.label }}</label>
-                                {{ form.title }}
-                                {% if form.title.errors %}<div class="field-errors">{{ form.title.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="quantity">
-                                <label for="{{ form.quantity.id_for_label }}">{{ form.quantity.label }}</label>
-                                {{ form.quantity }}
-                                {% if form.quantity.errors %}<div class="field-errors">{{ form.quantity.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field full-width" data-field-name="details">
-                                <label for="{{ form.details.id_for_label }}">{{ form.details.label }}</label>
-                                {{ form.details }}
-                                {% if form.details.errors %}<div class="field-errors">{{ form.details.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field full-width" data-field-name="justification">
-                                <label for="{{ form.justification.id_for_label }}">{{ form.justification.label }}</label>
-                                {{ form.justification }}
-                                {% if form.justification.errors %}<div class="field-errors">{{ form.justification.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="unit">
-                                <label for="{{ form.unit.id_for_label }}">{{ form.unit.label }}</label>
-                                {{ form.unit }}
-                                {% if form.unit.errors %}<div class="field-errors">{{ form.unit.errors }}</div>{% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-section-group" data-section-group="quotes">
-                        <h3>Orçamentos</h3>
-                        <div class="quote-grid">
-                            <div class="quote-card">
-                                <h4>Orçamento 1</h4>
-                                <div class="field" data-field-name="quote_1_amount">
-                                    <label for="{{ form.quote_1_amount.id_for_label }}">{{ form.quote_1_amount.label }}</label>
-                                    {{ form.quote_1_amount }}
-                                    {% if form.quote_1_amount.errors %}<div class="field-errors">{{ form.quote_1_amount.errors }}</div>{% endif %}
-                                </div>
-                                <div class="field" data-field-name="quote_1_link">
-                                    <label for="{{ form.quote_1_link.id_for_label }}">{{ form.quote_1_link.label }}</label>
-                                    {{ form.quote_1_link }}
-                                    {% if form.quote_1_link.errors %}<div class="field-errors">{{ form.quote_1_link.errors }}</div>{% endif %}
-                                </div>
-                                <div class="field" data-field-name="quote_1_quantity">
-                                    <label for="{{ form.quote_1_quantity.id_for_label }}">{{ form.quote_1_quantity.label }}</label>
-                                    {{ form.quote_1_quantity }}
-                                    {% if form.quote_1_quantity.errors %}<div class="field-errors">{{ form.quote_1_quantity.errors }}</div>{% endif %}
-                                </div>
-                                <div class="field" data-field-name="quote_1_freight">
-                                    <label for="{{ form.quote_1_freight.id_for_label }}">{{ form.quote_1_freight.label }}</label>
-                                    {{ form.quote_1_freight }}
-                                    {% if form.quote_1_freight.errors %}<div class="field-errors">{{ form.quote_1_freight.errors }}</div>{% endif %}
-                                </div>
-                            </div>
-                            <div class="quote-card">
-                                <h4>Orçamento 2</h4>
-                                <div class="field" data-field-name="quote_2_amount">
-                                    <label for="{{ form.quote_2_amount.id_for_label }}">{{ form.quote_2_amount.label }}</label>
-                                    {{ form.quote_2_amount }}
-                                    {% if form.quote_2_amount.errors %}<div class="field-errors">{{ form.quote_2_amount.errors }}</div>{% endif %}
-                                </div>
-                                <div class="field" data-field-name="quote_2_link">
-                                    <label for="{{ form.quote_2_link.id_for_label }}">{{ form.quote_2_link.label }}</label>
-                                    {{ form.quote_2_link }}
-                                    {% if form.quote_2_link.errors %}<div class="field-errors">{{ form.quote_2_link.errors }}</div>{% endif %}
-                                </div>
-                                <div class="field" data-field-name="quote_2_quantity">
-                                    <label for="{{ form.quote_2_quantity.id_for_label }}">{{ form.quote_2_quantity.label }}</label>
-                                    {{ form.quote_2_quantity }}
-                                    {% if form.quote_2_quantity.errors %}<div class="field-errors">{{ form.quote_2_quantity.errors }}</div>{% endif %}
-                                </div>
-                                <div class="field" data-field-name="quote_2_freight">
-                                    <label for="{{ form.quote_2_freight.id_for_label }}">{{ form.quote_2_freight.label }}</label>
-                                    {{ form.quote_2_freight }}
-                                    {% if form.quote_2_freight.errors %}<div class="field-errors">{{ form.quote_2_freight.errors }}</div>{% endif %}
-                                </div>
-                            </div>
-                            <div class="quote-card">
-                                <h4>Orçamento 3</h4>
-                                <div class="field" data-field-name="quote_3_amount">
-                                    <label for="{{ form.quote_3_amount.id_for_label }}">{{ form.quote_3_amount.label }}</label>
-                                    {{ form.quote_3_amount }}
-                                    {% if form.quote_3_amount.errors %}<div class="field-errors">{{ form.quote_3_amount.errors }}</div>{% endif %}
-                                </div>
-                                <div class="field" data-field-name="quote_3_link">
-                                    <label for="{{ form.quote_3_link.id_for_label }}">{{ form.quote_3_link.label }}</label>
-                                    {{ form.quote_3_link }}
-                                    {% if form.quote_3_link.errors %}<div class="field-errors">{{ form.quote_3_link.errors }}</div>{% endif %}
-                                </div>
-                                <div class="field" data-field-name="quote_3_quantity">
-                                    <label for="{{ form.quote_3_quantity.id_for_label }}">{{ form.quote_3_quantity.label }}</label>
-                                    {{ form.quote_3_quantity }}
-                                    {% if form.quote_3_quantity.errors %}<div class="field-errors">{{ form.quote_3_quantity.errors }}</div>{% endif %}
-                                </div>
-                                <div class="field" data-field-name="quote_3_freight">
-                                    <label for="{{ form.quote_3_freight.id_for_label }}">{{ form.quote_3_freight.label }}</label>
-                                    {{ form.quote_3_freight }}
-                                    {% if form.quote_3_freight.errors %}<div class="field-errors">{{ form.quote_3_freight.errors }}</div>{% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="field selected-quote-field" data-field-name="selected_quote">
-                            <div class="selected-quote-header">
-                                <label>{{ form.selected_quote.label }}</label>
-                                <p>Escolha qual orçamento deve entrar no cálculo final deste item.</p>
-                            </div>
-                            <div class="radio-group radio-group-cards">
-                                <ul>
-                                    {% for value, label in form.selected_quote.field.choices %}
-                                        <li>
-                                            <label class="quote-choice-card" for="id_selected_quote_{{ forloop.counter0 }}">
-                                                <span class="quote-choice-copy">
-                                                    <strong>{{ label }}</strong>
-                                                    <small>Usar este orçamento na soma final</small>
-                                                </span>
-                                                <input
-                                                    type="radio"
-                                                    name="{{ form.selected_quote.name }}"
-                                                    value="{{ value }}"
-                                                    id="id_selected_quote_{{ forloop.counter0 }}"
-                                                    {% if form.selected_quote.value == value %}checked{% endif %}
-                                                >
-                                            </label>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            </div>
-                            <div class="selected-quote-summary" id="selected-quote-summary">
-                                <span>Orçamento escolhido</span>
-                                <strong id="selected-quote-summary-value">Nenhum selecionado</strong>
-                            </div>
-                            {% if form.selected_quote.errors %}<div class="field-errors">{{ form.selected_quote.errors }}</div>{% endif %}
-                        </div>
-                    </div>
-
-                    <div class="form-section-group" data-section-group="transport">
-                        <h3>Dados de transporte</h3>
-                        <div class="field-grid two-columns">
-                            <div class="field" data-field-name="transport_mode">
-                                <label for="{{ form.transport_mode.id_for_label }}">{{ form.transport_mode.label }}</label>
-                                {{ form.transport_mode }}
-                                {% if form.transport_mode.errors %}<div class="field-errors">{{ form.transport_mode.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="people_count">
-                                <label for="{{ form.people_count.id_for_label }}">{{ form.people_count.label }}</label>
-                                {{ form.people_count }}
-                                {% if form.people_count.errors %}<div class="field-errors">{{ form.people_count.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="origin">
-                                <label for="{{ form.origin.id_for_label }}">{{ form.origin.label }}</label>
-                                {{ form.origin }}
-                                {% if form.origin.errors %}<div class="field-errors">{{ form.origin.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="destination">
-                                <label for="{{ form.destination.id_for_label }}">{{ form.destination.label }}</label>
-                                {{ form.destination }}
-                                {% if form.destination.errors %}<div class="field-errors">{{ form.destination.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field full-width" data-field-name="purpose">
-                                <label for="{{ form.purpose.id_for_label }}">{{ form.purpose.label }}</label>
-                                {{ form.purpose }}
-                                {% if form.purpose.errors %}<div class="field-errors">{{ form.purpose.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field full-width" data-field-name="period">
-                                <label for="{{ form.period.id_for_label }}">{{ form.period.label }}</label>
-                                {{ form.period }}
-                                {% if form.period.errors %}<div class="field-errors">{{ form.period.errors }}</div>{% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-section-group" data-section-group="daily">
-                        <h3>Dados de diárias</h3>
-                        <div class="field-grid two-columns">
-                            <div class="field" data-field-name="daily_type">
-                                <label for="{{ form.daily_type.id_for_label }}">{{ form.daily_type.label }}</label>
-                                {{ form.daily_type }}
-                                {% if form.daily_type.errors %}<div class="field-errors">{{ form.daily_type.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="location">
-                                <label for="{{ form.location.id_for_label }}">{{ form.location.label }}</label>
-                                {{ form.location }}
-                                {% if form.location.errors %}<div class="field-errors">{{ form.location.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="people_count">
-                                <label for="{{ form.people_count.id_for_label }}-daily">Quantidade de pessoas</label>
-                                {{ form.people_count.as_widget }}
-                            </div>
-                            <div class="field" data-field-name="days_count">
-                                <label for="{{ form.days_count.id_for_label }}">{{ form.days_count.label }}</label>
-                                {{ form.days_count }}
-                                {% if form.days_count.errors %}<div class="field-errors">{{ form.days_count.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="unit_value">
-                                <label for="{{ form.unit_value.id_for_label }}">{{ form.unit_value.label }}</label>
-                                {{ form.unit_value }}
-                                {% if form.unit_value.errors %}<div class="field-errors">{{ form.unit_value.errors }}</div>{% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-section-group" data-section-group="scholarship">
-                        <h3>Dados de bolsas</h3>
-                        <div class="field-grid two-columns">
-                            <div class="field full-width" data-field-name="scholarship_modality">
-                                <label for="{{ form.scholarship_modality.id_for_label }}">{{ form.scholarship_modality.label }}</label>
-                                {{ form.scholarship_modality }}
-                                {% if form.scholarship_modality.errors %}<div class="field-errors">{{ form.scholarship_modality.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="duration_months">
-                                <label for="{{ form.duration_months.id_for_label }}">{{ form.duration_months.label }}</label>
-                                {{ form.duration_months }}
-                                {% if form.duration_months.errors %}<div class="field-errors">{{ form.duration_months.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="monthly_value">
-                                <label for="{{ form.monthly_value.id_for_label }}">{{ form.monthly_value.label }}</label>
-                                {{ form.monthly_value }}
-                                {% if form.monthly_value.errors %}<div class="field-errors">{{ form.monthly_value.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="education_level">
-                                <label for="{{ form.education_level.id_for_label }}">{{ form.education_level.label }}</label>
-                                {{ form.education_level }}
-                                {% if form.education_level.errors %}<div class="field-errors">{{ form.education_level.errors }}</div>{% endif %}
-                            </div>
-                            <div class="field" data-field-name="weekly_dedication">
-                                <label for="{{ form.weekly_dedication.id_for_label }}">{{ form.weekly_dedication.label }}</label>
-                                {{ form.weekly_dedication }}
-                                {% if form.weekly_dedication.errors %}<div class="field-errors">{{ form.weekly_dedication.errors }}</div>{% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="button-primary">Salvar custo</button>
-                </form>
+                    {% endif %}
+                </div>
             </article>
 
-            <article class="workspace-card">
-                <h2>Itens já cadastrados na categoria</h2>
-                <div class="product-list" id="category-entry-list">
-                    {% for item in sections_with_entries %}
-                        <div class="category-entry-block" data-category-entries="{{ item.section.code }}">
-                            <div class="category-entry-header">
-                                <span class="dashboard-topic-code">{{ item.section.code }}</span>
-                                <h3>{{ item.section.title }}</h3>
-                                <p>{{ item.section.description }}</p>
-                            </div>
-                            <div class="category-entry-items">
-                                {% for entry in item.entries %}
-                                    <article class="product-item">
-                                        <h4>{{ entry.title }}</h4>
-                                        {% if entry.details %}<p>{{ entry.details }}</p>{% endif %}
-                                        {% if entry.justification %}<p><strong>Justificativa:</strong> {{ entry.justification }}</p>{% endif %}
-                                        {% if entry.section.code == 'a' and entry.selected_quote %}
-                                            <p><strong>Selecionado:</strong> preço R$ {{ entry.selected_quote.amount }}, quantidade {{ entry.selected_quote.quantity }}, frete R$ {{ entry.selected_quote.freight }}</p>
+            <article class="workspace-card builder-main">
+                {% if selected_topic %}
+                    <div class="builder-section-header">
+                        <div>
+                            <span class="dashboard-topic-code">Tópico selecionado</span>
+                            <h2>{{ selected_topic.name }}</h2>
+                            <p>Crie os campos deste tópico e depois use a mesma estrutura em <strong>Novo custo</strong>.</p>
+                        </div>
+                        <button type="button" class="button-primary" data-open-modal="field-modal">Criar campos</button>
+                    </div>
+
+                    <section class="builder-panel">
+                        <div class="builder-panel-header">
+                            <h3>Estrutura do tópico</h3>
+                            <span>{{ selected_rows|length }} item(ns) na estrutura</span>
+                        </div>
+
+                        {% if selected_rows %}
+                            <div class="structure-list">
+                                {% for row in selected_rows %}
+                                    <article class="structure-item level-{{ row.level }}">
+                                        <div class="structure-item-copy">
+                                            <strong>{{ row.field.name }}</strong>
+                                            <small>{{ row.type_label }}</small>
+                                        </div>
+                                        {% if row.level > 0 %}
+                                            <span class="structure-tag">Subcampo</span>
+                                        {% else %}
+                                            <span class="structure-tag">Campo</span>
                                         {% endif %}
-                                        <p><strong>Total considerado:</strong> R$ {{ entry.total_considered }}</p>
                                     </article>
-                                {% empty %}
                                 {% endfor %}
                             </div>
-                            {% if not item.entries %}
-                                <p class="empty-category-message">Nenhum item cadastrado nesta categoria.</p>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-            </article>
-        </section>
+                        {% else %}
+                            <div class="empty-state">
+                                <strong>Este tópico ainda não possui campos.</strong>
+                                <p>Clique em <em>Criar campos</em> para começar a desenhar a estrutura.</p>
+                            </div>
+                        {% endif %}
+                    </section>
 
-        <section class="workspace-card">
-            <h2>Custos já cadastrados</h2>
-            {% if entries %}
-                <div class="budget-products">
-                    {% for entry in entries %}
-                        <article class="budget-product-card">
-                            <span class="dashboard-topic-code">{{ entry.section.code }}</span>
-                            <h3>{{ entry.title }}</h3>
-                            {% if entry.details %}<p>{{ entry.details }}</p>{% endif %}
-                            {% if entry.justification %}<p><strong>Justificativa:</strong> {{ entry.justification }}</p>{% endif %}
-                            {% if entry.quantity %}<p><strong>Quantidade:</strong> {{ entry.quantity }}{% if entry.unit %} {{ entry.unit }}{% endif %}</p>{% endif %}
-                            {% if entry.quotes.exists %}
-                                <ul>
-                                    {% for quote in entry.quotes.all %}
-                                        <li>
-                                            Orçamento {{ quote.quote_number }}: R$ {{ quote.amount }}
-                                            {% if quote.quantity %} | quantidade {{ quote.quantity }}{% endif %}
-                                            {% if quote.freight %} | frete R$ {{ quote.freight }}{% endif %} -
-                                            <a href="{{ quote.link }}" target="_blank" rel="noreferrer">abrir link</a>
-                                            {% if entry.selected_quote_number == quote.quote_number %}<strong> selecionado</strong>{% endif %}
-                                        </li>
+                    <section class="builder-panel">
+                        <div class="builder-panel-header">
+                            <h3>Novo custo</h3>
+                            <span>Preencha os campos do tópico selecionado</span>
+                        </div>
+
+                        {% if selected_rows %}
+                            <form method="post" action="{% url 'create_topic_record' %}" class="form-stack">
+                                {% csrf_token %}
+                                <input type="hidden" name="topic_id" value="{{ selected_topic.id }}">
+                                <div class="dynamic-form-grid">
+                                    {% for row in selected_rows %}
+                                        <div class="field dynamic-entry-field level-{{ row.level }}">
+                                            <label for="field_{{ row.field.id }}">
+                                                {{ row.field.name }}
+                                                <small>{{ row.type_label }}</small>
+                                            </label>
+
+                                            {% if row.field.field_type == 'texto' %}
+                                                <input type="text" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                            {% elif row.field.field_type == 'numero' %}
+                                                <input type="number" step="1" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                            {% elif row.field.field_type == 'link' %}
+                                                <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                            {% elif row.field.field_type == 'valor' %}
+                                                <input type="number" step="0.01" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                            {% endif %}
+                                        </div>
                                     {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p><strong>Total considerado:</strong> R$ {{ entry.total_considered }}</p>
-                            {% endif %}
-                        </article>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>Nenhum custo cadastrado ainda.</p>
-            {% endif %}
+                                </div>
+                                <button type="submit" class="button-primary">Salvar novo custo</button>
+                            </form>
+                        {% else %}
+                            <div class="empty-state">
+                                <strong>Nada para preencher ainda.</strong>
+                                <p>Primeiro crie os campos e subcampos deste tópico.</p>
+                            </div>
+                        {% endif %}
+                    </section>
+
+                    <section class="builder-panel">
+                        <div class="builder-panel-header">
+                            <h3>Custos já registrados</h3>
+                            <span>{{ selected_records|length }} registro(s)</span>
+                        </div>
+
+                        {% if selected_records %}
+                            <div class="record-list">
+                                {% for record_card in selected_records %}
+                                    <article class="record-card">
+                                        <div class="record-card-header">
+                                            <strong>Registro {{ forloop.counter }}</strong>
+                                            <small>{{ record_card.record.created_at|date:"d/m/Y H:i" }}</small>
+                                        </div>
+                                        <div class="record-values">
+                                            {% for value in record_card.values %}
+                                                <div class="record-value level-{{ value.level }}">
+                                                    <span>{{ value.field_name }}</span>
+                                                    <strong>{{ value.value }}</strong>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </article>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <strong>Nenhum custo salvo neste tópico.</strong>
+                                <p>Assim que você cadastrar um novo custo, ele aparecerá aqui.</p>
+                            </div>
+                        {% endif %}
+                    </section>
+                {% else %}
+                    <div class="empty-state empty-state-large">
+                        <strong>Selecione um tópico para continuar.</strong>
+                        <p>Se ainda não existir nenhum, use <em>Cadastrar tópico</em> e depois comece a criar os campos.</p>
+                    </div>
+                {% endif %}
+            </article>
         </section>
     </main>
 
+    <div class="modal" id="topic-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="topic-modal"></div>
+        <div class="modal-content" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">Novo tópico</span>
+                    <h2>Cadastrar tópico</h2>
+                </div>
+                <button type="button" class="icon-button" data-close-modal="topic-modal">×</button>
+            </div>
+            <form method="post" action="{% url 'create_topic' %}" class="form-stack">
+                {% csrf_token %}
+                <div class="field">
+                    <label for="{{ topic_form.name.id_for_label }}">{{ topic_form.name.label }}</label>
+                    {{ topic_form.name }}
+                </div>
+                <button type="submit" class="button-primary">Salvar tópico</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="field-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="field-modal"></div>
+        <div class="modal-content" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">Novo campo</span>
+                    <h2>Criar campo ou subcampo</h2>
+                </div>
+                <button type="button" class="icon-button" data-close-modal="field-modal">×</button>
+            </div>
+
+            {% if selected_topic %}
+                <form method="post" action="{% url 'create_topic_field' %}" class="form-stack">
+                    {% csrf_token %}
+                    <input type="hidden" name="topic_id" value="{{ selected_topic.id }}">
+                    <div class="field">
+                        <label for="{{ field_form.name.id_for_label }}">{{ field_form.name.label }}</label>
+                        {{ field_form.name }}
+                    </div>
+                    <div class="field">
+                        <label for="{{ field_form.field_type.id_for_label }}">{{ field_form.field_type.label }}</label>
+                        {{ field_form.field_type }}
+                    </div>
+                    <div class="field">
+                        <label for="{{ field_form.parent_id.id_for_label }}">{{ field_form.parent_id.label }}</label>
+                        {{ field_form.parent_id }}
+                    </div>
+                    <button type="submit" class="button-primary">Salvar campo</button>
+                </form>
+            {% else %}
+                <p>Selecione um tópico antes de criar campos.</p>
+            {% endif %}
+        </div>
+    </div>
+
     <script>
-        const categoryMap = {
-            'a': ['base', 'quotes'],
-            'b': ['base', 'quotes'],
-            'c': ['base', 'quotes'],
-            'd.1': ['base', 'quotes', 'transport'],
-            'd.2': ['base', 'daily'],
-            'e': ['base', 'scholarship']
-        };
-        const categoryFieldVisibility = {
-            'a': ['title', 'selected_quote', 'quote_1_amount', 'quote_1_link', 'quote_1_quantity', 'quote_1_freight', 'quote_2_amount', 'quote_2_link', 'quote_2_quantity', 'quote_2_freight', 'quote_3_amount', 'quote_3_link', 'quote_3_quantity', 'quote_3_freight'],
-            'b': ['title', 'details', 'quantity', 'selected_quote', 'quote_1_amount', 'quote_1_link', 'quote_2_amount', 'quote_2_link', 'quote_3_amount', 'quote_3_link'],
-            'c': ['title', 'justification', 'quantity', 'unit', 'selected_quote', 'quote_1_amount', 'quote_1_link', 'quote_2_amount', 'quote_2_link', 'quote_3_amount', 'quote_3_link'],
-            'd.1': ['title', 'selected_quote', 'quote_1_amount', 'quote_1_link', 'quote_2_amount', 'quote_2_link', 'quote_3_amount', 'quote_3_link', 'transport_mode', 'origin', 'destination', 'purpose', 'people_count', 'period'],
-            'd.2': ['title', 'daily_type', 'location', 'people_count', 'days_count', 'unit_value'],
-            'e': ['title', 'justification', 'quantity', 'scholarship_modality', 'duration_months', 'monthly_value', 'education_level', 'weekly_dedication']
-        };
-
-        const hiddenSelect = document.getElementById('id_section_code');
-        const groups = Array.from(document.querySelectorAll('[data-section-group]'));
-        const baseGroupTitle = document.getElementById('base-group-title');
-        const titleFieldLabel = document.getElementById('title-field-label');
-        const titleInput = document.getElementById('id_title');
-        const quoteSummaryValue = document.getElementById('selected-quote-summary-value');
-
-        function setFieldsEnabled(group, enabled) {
-            group.querySelectorAll('input, select, textarea').forEach((field) => {
-                if (field.id === 'id_section_code') return;
-                field.disabled = !enabled;
-            });
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
         }
 
-        function updateSelectedQuoteVisual() {
-            const radios = Array.from(document.querySelectorAll('input[name="selected_quote"]'));
-            let selectedLabel = 'Nenhum selecionado';
-
-            radios.forEach((radio) => {
-                const item = radio.closest('li');
-                const label = radio.closest('label');
-                const checked = radio.checked;
-                if (item) item.classList.toggle('is-selected', checked);
-                if (label) label.classList.toggle('is-selected', checked);
-                if (checked) selectedLabel = `Orçamento ${radio.value}`;
-            });
-
-            if (quoteSummaryValue) {
-                quoteSummaryValue.textContent = selectedLabel;
-            }
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
         }
 
-        function applyCategory(category) {
-            hiddenSelect.value = category;
-            const activeGroups = categoryMap[category] || [];
-            const visibleFields = categoryFieldVisibility[category] || [];
-            groups.forEach((group) => {
-                const enabled = activeGroups.includes(group.dataset.sectionGroup);
-                group.classList.toggle('is-hidden', !enabled);
-                group.classList.toggle('is-enabled', enabled);
-                setFieldsEnabled(group, enabled);
-            });
-
-            document.querySelectorAll('[data-field-name]').forEach((fieldBlock) => {
-                const visible = visibleFields.includes(fieldBlock.dataset.fieldName);
-                fieldBlock.classList.toggle('is-hidden', !visible);
-            });
-
-            document.querySelectorAll('[data-category-entries]').forEach((block) => {
-                const visible = block.dataset.categoryEntries === category;
-                block.classList.toggle('is-visible', visible);
-            });
-
-            if (category === 'a') {
-                baseGroupTitle.textContent = 'Produto';
-                titleFieldLabel.textContent = 'Nome do produto';
-                titleInput.placeholder = 'Digite o nome do produto';
-            } else if (category === 'b') {
-                baseGroupTitle.textContent = 'Material';
-                titleFieldLabel.textContent = 'Descrição do material';
-                titleInput.placeholder = 'Digite a descrição do material';
-            } else if (category === 'c') {
-                baseGroupTitle.textContent = 'Serviço';
-                titleFieldLabel.textContent = 'Serviço solicitado';
-                titleInput.placeholder = 'Digite o serviço solicitado';
-            } else if (category === 'd.1') {
-                baseGroupTitle.textContent = 'Transporte';
-                titleFieldLabel.textContent = 'Descrição do deslocamento';
-                titleInput.placeholder = 'Digite uma descrição do deslocamento';
-            } else if (category === 'd.2') {
-                baseGroupTitle.textContent = 'Diária';
-                titleFieldLabel.textContent = 'Descrição da diária';
-                titleInput.placeholder = 'Digite uma descrição da diária';
-            } else if (category === 'e') {
-                baseGroupTitle.textContent = 'Bolsa';
-                titleFieldLabel.textContent = 'Descrição da bolsa';
-                titleInput.placeholder = 'Digite uma descrição da bolsa';
-            }
-
-            updateSelectedQuoteVisual();
-        }
-
-        hiddenSelect.addEventListener('change', (event) => applyCategory(event.target.value));
-        document.querySelectorAll('input[name="selected_quote"]').forEach((radio) => {
-            radio.addEventListener('change', updateSelectedQuoteVisual);
+        document.querySelectorAll('[data-open-modal]').forEach((button) => {
+            button.addEventListener('click', () => openModal(button.dataset.openModal));
         });
 
-        applyCategory(hiddenSelect.value || 'a');
+        document.querySelectorAll('[data-close-modal]').forEach((button) => {
+            button.addEventListener('click', () => closeModal(button.dataset.closeModal));
+        });
     </script>
 </body>
 </html>

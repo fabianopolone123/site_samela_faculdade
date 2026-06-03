@@ -815,6 +815,225 @@ body {
     gap: 18px;
 }
 
+.builder-hero {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 28px;
+}
+
+.builder-hero-copy {
+    max-width: 56rem;
+}
+
+.builder-hero-copy h1 {
+    margin-bottom: 12px;
+}
+
+.builder-grid {
+    grid-template-columns: 340px minmax(0, 1fr);
+    align-items: start;
+}
+
+.builder-sidebar,
+.builder-main {
+    display: grid;
+    gap: 20px;
+}
+
+.builder-sidebar {
+    position: sticky;
+    top: 24px;
+}
+
+.builder-sidebar-header,
+.builder-section-header,
+.builder-panel-header,
+.record-card-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.builder-sidebar-header,
+.builder-panel-header {
+    margin-bottom: 2px;
+}
+
+.builder-sidebar-header p,
+.builder-section-header p,
+.builder-panel-header span,
+.empty-state p {
+    margin: 0;
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.55;
+}
+
+.topic-list,
+.record-list,
+.record-values,
+.structure-list {
+    display: grid;
+    gap: 14px;
+}
+
+.topic-card,
+.structure-item,
+.record-card,
+.empty-state {
+    border-radius: 22px;
+    border: 1px solid rgba(0, 95, 115, 0.1);
+    background: rgba(255, 255, 255, 0.82);
+}
+
+.topic-card {
+    display: grid;
+    gap: 8px;
+    padding: 18px 18px 20px;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.topic-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(10, 147, 150, 0.3);
+    box-shadow: 0 20px 32px rgba(7, 24, 38, 0.08);
+}
+
+.topic-card.is-active {
+    background: linear-gradient(180deg, rgba(215, 240, 239, 0.85), rgba(255, 255, 255, 0.98));
+    border-color: rgba(10, 147, 150, 0.35);
+    box-shadow: 0 22px 36px rgba(0, 95, 115, 0.12);
+}
+
+.topic-card strong,
+.structure-item strong,
+.record-card strong,
+.empty-state strong {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.topic-card-badge,
+.structure-tag {
+    display: inline-flex;
+    width: fit-content;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(0, 95, 115, 0.08);
+    color: var(--accent);
+    font-size: 0.76rem;
+    font-weight: 700;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.topic-card small,
+.structure-item small,
+.record-card small {
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.builder-panel {
+    display: grid;
+    gap: 18px;
+    padding: 24px;
+    border-radius: 26px;
+    border: 1px solid rgba(0, 95, 115, 0.1);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(245, 250, 251, 0.9));
+}
+
+.structure-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 18px;
+}
+
+.structure-item.level-1,
+.dynamic-entry-field.level-1,
+.record-value.level-1 {
+    margin-left: 22px;
+}
+
+.structure-item.level-2,
+.dynamic-entry-field.level-2,
+.record-value.level-2 {
+    margin-left: 44px;
+}
+
+.structure-item.level-3,
+.dynamic-entry-field.level-3,
+.record-value.level-3 {
+    margin-left: 66px;
+}
+
+.structure-item-copy {
+    display: grid;
+    gap: 4px;
+}
+
+.dynamic-form-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.dynamic-entry-field {
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(0, 95, 115, 0.1);
+    background: rgba(255, 255, 255, 0.76);
+}
+
+.dynamic-entry-field label {
+    display: grid;
+    gap: 4px;
+}
+
+.dynamic-entry-field label small {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+.record-card {
+    padding: 18px;
+}
+
+.record-values {
+    margin-top: 14px;
+}
+
+.record-value {
+    display: grid;
+    gap: 4px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: rgba(247, 251, 252, 0.92);
+}
+
+.record-value span {
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.empty-state {
+    display: grid;
+    gap: 8px;
+    padding: 22px;
+}
+
+.empty-state-large {
+    min-height: 320px;
+    place-content: center;
+}
+
 .category-entry-block {
     display: none;
     gap: 14px;
@@ -924,6 +1143,34 @@ tr.is-selected {
     .quote-grid,
     .workspace-grid-wide {
         grid-template-columns: 1fr;
+    }
+
+    .builder-hero,
+    .builder-sidebar-header,
+    .builder-section-header,
+    .builder-panel-header,
+    .record-card-header {
+        flex-direction: column;
+    }
+
+    .builder-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .builder-sidebar {
+        position: static;
+    }
+
+    .structure-item.level-1,
+    .dynamic-entry-field.level-1,
+    .record-value.level-1,
+    .structure-item.level-2,
+    .dynamic-entry-field.level-2,
+    .record-value.level-2,
+    .structure-item.level-3,
+    .dynamic-entry-field.level-3,
+    .record-value.level-3 {
+        margin-left: 0;
     }
 }
 

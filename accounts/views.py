@@ -7,23 +7,24 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
-from django.db.models import Prefetch
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 
 from .forms import (
-    BudgetCostForm,
     LoginForm,
     SignupCodeForm,
     SignupEmailForm,
     SignupPasswordForm,
+    TopicFieldForm,
+    TopicForm,
 )
 from .models import (
-    BudgetCostEntry,
-    BudgetCostQuote,
-    BudgetProduct,
-    BudgetQuote,
     BudgetSection,
+    CostField,
+    CostRecord,
+    CostRecordValue,
+    CostTopic,
     SignupCode,
     User,
 )
@@ -43,16 +44,12 @@ PROJECT_BUDGET_TITLE = (
 )
 PROJECT_BUDGET_DESCRIPTION = (
     'A FAPESP, conforme estabelecido no convênio celebrado com a Fundação Bracell '
-    'e a Fundação Itaú, cobrirá os custos do projeto de pesquisa segundo normas '
-    'e orientações para Auxílio à Pesquisa Regular (para projetos com teto '
-    'orçamentário de R$ 600 mil) ou para Projeto Temático (sem teto orçamentário). '
-    'Serão aprovadas propostas até o limite orçamentário da Chamada '
-    '(total de R$ 6.400.000,00). O orçamento do projeto de pesquisa apresentado '
-    'à FAPESP deverá ser detalhado e cada item justificado especificamente em '
-    'termos dos objetivos do projeto proposto. Destaca-se nessa modalidade que '
-    'poderão ser custeadas atividades relacionadas ao desenvolvimento da pesquisa '
-    'em outros estados, incluindo trabalhos de campo, desde que o Pesquisador '
-    'Responsável seja vinculado a uma Instituição Sede do Estado de São Paulo.'
+    'e a Fundação Itaú, cobrirá os custos do projeto de pesquisa segundo normas e '
+    'orientações para Auxílio à Pesquisa Regular (para projetos com teto orçamentário '
+    'de R$ 600 mil) ou para Projeto Temático (sem teto orçamentário). Serão aprovadas '
+    'propostas até o limite orçamentário da Chamada (total de R$ 6.400.000,00). '
+    'O orçamento do projeto de pesquisa apresentado à FAPESP deverá ser detalhado e '
+    'cada item justificado especificamente em termos dos objetivos do projeto proposto.'
 )
 
 
@@ -79,87 +76,128 @@ def dashboard_view(request):
 
 @login_required
 def budget_product_create_view(request):
-    sections = get_cost_sections()
-
-    if request.method == 'POST':
-        form = BudgetCostForm(request.POST)
-        if form.is_valid():
-            section = BudgetSection.objects.get(code=form.cleaned_data['section_code'])
-            entry = BudgetCostEntry.objects.create(
-                section=section,
-                title=form.cleaned_data['title'],
-                details=form.cleaned_data.get('details', ''),
-                justification=form.cleaned_data.get('justification', ''),
-                quantity=form.cleaned_data.get('quantity'),
-                unit=form.cleaned_data.get('unit', ''),
-                selected_quote_number=(
-                    int(form.cleaned_data['selected_quote'])
-                    if form.cleaned_data.get('selected_quote')
-                    else None
-                ),
-                data=build_entry_data(form.cleaned_data),
-            )
-
-            if section.code in {'a', 'b', 'c', 'd.1'}:
-                for quote_number in range(1, 4):
-                    BudgetCostQuote.objects.create(
-                        entry=entry,
-                        quote_number=quote_number,
-                        amount=form.cleaned_data[f'quote_{quote_number}_amount'],
-                        quantity=form.cleaned_data.get(f'quote_{quote_number}_quantity'),
-                        freight=form.cleaned_data.get(f'quote_{quote_number}_freight'),
-                        link=form.cleaned_data[f'quote_{quote_number}_link'],
-                    )
-
-            messages.success(request, 'Custo cadastrado com sucesso.')
-            return redirect('budget_product_create')
-    else:
-        form = BudgetCostForm()
-
-    entries = list(
-        BudgetCostEntry.objects.select_related('section')
-        .prefetch_related('quotes')
-        .order_by('section__code', '-created_at')
-    )
-    sections_with_entries = []
-    for section in sections:
-        section_entries = [entry for entry in entries if entry.section.code == section.code]
-        sections_with_entries.append(
-            {
-                'section': section,
-                'entries': section_entries,
-            }
+    topics = list(
+        CostTopic.objects.prefetch_related(
+            'fields',
+            'records__values__field',
         )
-    return render(
-        request,
-        'accounts/budget_product_form.html',
-        {
-            'form': form,
-            'sections': sections,
-            'entries': entries,
-            'sections_with_entries': sections_with_entries,
-        },
     )
+
+    selected_topic = None
+    selected_topic_id = request.GET.get('topic')
+    if selected_topic_id:
+        selected_topic = next(
+            (topic for topic in topics if str(topic.id) == selected_topic_id),
+            None,
+        )
+    elif topics:
+        selected_topic = topics[0]
+
+    selected_rows = build_topic_rows(selected_topic) if selected_topic else []
+    selected_records = (
+        build_record_cards(selected_topic, selected_rows) if selected_topic else []
+    )
+
+    context = {
+        'topics': topics,
+        'selected_topic': selected_topic,
+        'topic_form': TopicForm(),
+        'field_form': TopicFieldForm(topic=selected_topic),
+        'selected_rows': selected_rows,
+        'selected_records': selected_records,
+    }
+    return render(request, 'accounts/budget_product_form.html', context)
+
+
+@login_required
+def create_topic_view(request):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    form = TopicForm(request.POST)
+    if form.is_valid():
+        topic = CostTopic.objects.create(name=form.cleaned_data['name'])
+        messages.success(request, 'Tópico cadastrado com sucesso.')
+        return redirect(f"{reverse('budget_product_create')}?topic={topic.id}")
+
+    messages.error(request, 'Não foi possível cadastrar o tópico.')
+    return redirect('budget_product_create')
+
+
+@login_required
+def create_topic_field_view(request):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    topic = get_object_or_404(CostTopic, id=request.POST.get('topic_id'))
+    form = TopicFieldForm(request.POST, topic=topic)
+    if form.is_valid():
+        parent = None
+        parent_id = form.cleaned_data.get('parent_id')
+        if parent_id:
+            parent = get_object_or_404(CostField, id=parent_id, topic=topic)
+
+        CostField.objects.create(
+            topic=topic,
+            parent=parent,
+            name=form.cleaned_data['name'],
+            field_type=form.cleaned_data['field_type'],
+        )
+        messages.success(request, 'Campo cadastrado com sucesso.')
+    else:
+        messages.error(request, 'Não foi possível cadastrar o campo.')
+
+    return redirect(f"{reverse('budget_product_create')}?topic={topic.id}")
+
+
+@login_required
+def create_topic_record_view(request):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    topic = get_object_or_404(CostTopic, id=request.POST.get('topic_id'))
+    fields = list(topic.fields.order_by('created_at'))
+
+    if not fields:
+        messages.error(request, 'Crie ao menos um campo antes de salvar um novo custo.')
+        return redirect(f"{reverse('budget_product_create')}?topic={topic.id}")
+
+    record = CostRecord.objects.create(topic=topic)
+    saved_values = 0
+
+    for field in fields:
+        value = request.POST.get(f'field_{field.id}', '').strip()
+        if value:
+            CostRecordValue.objects.create(record=record, field=field, value=value)
+            saved_values += 1
+
+    if saved_values == 0:
+        record.delete()
+        messages.error(request, 'Preencha ao menos um campo para salvar o novo custo.')
+    else:
+        messages.success(request, 'Novo custo cadastrado com sucesso.')
+
+    return redirect(f"{reverse('budget_product_create')}?topic={topic.id}")
 
 
 @login_required
 def budget_ready_view(request):
-    leaf_sections = get_cost_sections()
+    sections = list(
+        BudgetSection.objects.prefetch_related('cost_entries__quotes').order_by('code')
+    )
     section_blocks = []
-    category_totals = {'a': Decimal('0'), 'b': Decimal('0'), 'c': Decimal('0'), 'd': Decimal('0'), 'e': Decimal('0')}
+    category_totals = {
+        'a': Decimal('0'),
+        'b': Decimal('0'),
+        'c': Decimal('0'),
+        'd': Decimal('0'),
+        'e': Decimal('0'),
+    }
+    general_total = Decimal('0')
 
-    for section in leaf_sections:
-        entries = list(
-            BudgetCostEntry.objects.filter(section=section)
-            .prefetch_related('quotes')
-            .order_by('created_at')
-        )
-        section_total = Decimal('0')
-        for entry in entries:
-            section_total += Decimal(entry.total_considered or 0)
-
-        parent_key = section.code.split('.')[0]
-        category_totals[parent_key] += section_total
+    for section in sections:
+        entries = list(section.cost_entries.all())
+        section_total = sum((entry.total_considered for entry in entries), Decimal('0'))
         section_blocks.append(
             {
                 'section': section,
@@ -168,19 +206,20 @@ def budget_ready_view(request):
             }
         )
 
-    general_total = sum(category_totals.values(), Decimal('0'))
+        if section.code in ['a', 'b', 'c', 'e']:
+            category_totals[section.code] += section_total
+        elif section.code.startswith('d'):
+            category_totals['d'] += section_total
+        general_total += section_total
 
-    return render(
-        request,
-        'accounts/budget_ready.html',
-        {
-            'project_budget_title': PROJECT_BUDGET_TITLE,
-            'project_budget_description': PROJECT_BUDGET_DESCRIPTION,
-            'section_blocks': section_blocks,
-            'category_totals': category_totals,
-            'general_total': general_total,
-        },
-    )
+    context = {
+        'project_budget_title': PROJECT_BUDGET_TITLE,
+        'project_budget_description': PROJECT_BUDGET_DESCRIPTION,
+        'section_blocks': section_blocks,
+        'category_totals': category_totals,
+        'general_total': general_total,
+    }
+    return render(request, 'accounts/budget_ready.html', context)
 
 
 def logout_view(request):
@@ -256,13 +295,23 @@ def signup_code_view(request):
 
     form = SignupCodeForm(request.POST)
     if not form.is_valid():
-        persist_signup_state(request, email=signup_code.email, step='code', code_id=signup_code.id)
+        persist_signup_state(
+            request,
+            email=signup_code.email,
+            step='code',
+            code_id=signup_code.id,
+        )
         return render_login_with_forms(request, code_form=form)
 
     submitted_code = form.cleaned_data['code'].strip()
     if submitted_code != signup_code.code:
         form.add_error('code', 'Código inválido. Verifique o e-mail informado.')
-        persist_signup_state(request, email=signup_code.email, step='code', code_id=signup_code.id)
+        persist_signup_state(
+            request,
+            email=signup_code.email,
+            step='code',
+            code_id=signup_code.id,
+        )
         return render_login_with_forms(request, code_form=form)
 
     signup_code.mark_verified()
@@ -288,7 +337,12 @@ def signup_password_view(request):
 
     form = SignupPasswordForm(request.POST)
     if not form.is_valid():
-        persist_signup_state(request, email=signup_code.email, step='password', code_id=signup_code.id)
+        persist_signup_state(
+            request,
+            email=signup_code.email,
+            step='password',
+            code_id=signup_code.id,
+        )
         return render_login_with_forms(request, password_form=form)
 
     user = User.objects.create_user(
@@ -387,32 +441,64 @@ def get_active_signup_code(request):
     return signup_code
 
 
-def get_budget_section():
-    return BudgetSection.objects.get(code='5.1')
+def build_topic_rows(topic):
+    if topic is None:
+        return []
+
+    fields = list(topic.fields.all())
+    children_map = {}
+    for field in fields:
+        children_map.setdefault(field.parent_id, []).append(field)
+
+    rows = []
+
+    def walk(field, level):
+        rows.append(
+            {
+                'field': field,
+                'level': level,
+                'type_label': field.get_field_type_display(),
+            }
+        )
+        for child in children_map.get(field.id, []):
+            walk(child, level + 1)
+
+    for root in children_map.get(None, []):
+        walk(root, 0)
+
+    return rows
 
 
-def get_cost_sections():
-    return list(BudgetSection.objects.filter(code__in=['a', 'b', 'c', 'd.1', 'd.2', 'e']).order_by('code'))
+def build_record_cards(topic, selected_rows):
+    field_order = {row['field'].id: index for index, row in enumerate(selected_rows)}
+    records = []
+
+    for record in topic.records.all():
+        values = sorted(
+            [
+                {
+                    'field_name': value.field.name,
+                    'field_type': value.field.get_field_type_display(),
+                    'value': value.value,
+                    'level': get_field_level(value.field),
+                    'order': field_order.get(value.field_id, 9999),
+                }
+                for value in record.values.all()
+            ],
+            key=lambda item: item['order'],
+        )
+        records.append({'record': record, 'values': values})
+
+    return records
 
 
-def build_entry_data(cleaned_data):
-    return {
-        'transport_mode': cleaned_data.get('transport_mode', ''),
-        'origin': cleaned_data.get('origin', ''),
-        'destination': cleaned_data.get('destination', ''),
-        'purpose': cleaned_data.get('purpose', ''),
-        'people_count': cleaned_data.get('people_count'),
-        'period': cleaned_data.get('period', ''),
-        'daily_type': cleaned_data.get('daily_type', ''),
-        'location': cleaned_data.get('location', ''),
-        'days_count': cleaned_data.get('days_count'),
-        'unit_value': float(cleaned_data.get('unit_value') or 0),
-        'scholarship_modality': cleaned_data.get('scholarship_modality', ''),
-        'duration_months': cleaned_data.get('duration_months'),
-        'monthly_value': float(cleaned_data.get('monthly_value') or 0),
-        'education_level': cleaned_data.get('education_level', ''),
-        'weekly_dedication': cleaned_data.get('weekly_dedication', ''),
-    }
+def get_field_level(field):
+    level = 0
+    current = field.parent
+    while current is not None:
+        level += 1
+        current = current.parent
+    return level
 
 
 def generate_code():
