@@ -1278,7 +1278,7 @@ tr.is-selected {
 .all-topics-total-card {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 2px;
     padding: 16px 22px;
     border-radius: var(--radius-md);

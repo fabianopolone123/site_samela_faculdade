@@ -15,16 +15,9 @@
                 <span class="eyebrow">Cadastrar custos</span>
                 <h1>Monte os tópicos e registre os custos do orçamento</h1>
             </div>
-            <div class="builder-hero-right">
-                <div class="all-topics-total-card">
-                    <span>Total de custos</span>
-                    <strong>R$&nbsp;{{ all_topics_total|floatformat:2 }}</strong>
-                    <small>Soma de todos os tópicos</small>
-                </div>
-                <div class="workspace-links">
-                    <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
-                    <button type="button" class="button-primary" data-open-modal="topic-modal">Cadastrar tópico</button>
-                </div>
+            <div class="workspace-links">
+                <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
+                <button type="button" class="button-primary" data-open-modal="topic-modal">Cadastrar tópico</button>
             </div>
         </section>
 
@@ -40,6 +33,12 @@
 
         <section class="workspace-grid builder-grid">
             <article class="workspace-card builder-sidebar">
+                <div class="all-topics-total-card">
+                    <span>Total de custos</span>
+                    <strong>R$&nbsp;{{ all_topics_total|floatformat:2 }}</strong>
+                    <small>Soma de todos os tópicos</small>
+                </div>
+
                 <div class="topic-dropdown-wrap">
                     <button type="button" class="topic-dropdown-trigger" id="topics-trigger">
                         <span>{{ selected_topic.name|default:"Selecionar tópico" }}</span>
