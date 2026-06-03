@@ -1,0 +1,171 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEEVY - UFSCar | Acesso</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="auth-body">
+    <div class="background-grid" aria-hidden="true"></div>
+    <div class="aurora aurora-left" aria-hidden="true"></div>
+    <div class="aurora aurora-right" aria-hidden="true"></div>
+    <main class="auth-layout">
+        <section class="hero-shell">
+            <div class="project-panel project-panel-centered">
+                <span class="eyebrow">Portal Acadêmico</span>
+                <p class="hero-kicker">{{ project_info.organization }}</p>
+                <h1>{{ project_info.title }}</h1>
+                <p class="lead">{{ project_info.subtitle }}</p>
+                <div class="hero-edition">{{ project_info.edition }}</div>
+                <div class="project-meta project-meta-centered">
+                    <div>
+                        <span>Instituição</span>
+                        <strong>{{ project_info.organization }}</strong>
+                    </div>
+                    <div>
+                        <span>Acesso</span>
+                        <strong>Restrito e autorizado</strong>
+                    </div>
+                </div>
+                <div class="project-card project-card-inline">
+                    <h2>Ambiente de entrada do projeto</h2>
+                    <p>O cadastro está liberado apenas para e-mails previamente autorizados pela equipe responsável.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="login-panel">
+            <div class="login-card login-card-floating">
+                <div class="login-glow" aria-hidden="true"></div>
+                <span class="eyebrow">Acesso ao sistema</span>
+                <h2>Entrar</h2>
+                <p class="login-copy">Use seu e-mail autorizado e a senha cadastrada para acessar o portal.</p>
+
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <form method="post" class="form-stack">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="field-errors">{{ form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="field">
+                        <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                            <div class="field-errors">{{ form.username.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="field">
+                        <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="field-errors">{{ form.password.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="button-primary">Entrar</button>
+                </form>
+
+                <button type="button" class="button-secondary" id="open-signup-modal">
+                    Criar conta
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <div class="modal {% if signup_modal_open %}is-open{% endif %}" id="signup-modal" aria-hidden="{% if signup_modal_open %}false{% else %}true{% endif %}">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="signup-title">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">Cadastro controlado</span>
+                    <h2 id="signup-title">Criar conta</h2>
+                </div>
+                <a href="{% url 'signup_reset' %}" class="icon-button" aria-label="Fechar">×</a>
+            </div>
+
+            <div class="step-indicator">
+                <span class="{% if signup_step == 'email' %}active{% endif %}">1. E-mail</span>
+                <span class="{% if signup_step == 'code' %}active{% endif %}">2. Código</span>
+                <span class="{% if signup_step == 'password' %}active{% endif %}">3. Senha</span>
+            </div>
+
+            {% if signup_step == 'email' %}
+                <form method="post" action="{% url 'signup_email' %}" class="form-stack">
+                    {% csrf_token %}
+                    <p class="modal-copy">Informe um e-mail autorizado para receber o código de verificação.</p>
+                    <div class="field">
+                        <label for="{{ email_form.email.id_for_label }}">{{ email_form.email.label }}</label>
+                        {{ email_form.email }}
+                        {% if email_form.email.errors %}
+                            <div class="field-errors">{{ email_form.email.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="button-primary">Enviar código</button>
+                </form>
+            {% elif signup_step == 'code' %}
+                <form method="post" action="{% url 'signup_code' %}" class="form-stack">
+                    {% csrf_token %}
+                    <p class="modal-copy">Digite o código curto enviado para <strong>{{ signup_email }}</strong>.</p>
+                    <div class="field">
+                        <label for="{{ code_form.code.id_for_label }}">{{ code_form.code.label }}</label>
+                        {{ code_form.code }}
+                        {% if code_form.code.errors %}
+                            <div class="field-errors">{{ code_form.code.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="button-primary">Validar código</button>
+                </form>
+            {% elif signup_step == 'password' %}
+                <form method="post" action="{% url 'signup_password' %}" class="form-stack">
+                    {% csrf_token %}
+                    <p class="modal-copy">Código validado para <strong>{{ signup_email }}</strong>. Defina sua senha de acesso.</p>
+                    {% if password_form.non_field_errors %}
+                        <div class="field-errors">{{ password_form.non_field_errors }}</div>
+                    {% endif %}
+                    <div class="field">
+                        <label for="{{ password_form.password1.id_for_label }}">{{ password_form.password1.label }}</label>
+                        {{ password_form.password1 }}
+                    </div>
+                    <div class="field">
+                        <label for="{{ password_form.password2.id_for_label }}">{{ password_form.password2.label }}</label>
+                        {{ password_form.password2 }}
+                    </div>
+                    <button type="submit" class="button-primary">Concluir cadastro</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('signup-modal');
+        const openButton = document.getElementById('open-signup-modal');
+        const closeTriggers = document.querySelectorAll('[data-close-modal]');
+
+        function openModal() {
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        if (openButton) {
+            openButton.addEventListener('click', openModal);
+        }
+
+        closeTriggers.forEach((trigger) => {
+            trigger.addEventListener('click', () => {
+                window.location.href = "{% url 'signup_reset' %}";
+            });
+        });
+    </script>
+</body>
+</html>
