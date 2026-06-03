@@ -33,10 +33,11 @@
 
         <section class="workspace-grid builder-grid">
             <article class="workspace-card builder-sidebar">
-                <div class="builder-sidebar-header">
-                    <h2>Tópicos cadastrados</h2>
-                </div>
-                <div class="topic-list">
+                <button type="button" class="sidebar-accordion-toggle" id="topics-toggle" aria-expanded="true">
+                    <span>Tópicos cadastrados</span>
+                    <span class="sidebar-accordion-icon">▲</span>
+                </button>
+                <div class="topic-list" id="topics-list">
                     {% if topics %}
                         {% for topic in topics %}
                             <a
@@ -412,6 +413,18 @@
         document.querySelectorAll('[data-close-modal]').forEach((button) => {
             button.addEventListener('click', () => closeModal(button.dataset.closeModal));
         });
+
+        // Accordion da sidebar
+        const topicsToggle = document.getElementById('topics-toggle');
+        const topicsList = document.getElementById('topics-list');
+        if (topicsToggle && topicsList) {
+            topicsToggle.addEventListener('click', () => {
+                const open = topicsToggle.getAttribute('aria-expanded') === 'true';
+                topicsToggle.setAttribute('aria-expanded', !open);
+                topicsList.style.display = open ? 'none' : 'grid';
+                topicsToggle.querySelector('.sidebar-accordion-icon').textContent = open ? '▼' : '▲';
+            });
+        }
 
         // Preservar posição de scroll ao trocar de tópico
         document.querySelectorAll('.topic-card').forEach(link => {
