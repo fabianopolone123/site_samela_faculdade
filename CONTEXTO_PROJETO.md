@@ -145,3 +145,11 @@
 - Botão `Novo custo` fica desabilitado enquanto não houver campos cadastrados no tópico
 - Novos estilos CSS: `.modal-content--wide`, `.topic-action-header`, `.campos-modal-body`, `.campos-add-grid`, `.icon-button--danger`, `.action-badge`, entre outros
 - No formulário "Novo custo", campos raiz que possuem subcampos são renderizados apenas como cabeçalho de grupo, sem input de texto — evita campo redundante nos agrupadores como "Orçamento 1", "Orçamento 2", "Orçamento 3"
+- Campo "Frete" (tipo valor) adicionado como subcampo de Orçamento 1, 2 e 3 no tópico "Material permanente"
+- No modal "Novo custo", o campo Preço e o campo Frete de cada orçamento calculam ao vivo o Total (Preço + Frete) via JavaScript
+- Lógica de cálculo de total por registro: a view identifica o campo "Selecionar para orçar", localiza o grupo "Orçamento N" correspondente e soma Preço + Frete
+- Card de total geral exibido acima da lista de registros, mostrando a soma dos orçamentos selecionados em todos os registros
+- Cada registro na lista exibe o total do orçamento selecionado
+- `get_selected_total_for_record()` adicionado ao views.py para cálculo por registro
+- `build_record_cards()` atualizado para retornar tupla `(records, grand_total)`
+- `build_topic_groups()` atualizado para incluir `field_role` (preco/frete) e `has_price_calc` por grupo

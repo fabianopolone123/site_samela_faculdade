@@ -80,6 +80,18 @@
                         </div>
                     </div>
 
+                    {% if topic_grand_total is not None %}
+                    <div class="topic-total-card">
+                        <div class="topic-total-info">
+                            <span class="eyebrow">Total estimado do tópico</span>
+                            <small>Soma dos orçamentos selecionados em todos os registros</small>
+                        </div>
+                        <div class="topic-total-amount">
+                            R$&nbsp;{{ topic_grand_total|floatformat:2 }}
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <section class="builder-panel">
                         <div class="builder-panel-header">
                             <h3>Custos já registrados</h3>
@@ -101,6 +113,12 @@
                                                 </div>
                                             {% endfor %}
                                         </div>
+                                        {% if record_card.selected_total is not None %}
+                                        <div class="record-selected-total">
+                                            <span>Total do orçamento selecionado</span>
+                                            <strong>R$&nbsp;{{ record_card.selected_total|floatformat:2 }}</strong>
+                                        </div>
+                                        {% endif %}
                                     </article>
                                 {% endfor %}
                             </div>
@@ -305,11 +323,23 @@
                                                     {% elif row.field.field_type == 'link' %}
                                                         <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                     {% elif row.field.field_type == 'valor' %}
-                                                        <input type="number" step="0.01" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                        {% if row.field_role == 'preco' %}
+                                                            <input type="number" step="0.01" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" data-calc-preco="orc-{{ group.root.field.id }}">
+                                                        {% elif row.field_role == 'frete' %}
+                                                            <input type="number" step="0.01" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" data-calc-frete="orc-{{ group.root.field.id }}">
+                                                        {% else %}
+                                                            <input type="number" step="0.01" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                        {% endif %}
                                                     {% endif %}
                                                 </div>
                                             {% endfor %}
                                         </div>
+                                        {% if group.has_price_calc %}
+                                        <div class="orc-calc-total" data-calc-total="orc-{{ group.root.field.id }}">
+                                            <span>Total (Preço + Frete)</span>
+                                            <strong>R$ 0,00</strong>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 {% endif %}
                             </article>
@@ -354,6 +384,27 @@
         const autoOpen = urlParams.get('open');
         if (autoOpen === 'campos') openModal('campos-modal');
         else if (autoOpen === 'custo') openModal('custo-modal');
+
+        // Cálculo ao vivo: Preço + Frete = Total por orçamento
+        document.querySelectorAll('[data-calc-preco]').forEach(precoInput => {
+            const key = precoInput.dataset.calcPreco;
+            const freteInput = document.querySelector(`[data-calc-frete="${key}"]`);
+            const totalEl = document.querySelector(`[data-calc-total="${key}"] strong`);
+
+            function updateTotal() {
+                const p = parseFloat(precoInput.value) || 0;
+                const f = parseFloat(freteInput ? freteInput.value : 0) || 0;
+                if (totalEl) {
+                    totalEl.textContent = 'R$ ' + (p + f).toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                }
+            }
+
+            precoInput.addEventListener('input', updateTotal);
+            if (freteInput) freteInput.addEventListener('input', updateTotal);
+        });
     </script>
 </body>
 </html>

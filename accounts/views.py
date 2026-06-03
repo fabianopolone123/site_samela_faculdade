@@ -1,5 +1,5 @@
 import secrets
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.contrib import messages
@@ -95,8 +95,8 @@ def budget_product_create_view(request):
 
     selected_rows = build_topic_rows(selected_topic) if selected_topic else []
     selected_groups = build_topic_groups(selected_topic) if selected_topic else []
-    selected_records = (
-        build_record_cards(selected_topic, selected_rows) if selected_topic else []
+    selected_records, topic_grand_total = (
+        build_record_cards(selected_topic, selected_rows) if selected_topic else ([], None)
     )
 
     context = {
@@ -107,6 +107,7 @@ def budget_product_create_view(request):
         'selected_rows': selected_rows,
         'selected_groups': selected_groups,
         'selected_records': selected_records,
+        'topic_grand_total': topic_grand_total,
     }
     return render(request, 'accounts/budget_product_form.html', context)
 
@@ -496,17 +497,76 @@ def build_topic_groups(topic):
             current_group = {
                 'root': row,
                 'children': [],
+                'has_price_calc': False,
             }
             groups.append(current_group)
         elif current_group is not None:
-            current_group['children'].append(row)
+            name_lower = row['field'].name.lower().strip()
+            if name_lower in ('preço', 'preco', 'price'):
+                field_role = 'preco'
+                current_group['has_price_calc'] = True
+            elif name_lower == 'frete':
+                field_role = 'frete'
+                current_group['has_price_calc'] = True
+            else:
+                field_role = None
+            current_group['children'].append({**row, 'field_role': field_role})
 
     return groups
 
 
+def get_selected_total_for_record(record, topic_fields):
+    values_map = {rv.field_id: rv.value for rv in record.values.all()}
+
+    selector = next(
+        (f for f in topic_fields if f.parent_id is None and 'selecionar' in f.name.lower()),
+        None,
+    )
+    if not selector:
+        return None
+
+    selected_str = values_map.get(selector.id, '').strip()
+    if not selected_str:
+        return None
+
+    orc_parent = next(
+        (
+            f for f in topic_fields
+            if f.parent_id is None and f.name.strip() == f'Orçamento {selected_str}'
+        ),
+        None,
+    )
+    if not orc_parent:
+        return None
+
+    preco_val = Decimal('0')
+    frete_val = Decimal('0')
+
+    for f in topic_fields:
+        if f.parent_id != orc_parent.id:
+            continue
+        val_str = values_map.get(f.id, '').strip()
+        if not val_str:
+            continue
+        try:
+            amount = Decimal(val_str)
+        except (InvalidOperation, ValueError):
+            continue
+        name_lower = f.name.lower().strip()
+        if name_lower in ('preço', 'preco'):
+            preco_val = amount
+        elif name_lower == 'frete':
+            frete_val = amount
+
+    return preco_val + frete_val
+
+
 def build_record_cards(topic, selected_rows):
     field_order = {row['field'].id: index for index, row in enumerate(selected_rows)}
+    all_fields = list(topic.fields.all())
     records = []
+    grand_total = Decimal('0')
+    has_totals = False
 
     for record in topic.records.all():
         values = sorted(
@@ -522,9 +582,13 @@ def build_record_cards(topic, selected_rows):
             ],
             key=lambda item: item['order'],
         )
-        records.append({'record': record, 'values': values})
+        selected_total = get_selected_total_for_record(record, all_fields)
+        if selected_total is not None:
+            grand_total += selected_total
+            has_totals = True
+        records.append({'record': record, 'values': values, 'selected_total': selected_total})
 
-    return records
+    return records, (grand_total if has_totals else None)
 
 
 def get_field_level(field):

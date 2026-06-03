@@ -1266,6 +1266,86 @@ tr.is-selected {
     }
 }
 
+/* Card de total geral do tópico */
+.topic-total-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 22px 28px;
+    border-radius: 26px;
+    background: linear-gradient(135deg, rgba(0, 95, 115, 0.1), rgba(238, 155, 0, 0.14));
+    border: 1px solid rgba(0, 95, 115, 0.18);
+    box-shadow: 0 16px 36px rgba(0, 95, 115, 0.1);
+}
+
+.topic-total-info {
+    display: grid;
+    gap: 4px;
+}
+
+.topic-total-info small {
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.topic-total-amount {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--accent);
+    white-space: nowrap;
+}
+
+/* Total do orçamento selecionado em cada record card */
+.record-selected-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(0, 95, 115, 0.07), rgba(238, 155, 0, 0.1));
+    border: 1px solid rgba(0, 95, 115, 0.12);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.record-selected-total span {
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.record-selected-total strong {
+    color: var(--accent);
+    font-size: 1rem;
+}
+
+/* Total ao vivo por orçamento no modal */
+.orc-calc-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(10, 147, 150, 0.1), rgba(238, 155, 0, 0.12));
+    border: 1px solid rgba(10, 147, 150, 0.2);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    margin-top: 4px;
+}
+
+.orc-calc-total span {
+    color: var(--muted);
+    font-size: 0.86rem;
+}
+
+.orc-calc-total strong {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
 /* Wide modal */
 .modal-content--wide {
     width: min(860px, calc(100% - 24px));
