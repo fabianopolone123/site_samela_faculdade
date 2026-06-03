@@ -1266,6 +1266,118 @@ tr.is-selected {
     }
 }
 
+/* Dashboard centralizado */
+.dashboard-centered-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+}
+
+.dashboard-welcome-card {
+    width: min(460px, 100%);
+    background: var(--paper-strong);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-strong);
+    padding: 40px 36px;
+    display: grid;
+    gap: 0;
+}
+
+.dashboard-welcome-header {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 28px;
+    text-align: center;
+}
+
+.dashboard-welcome-header h1 {
+    margin: 8px 0 0;
+    font-size: 1.9rem;
+}
+
+.dashboard-welcome-user {
+    margin: 0;
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.95rem;
+}
+
+.dashboard-welcome-user strong {
+    color: var(--accent);
+}
+
+.dashboard-divider {
+    height: 1px;
+    background: var(--line);
+    margin: 0 -36px;
+}
+
+.dashboard-nav-actions {
+    display: grid;
+    gap: 12px;
+    padding: 24px 0;
+}
+
+.dashboard-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(0, 95, 115, 0.12);
+    background: rgba(0, 95, 115, 0.04);
+    text-decoration: none;
+    color: var(--ink);
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.dashboard-nav-item:hover {
+    background: rgba(0, 95, 115, 0.09);
+    border-color: rgba(0, 95, 115, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(0, 95, 115, 0.1);
+}
+
+.dashboard-nav-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.dashboard-nav-item div {
+    display: grid;
+    gap: 2px;
+}
+
+.dashboard-nav-item strong {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1rem;
+    color: var(--ink);
+}
+
+.dashboard-nav-item small {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.dashboard-logout-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.88rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.dashboard-logout-link:hover {
+    color: var(--danger);
+}
+
 /* Barra de total geral no orçamento pronto */
 .budget-grand-total-bar {
     display: flex;
