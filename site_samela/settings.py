@@ -79,6 +79,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'accounts.User'
+AUTHENTICATION_BACKENDS = [
+    'accounts.auth_backends.EmailOrLoginNameBackend',
+]
 
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard'

@@ -14,14 +14,14 @@
     <main class="auth-layout">
         <section class="hero-shell">
             <div class="project-panel project-panel-centered">
-                <span class="eyebrow">Portal Acadêmico</span>
+                <span class="eyebrow">Portal Academico</span>
                 <p class="hero-kicker">{{ project_info.organization }}</p>
                 <h1>{{ project_info.title }}</h1>
                 <p class="lead">{{ project_info.subtitle }}</p>
                 <div class="hero-edition">{{ project_info.edition }}</div>
                 <div class="project-meta project-meta-centered">
                     <div>
-                        <span>Instituição</span>
+                        <span>Instituicao</span>
                         <strong>{{ project_info.organization }}</strong>
                     </div>
                     <div>
@@ -31,7 +31,7 @@
                 </div>
                 <div class="project-card project-card-inline">
                     <h2>Ambiente de entrada do projeto</h2>
-                    <p>O cadastro está liberado apenas para e-mails previamente autorizados pela equipe responsável.</p>
+                    <p>O cadastro esta liberado apenas para e-mails previamente autorizados pela equipe responsavel.</p>
                 </div>
             </div>
         </section>
@@ -41,7 +41,15 @@
                 <div class="login-glow" aria-hidden="true"></div>
                 <span class="eyebrow">Acesso ao sistema</span>
                 <h2>Entrar</h2>
-                <p class="login-copy">Use seu e-mail autorizado e a senha cadastrada para acessar o portal.</p>
+                <p class="login-copy">Use seu login ou e-mail autorizado e a senha cadastrada para acessar o portal.</p>
+                <div class="demo-access">
+                    {% for item in demo_access %}
+                        <div class="demo-pill">
+                            <span>{{ item.label }}</span>
+                            <strong>{{ item.value }}</strong>
+                        </div>
+                    {% endfor %}
+                </div>
 
                 {% if messages %}
                     <div class="messages">
@@ -91,19 +99,19 @@
                     <span class="eyebrow">Cadastro controlado</span>
                     <h2 id="signup-title">Criar conta</h2>
                 </div>
-                <a href="{% url 'signup_reset' %}" class="icon-button" aria-label="Fechar">×</a>
+                <a href="{% url 'signup_reset' %}" class="icon-button" aria-label="Fechar">x</a>
             </div>
 
             <div class="step-indicator">
                 <span class="{% if signup_step == 'email' %}active{% endif %}">1. E-mail</span>
-                <span class="{% if signup_step == 'code' %}active{% endif %}">2. Código</span>
+                <span class="{% if signup_step == 'code' %}active{% endif %}">2. Codigo</span>
                 <span class="{% if signup_step == 'password' %}active{% endif %}">3. Senha</span>
             </div>
 
             {% if signup_step == 'email' %}
                 <form method="post" action="{% url 'signup_email' %}" class="form-stack">
                     {% csrf_token %}
-                    <p class="modal-copy">Informe um e-mail autorizado para receber o código de verificação.</p>
+                    <p class="modal-copy">Informe um e-mail autorizado para receber o codigo de verificacao.</p>
                     <div class="field">
                         <label for="{{ email_form.email.id_for_label }}">{{ email_form.email.label }}</label>
                         {{ email_form.email }}
@@ -111,14 +119,14 @@
                             <div class="field-errors">{{ email_form.email.errors }}</div>
                         {% endif %}
                     </div>
-                    <button type="submit" class="button-primary">Enviar código</button>
+                    <button type="submit" class="button-primary">Enviar codigo</button>
                 </form>
             {% elif signup_step == 'code' %}
                 <form method="post" action="{% url 'signup_code' %}" class="form-stack">
                     {% csrf_token %}
                     <p class="modal-copy">
-                        Digite o código curto enviado para <strong>{{ signup_email }}</strong>.
-                        Se não encontrar na caixa de entrada, verifique também Spam e Lixo eletrônico.
+                        Digite o codigo curto enviado para <strong>{{ signup_email }}</strong>.
+                        Se nao encontrar na caixa de entrada, verifique tambem Spam e Lixo eletronico.
                     </p>
                     <div class="field">
                         <label for="{{ code_form.code.id_for_label }}">{{ code_form.code.label }}</label>
@@ -127,12 +135,12 @@
                             <div class="field-errors">{{ code_form.code.errors }}</div>
                         {% endif %}
                     </div>
-                    <button type="submit" class="button-primary">Validar código</button>
+                    <button type="submit" class="button-primary">Validar codigo</button>
                 </form>
             {% elif signup_step == 'password' %}
                 <form method="post" action="{% url 'signup_password' %}" class="form-stack">
                     {% csrf_token %}
-                    <p class="modal-copy">Código validado para <strong>{{ signup_email }}</strong>. Defina sua senha de acesso.</p>
+                    <p class="modal-copy">Codigo validado para <strong>{{ signup_email }}</strong>. Defina sua senha de acesso.</p>
                     {% if password_form.non_field_errors %}
                         <div class="field-errors">{{ password_form.non_field_errors }}</div>
                     {% endif %}

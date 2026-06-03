@@ -11,6 +11,7 @@ from .managers import UserManager
 class User(AbstractUser):
     username = None
     email = models.EmailField('e-mail', unique=True)
+    login_name = models.CharField('login', max_length=150, unique=True, blank=True, null=True)
     full_name = models.CharField('nome completo', max_length=255, blank=True)
 
     USERNAME_FIELD = 'email'
@@ -22,9 +23,65 @@ class User(AbstractUser):
         return self.email
 
 
+class BudgetSection(models.Model):
+    code = models.CharField('codigo', max_length=20, unique=True)
+    title = models.CharField('titulo', max_length=255)
+    description = models.TextField('descricao', blank=True)
+
+    class Meta:
+        ordering = ['code']
+
+    def __str__(self):
+        return f'{self.code} - {self.title}'
+
+
+class BudgetProduct(models.Model):
+    section = models.ForeignKey(
+        BudgetSection,
+        on_delete=models.CASCADE,
+        related_name='products',
+    )
+    name = models.CharField('nome do produto', max_length=255)
+    created_at = models.DateTimeField('criado em', auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def selected_quote(self):
+        return self.quotes.filter(is_selected=True).first()
+
+
+class BudgetQuote(models.Model):
+    product = models.ForeignKey(
+        BudgetProduct,
+        on_delete=models.CASCADE,
+        related_name='quotes',
+    )
+    quote_number = models.PositiveSmallIntegerField('orcamento')
+    price = models.DecimalField('preco', max_digits=12, decimal_places=2)
+    quantity = models.PositiveIntegerField('quantidade')
+    link = models.URLField('link')
+    is_selected = models.BooleanField('selecionado', default=False)
+
+    class Meta:
+        ordering = ['quote_number']
+        unique_together = [('product', 'quote_number')]
+
+    def __str__(self):
+        return f'{self.product.name} - orcamento {self.quote_number}'
+
+    @property
+    def total(self):
+        return self.price * self.quantity
+
+
 class SignupCode(models.Model):
     email = models.EmailField('e-mail')
-    code = models.CharField('código', max_length=6)
+    code = models.CharField('codigo', max_length=6)
     created_at = models.DateTimeField('criado em', auto_now_add=True)
     expires_at = models.DateTimeField('expira em')
     verified_at = models.DateTimeField('verificado em', null=True, blank=True)

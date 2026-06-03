@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orcamento Pronto | NEEVY - UFSCar</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="dashboard-body">
+    <main class="budget-shell">
+        <section class="workspace-header">
+            <span class="eyebrow">Orcamento pronto</span>
+            <h1>PROJETO: {{ project_budget_title }}</h1>
+            <h2>ORCAMENTO</h2>
+            <p>{{ project_budget_description }}</p>
+            <div class="workspace-links">
+                <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
+                <a href="{% url 'budget_product_create' %}" class="button-primary">Cadastrar campos</a>
+            </div>
+        </section>
+
+        <section class="workspace-card">
+            <div class="budget-topic-header">
+                <div>
+                    <span class="dashboard-topic-code">{{ budget_section.code }}</span>
+                    <h3>{{ budget_section.title }}</h3>
+                </div>
+                <div class="budget-total-box">
+                    <span>Total selecionado</span>
+                    <strong>R$ {{ selected_total }}</strong>
+                </div>
+            </div>
+
+            {% if products %}
+                <div class="budget-products">
+                    {% for item in products %}
+                        <article class="budget-product-card">
+                            <h4>{{ item.product.name }}</h4>
+                            <table class="budget-table">
+                                <thead>
+                                    <tr>
+                                        <th>Orcamento</th>
+                                        <th>Preco</th>
+                                        <th>Quantidade</th>
+                                        <th>Total</th>
+                                        <th>Link</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for quote in item.quotes %}
+                                        <tr{% if quote.is_selected %} class="is-selected"{% endif %}>
+                                            <td>{{ quote.quote_number }}</td>
+                                            <td>R$ {{ quote.price }}</td>
+                                            <td>{{ quote.quantity }}</td>
+                                            <td>R$ {{ quote.total }}</td>
+                                            <td><a href="{{ quote.link }}" target="_blank" rel="noreferrer">Abrir</a></td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                            {% if item.selected_quote %}
+                                <p class="selected-summary">
+                                    Selecionado para o total: Orcamento {{ item.selected_quote.quote_number }}
+                                    com subtotal de R$ {{ item.selected_quote.total }}.
+                                </p>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Ainda nao ha produtos cadastrados para o topico 5.1.</p>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

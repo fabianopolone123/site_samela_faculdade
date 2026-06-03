@@ -1,4 +1,5 @@
 import secrets
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib import messages
@@ -6,15 +7,45 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.mail import send_mail
+from django.db.models import Prefetch
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
-from .forms import LoginForm, SignupCodeForm, SignupEmailForm, SignupPasswordForm
-from .models import SignupCode, User
+from .forms import (
+    BudgetProductForm,
+    LoginForm,
+    SignupCodeForm,
+    SignupEmailForm,
+    SignupPasswordForm,
+)
+from .models import BudgetProduct, BudgetQuote, BudgetSection, SignupCode, User
 
 SIGNUP_EMAIL_SESSION_KEY = 'signup_email'
 SIGNUP_STEP_SESSION_KEY = 'signup_step'
 SIGNUP_CODE_SESSION_KEY = 'signup_code_id'
+PROJECT_INFO = {
+    'title': 'Orcamento - FAPESP - Fundacao Bracell Fundacao Itau',
+    'subtitle': 'Auxilio a Pesquisa para o Fortalecimento da Educacao na Pre-Escola',
+    'edition': '06/2026',
+    'organization': 'NEEVY - UFSCar',
+}
+PROJECT_BUDGET_TITLE = (
+    'INDICADORES E CRITERIOS DE AVALIACAO DE DESENVOLVIMENTO CULTURAL '
+    'DE CRIANCAS DE PRE-ESCOLA NA THC'
+)
+PROJECT_BUDGET_DESCRIPTION = (
+    'A FAPESP, conforme estabelecido no convenio celebrado com a Fundacao Bracell '
+    'e a Fundacao Itau, cobrira os custos do projeto de pesquisa segundo normas '
+    'e orientacoes para Auxilio a Pesquisa Regular (para projetos com teto '
+    'orcamentario de R$ 600 mil) ou para Projeto Tematico (sem teto orcamentario). '
+    'Serao aprovadas propostas ate o limite orcamentario da Chamada '
+    '(total de R$ 6.400.000,00). O orcamento do projeto de pesquisa apresentado '
+    'a FAPESP devera ser detalhado e cada item justificado especificamente em '
+    'termos dos objetivos do projeto proposto. Destaca-se nessa modalidade que '
+    'poderao ser custeadas atividades relacionadas ao desenvolvimento da pesquisa '
+    'em outros estados, incluindo trabalhos de campo, desde que o Pesquisador '
+    'Responsavel seja vinculado a uma Instituicao Sede do Estado de Sao Paulo.'
+)
 
 
 class ProjectLoginView(LoginView):
@@ -25,12 +56,11 @@ class ProjectLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(build_signup_context(self.request))
-        context['project_info'] = {
-            'title': 'Orçamento - FAPESP – Fundação Bracell Fundação Itaú',
-            'subtitle': 'Auxílio à Pesquisa para o Fortalecimento da Educação na Pré-Escola',
-            'edition': '06/2026',
-            'organization': 'NEEVY - UFSCar',
-        }
+        context['project_info'] = PROJECT_INFO
+        context['demo_access'] = [
+            {'label': 'ADM', 'value': 'adm / 123'},
+            {'label': 'Teste', 'value': 'fabiano / 123'},
+        ]
         return context
 
 
@@ -40,12 +70,102 @@ def login_view(request):
 
 @login_required
 def dashboard_view(request):
-    return render(request, 'accounts/dashboard.html')
+    return render(
+        request,
+        'accounts/dashboard.html',
+        {
+            'budget_section': get_budget_section(),
+            'project_budget_title': PROJECT_BUDGET_TITLE,
+        },
+    )
+
+
+@login_required
+def budget_product_create_view(request):
+    section = get_budget_section()
+
+    if request.method == 'POST':
+        form = BudgetProductForm(request.POST)
+        if form.is_valid():
+            product = BudgetProduct.objects.create(
+                section=section,
+                name=form.cleaned_data['name'],
+            )
+            selected_quote = int(form.cleaned_data['selected_quote'])
+
+            for quote_number in range(1, 4):
+                BudgetQuote.objects.create(
+                    product=product,
+                    quote_number=quote_number,
+                    price=form.cleaned_data[f'quote_{quote_number}_price'],
+                    quantity=form.cleaned_data[f'quote_{quote_number}_quantity'],
+                    link=form.cleaned_data[f'quote_{quote_number}_link'],
+                    is_selected=selected_quote == quote_number,
+                )
+
+            messages.success(request, 'Produto cadastrado com sucesso no topico 5.1.')
+            return redirect('budget_product_create')
+    else:
+        form = BudgetProductForm()
+
+    products = (
+        BudgetProduct.objects.filter(section=section)
+        .prefetch_related('quotes')
+        .order_by('-created_at')
+    )
+    return render(
+        request,
+        'accounts/budget_product_form.html',
+        {
+            'form': form,
+            'budget_section': section,
+            'products': products,
+        },
+    )
+
+
+@login_required
+def budget_ready_view(request):
+    section = (
+        BudgetSection.objects.prefetch_related(
+            Prefetch(
+                'products',
+                queryset=BudgetProduct.objects.prefetch_related('quotes').order_by('-created_at'),
+            )
+        )
+        .get(code='5.1')
+    )
+    selected_total = Decimal('0')
+    products = []
+
+    for product in section.products.all():
+        selected_quote = product.selected_quote
+        if selected_quote:
+            selected_total += selected_quote.total
+        products.append(
+            {
+                'product': product,
+                'selected_quote': selected_quote,
+                'quotes': product.quotes.all(),
+            }
+        )
+
+    return render(
+        request,
+        'accounts/budget_ready.html',
+        {
+            'budget_section': section,
+            'project_budget_title': PROJECT_BUDGET_TITLE,
+            'project_budget_description': PROJECT_BUDGET_DESCRIPTION,
+            'products': products,
+            'selected_total': selected_total,
+        },
+    )
 
 
 def logout_view(request):
     logout(request)
-    messages.success(request, 'Sessão encerrada com sucesso.')
+    messages.success(request, 'Sessao encerrada com sucesso.')
     return redirect('login')
 
 
@@ -61,12 +181,12 @@ def signup_email_view(request):
     email = normalize_email(form.cleaned_data['email'])
 
     if email not in settings.ALLOWED_SIGNUP_EMAILS:
-        form.add_error('email', 'Este e-mail não está autorizado para cadastro.')
+        form.add_error('email', 'Este e-mail nao esta autorizado para cadastro.')
         persist_signup_state(request, step='email')
         return render_login_with_forms(request, email_form=form)
 
     if User.objects.filter(email=email).exists():
-        form.add_error('email', 'Já existe uma conta criada para este e-mail.')
+        form.add_error('email', 'Ja existe uma conta criada para este e-mail.')
         persist_signup_state(request, step='email')
         return render_login_with_forms(request, email_form=form)
 
@@ -77,11 +197,11 @@ def signup_email_view(request):
     )
 
     send_mail(
-        subject='Seu código de acesso ao portal NEEVY - UFSCar',
+        subject='Seu codigo de acesso ao portal NEEVY - UFSCar',
         message=(
-            f'Seu código de verificação é: {signup_code.code}\n\n'
+            f'Seu codigo de verificacao e: {signup_code.code}\n\n'
             f'Validade: {settings.SIGNUP_CODE_EXPIRATION_MINUTES} minutos.\n'
-            'Se você não solicitou este cadastro, ignore esta mensagem.'
+            'Se voce nao solicitou este cadastro, ignore esta mensagem.'
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[email],
@@ -97,8 +217,8 @@ def signup_email_view(request):
     messages.success(
         request,
         (
-            f'Código enviado para {email}. '
-            'Se não encontrar na caixa de entrada, verifique também Spam e Lixo eletrônico.'
+            f'Codigo enviado para {email}. '
+            'Se nao encontrar na caixa de entrada, verifique tambem Spam e Lixo eletronico.'
         ),
     )
     return redirect('login')
@@ -110,7 +230,7 @@ def signup_code_view(request):
 
     signup_code = get_active_signup_code(request)
     if signup_code is None:
-        messages.error(request, 'Solicite um novo código para continuar.')
+        messages.error(request, 'Solicite um novo codigo para continuar.')
         clear_signup_state(request)
         return redirect('login')
 
@@ -121,7 +241,7 @@ def signup_code_view(request):
 
     submitted_code = form.cleaned_data['code'].strip()
     if submitted_code != signup_code.code:
-        form.add_error('code', 'Código inválido. Verifique o e-mail informado.')
+        form.add_error('code', 'Codigo invalido. Verifique o e-mail informado.')
         persist_signup_state(request, email=signup_code.email, step='code', code_id=signup_code.id)
         return render_login_with_forms(request, code_form=form)
 
@@ -132,7 +252,7 @@ def signup_code_view(request):
         step='password',
         code_id=signup_code.id,
     )
-    messages.success(request, 'Código validado. Agora defina sua senha.')
+    messages.success(request, 'Codigo validado. Agora defina sua senha.')
     return redirect('login')
 
 
@@ -142,7 +262,7 @@ def signup_password_view(request):
 
     signup_code = get_active_signup_code(request)
     if signup_code is None or signup_code.verified_at is None:
-        messages.error(request, 'Valide o código antes de criar sua senha.')
+        messages.error(request, 'Valide o codigo antes de criar sua senha.')
         clear_signup_state(request)
         return redirect('login')
 
@@ -153,6 +273,7 @@ def signup_password_view(request):
 
     user = User.objects.create_user(
         email=signup_code.email,
+        login_name=signup_code.email.split('@')[0],
         password=form.cleaned_data['password1'],
     )
     signup_code.mark_consumed()
@@ -160,10 +281,10 @@ def signup_password_view(request):
     send_mail(
         subject='Conta criada com sucesso no portal NEEVY - UFSCar',
         message=(
-            'Seu cadastro foi concluído com sucesso.\n\n'
+            'Seu cadastro foi concluido com sucesso.\n\n'
             f'E-mail de acesso: {user.email}\n'
-            f'Data de criação: {timezone.localtime().strftime("%d/%m/%Y %H:%M")}\n'
-            'A partir de agora você já pode fazer login no portal.'
+            f'Data de criacao: {timezone.localtime().strftime("%d/%m/%Y %H:%M")}\n'
+            'A partir de agora voce ja pode fazer login no portal.'
         ),
         from_email=settings.DEFAULT_FROM_EMAIL,
         recipient_list=[user.email],
@@ -171,7 +292,7 @@ def signup_password_view(request):
     )
 
     clear_signup_state(request)
-    messages.success(request, 'Conta criada com sucesso. Faça login para continuar.')
+    messages.success(request, 'Conta criada com sucesso. Faca login para continuar.')
     return redirect('login')
 
 
@@ -189,16 +310,14 @@ def render_login_with_forms(request, email_form=None, code_form=None, password_f
             'email_form': email_form or SignupEmailForm(),
             'code_form': code_form or SignupCodeForm(),
             'password_form': password_form or SignupPasswordForm(),
-            'project_info': {
-                'title': 'Orçamento - FAPESP – Fundação Bracell Fundação Itaú',
-                'subtitle': 'Auxílio à Pesquisa para o Fortalecimento da Educação na Pré-Escola',
-                'edition': '06/2026',
-                'organization': 'NEEVY - UFSCar',
-            },
+            'project_info': PROJECT_INFO,
+            'demo_access': [
+                {'label': 'ADM', 'value': 'adm / 123'},
+                {'label': 'Teste', 'value': 'fabiano / 123'},
+            ],
         }
     )
-    response = render(request, 'accounts/login.html', context)
-    return response
+    return render(request, 'accounts/login.html', context)
 
 
 def build_signup_context(request):
@@ -214,7 +333,6 @@ def build_signup_context(request):
             SIGNUP_STEP_SESSION_KEY in request.session
             or SIGNUP_EMAIL_SESSION_KEY in request.session
         ),
-        'allowed_emails': sorted(settings.ALLOWED_SIGNUP_EMAILS),
     }
 
 
@@ -251,6 +369,10 @@ def get_active_signup_code(request):
         return None
 
     return signup_code
+
+
+def get_budget_section():
+    return BudgetSection.objects.get(code='5.1')
 
 
 def generate_code():

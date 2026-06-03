@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro de Campos | NEEVY - UFSCar</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="dashboard-body">
+    <main class="workspace-shell">
+        <section class="workspace-header">
+            <span class="eyebrow">Cadastrar campos</span>
+            <h1>{{ budget_section.code }}. {{ budget_section.title }}</h1>
+            <p>Cadastre o nome do produto e os tres orcamentos. Um deles sera marcado para entrar na soma do orcamento total.</p>
+            <div class="workspace-links">
+                <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
+                <a href="{% url 'budget_ready' %}" class="button-primary">Ver orcamento pronto</a>
+            </div>
+        </section>
+
+        <section class="workspace-grid">
+            <article class="workspace-card">
+                <h2>Novo produto</h2>
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <form method="post" class="form-stack">
+                    {% csrf_token %}
+                    {% for field in form %}
+                        <div class="field">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div class="field-errors">{{ field.errors }}</div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="button-primary">Salvar produto</button>
+                </form>
+            </article>
+
+            <article class="workspace-card">
+                <h2>Produtos cadastrados</h2>
+                {% if products %}
+                    <div class="product-list">
+                        {% for product in products %}
+                            <div class="product-item">
+                                <h3>{{ product.name }}</h3>
+                                <ul>
+                                    {% for quote in product.quotes.all %}
+                                        <li>
+                                            Orcamento {{ quote.quote_number }}:
+                                            R$ {{ quote.price }} x {{ quote.quantity }}
+                                            {% if quote.is_selected %}<strong> selecionado</strong>{% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>Nenhum produto cadastrado ainda.</p>
+                {% endif %}
+            </article>
+        </section>
+    </main>
+</body>
+</html>
