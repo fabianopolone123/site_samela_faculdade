@@ -308,7 +308,7 @@ def signup_email_view(request):
     )
 
     _send_utf8_mail(
-        subject='Seu código de acesso ao portal NEEVY - UFSCar',
+        subject='Seu código de acesso ao portal',
         body=(
             f'Seu código de verificação é: {signup_code.code}\n\n'
             f'Validade: {settings.SIGNUP_CODE_EXPIRATION_MINUTES} minutos.\n'
