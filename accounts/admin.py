@@ -1,7 +1,15 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import BudgetProduct, BudgetQuote, BudgetSection, SignupCode, User
+from .models import (
+    BudgetCostEntry,
+    BudgetCostQuote,
+    BudgetProduct,
+    BudgetQuote,
+    BudgetSection,
+    SignupCode,
+    User,
+)
 
 
 @admin.register(User)
@@ -49,3 +57,16 @@ class BudgetProductAdmin(admin.ModelAdmin):
     list_filter = ('section',)
     search_fields = ('name',)
     inlines = [BudgetQuoteInline]
+
+
+class BudgetCostQuoteInline(admin.TabularInline):
+    model = BudgetCostQuote
+    extra = 0
+
+
+@admin.register(BudgetCostEntry)
+class BudgetCostEntryAdmin(admin.ModelAdmin):
+    list_display = ('title', 'section', 'quantity', 'selected_quote_number', 'created_at')
+    list_filter = ('section',)
+    search_fields = ('title', 'details', 'justification')
+    inlines = [BudgetCostQuoteInline]

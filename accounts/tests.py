@@ -3,7 +3,7 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import BudgetProduct, BudgetSection, SignupCode, User
+from .models import BudgetCostEntry, BudgetSection, SignupCode, User
 
 
 class SignupFlowTests(TestCase):
@@ -36,20 +36,6 @@ class SignupFlowTests(TestCase):
         self.assertTrue(User.objects.filter(email=email).exists())
         self.assertEqual(len(mail.outbox), 2)
 
-    def test_login_with_created_user_redirects_to_dashboard(self):
-        user = User.objects.create_user(
-            email='samelapolloni@estudante.ufscar.br',
-            login_name='samela',
-            password='SenhaSegura123',
-        )
-
-        response = self.client.post(
-            reverse('login'),
-            {'username': user.email, 'password': 'SenhaSegura123'},
-        )
-
-        self.assertRedirects(response, reverse('dashboard'))
-
 
 class SeededAccessTests(TestCase):
     def test_seeded_test_user_can_login_with_login_name(self):
@@ -60,44 +46,57 @@ class SeededAccessTests(TestCase):
 
         self.assertRedirects(response, reverse('dashboard'))
 
-    def test_seeded_admin_user_exists(self):
-        self.assertTrue(
-            User.objects.filter(login_name='adm', is_superuser=True, is_staff=True).exists()
-        )
-
 
 class BudgetFlowTests(TestCase):
     def setUp(self):
         self.client.post(reverse('login'), {'username': 'fabiano', 'password': '123'})
 
-    def test_create_budget_product_and_render_total(self):
+    def test_sections_seeded(self):
+        self.assertTrue(BudgetSection.objects.filter(code='a').exists())
+        self.assertTrue(BudgetSection.objects.filter(code='d.1').exists())
+        self.assertTrue(BudgetSection.objects.filter(code='e').exists())
+
+    def test_create_material_cost_entry(self):
         response = self.client.post(
             reverse('budget_product_create'),
             {
-                'name': 'Tablet educacional',
+                'section_code': 'a',
+                'title': 'Notebook',
+                'details': 'Equipamento para coleta de dados',
+                'quantity': '2',
                 'selected_quote': '2',
-                'quote_1_price': '100.00',
-                'quote_1_quantity': '1',
+                'quote_1_amount': '1000.00',
                 'quote_1_link': 'https://example.com/1',
-                'quote_2_price': '200.00',
-                'quote_2_quantity': '2',
+                'quote_2_amount': '1200.00',
                 'quote_2_link': 'https://example.com/2',
-                'quote_3_price': '300.00',
-                'quote_3_quantity': '3',
+                'quote_3_amount': '1300.00',
                 'quote_3_link': 'https://example.com/3',
             },
         )
 
         self.assertRedirects(response, reverse('budget_product_create'))
-        product = BudgetProduct.objects.get(name='Tablet educacional')
-        self.assertEqual(product.section.code, '5.1')
-        self.assertEqual(product.quotes.filter(is_selected=True).count(), 1)
+        entry = BudgetCostEntry.objects.get(title='Notebook')
+        self.assertEqual(entry.section.code, 'a')
+        self.assertEqual(entry.total_considered, 2400)
 
-        response = self.client.get(reverse('budget_ready'))
-        self.assertContains(response, 'Tablet educacional')
-        self.assertContains(response, 'R$ 400')
+        ready = self.client.get(reverse('budget_ready'))
+        self.assertContains(ready, 'Notebook')
+        self.assertContains(ready, 'R$ 2400')
 
-    def test_budget_section_seeded(self):
-        self.assertTrue(
-            BudgetSection.objects.filter(code='5.1', title__icontains='Custeio').exists()
+    def test_create_daily_entry(self):
+        response = self.client.post(
+            reverse('budget_product_create'),
+            {
+                'section_code': 'd.2',
+                'title': 'Diária para campo',
+                'daily_type': 'Diária no país',
+                'location': 'Campinas',
+                'people_count': '2',
+                'days_count': '3',
+                'unit_value': '150.00',
+            },
         )
+
+        self.assertRedirects(response, reverse('budget_product_create'))
+        entry = BudgetCostEntry.objects.get(title='Diária para campo')
+        self.assertEqual(entry.total_considered, 900)

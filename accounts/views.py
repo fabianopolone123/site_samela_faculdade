@@ -12,13 +12,21 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from .forms import (
-    BudgetProductForm,
+    BudgetCostForm,
     LoginForm,
     SignupCodeForm,
     SignupEmailForm,
     SignupPasswordForm,
 )
-from .models import BudgetProduct, BudgetQuote, BudgetSection, SignupCode, User
+from .models import (
+    BudgetCostEntry,
+    BudgetCostQuote,
+    BudgetProduct,
+    BudgetQuote,
+    BudgetSection,
+    SignupCode,
+    User,
+)
 
 SIGNUP_EMAIL_SESSION_KEY = 'signup_email'
 SIGNUP_STEP_SESSION_KEY = 'signup_step'
@@ -66,95 +74,99 @@ def login_view(request):
 
 @login_required
 def dashboard_view(request):
-    return render(
-        request,
-        'accounts/dashboard.html',
-        {
-            'budget_section': get_budget_section(),
-            'project_budget_title': PROJECT_BUDGET_TITLE,
-        },
-    )
+    return render(request, 'accounts/dashboard.html')
 
 
 @login_required
 def budget_product_create_view(request):
-    section = get_budget_section()
+    sections = get_cost_sections()
 
     if request.method == 'POST':
-        form = BudgetProductForm(request.POST)
+        form = BudgetCostForm(request.POST)
         if form.is_valid():
-            product = BudgetProduct.objects.create(
+            section = BudgetSection.objects.get(code=form.cleaned_data['section_code'])
+            entry = BudgetCostEntry.objects.create(
                 section=section,
-                name=form.cleaned_data['name'],
+                title=form.cleaned_data['title'],
+                details=form.cleaned_data.get('details', ''),
+                justification=form.cleaned_data.get('justification', ''),
+                quantity=form.cleaned_data.get('quantity'),
+                unit=form.cleaned_data.get('unit', ''),
+                selected_quote_number=(
+                    int(form.cleaned_data['selected_quote'])
+                    if form.cleaned_data.get('selected_quote')
+                    else None
+                ),
+                data=build_entry_data(form.cleaned_data),
             )
-            selected_quote = int(form.cleaned_data['selected_quote'])
 
-            for quote_number in range(1, 4):
-                BudgetQuote.objects.create(
-                    product=product,
-                    quote_number=quote_number,
-                    price=form.cleaned_data[f'quote_{quote_number}_price'],
-                    quantity=form.cleaned_data[f'quote_{quote_number}_quantity'],
-                    link=form.cleaned_data[f'quote_{quote_number}_link'],
-                    is_selected=selected_quote == quote_number,
-                )
+            if section.code in {'a', 'b', 'c', 'd.1'}:
+                for quote_number in range(1, 4):
+                    BudgetCostQuote.objects.create(
+                        entry=entry,
+                        quote_number=quote_number,
+                        amount=form.cleaned_data[f'quote_{quote_number}_amount'],
+                        link=form.cleaned_data[f'quote_{quote_number}_link'],
+                    )
 
-            messages.success(request, 'Produto cadastrado com sucesso no tópico 5.1.')
+            messages.success(request, 'Custo cadastrado com sucesso.')
             return redirect('budget_product_create')
     else:
-        form = BudgetProductForm()
+        form = BudgetCostForm()
 
-    products = (
-        BudgetProduct.objects.filter(section=section)
+    entries = (
+        BudgetCostEntry.objects.select_related('section')
         .prefetch_related('quotes')
-        .order_by('-created_at')
+        .order_by('section__code', '-created_at')
     )
     return render(
         request,
         'accounts/budget_product_form.html',
         {
             'form': form,
-            'budget_section': section,
-            'products': products,
+            'sections': sections,
+            'entries': entries,
         },
     )
 
 
 @login_required
 def budget_ready_view(request):
-    section = (
-        BudgetSection.objects.prefetch_related(
-            Prefetch(
-                'products',
-                queryset=BudgetProduct.objects.prefetch_related('quotes').order_by('-created_at'),
-            )
-        )
-        .get(code='5.1')
-    )
-    selected_total = Decimal('0')
-    products = []
+    leaf_sections = get_cost_sections()
+    section_blocks = []
+    category_totals = {'a': Decimal('0'), 'b': Decimal('0'), 'c': Decimal('0'), 'd': Decimal('0'), 'e': Decimal('0')}
 
-    for product in section.products.all():
-        selected_quote = product.selected_quote
-        if selected_quote:
-            selected_total += selected_quote.total
-        products.append(
+    for section in leaf_sections:
+        entries = list(
+            BudgetCostEntry.objects.filter(section=section)
+            .prefetch_related('quotes')
+            .order_by('created_at')
+        )
+        section_total = Decimal('0')
+        for entry in entries:
+            section_total += Decimal(entry.total_considered or 0)
+
+        parent_key = section.code.split('.')[0]
+        category_totals[parent_key] += section_total
+        section_blocks.append(
             {
-                'product': product,
-                'selected_quote': selected_quote,
-                'quotes': product.quotes.all(),
+                'section': section,
+                'entries': entries,
+                'section_total': section_total,
             }
         )
+
+    general_total = sum(category_totals.values(), Decimal('0'))
 
     return render(
         request,
         'accounts/budget_ready.html',
         {
-            'budget_section': section,
             'project_budget_title': PROJECT_BUDGET_TITLE,
             'project_budget_description': PROJECT_BUDGET_DESCRIPTION,
-            'products': products,
-            'selected_total': selected_total,
+            'section_blocks': section_blocks,
+            'category_totals': category_totals,
+            'general_total': general_total,
         },
     )
 
@@ -365,6 +377,30 @@ def get_active_signup_code(request):
 
 def get_budget_section():
     return BudgetSection.objects.get(code='5.1')
+
+
+def get_cost_sections():
+    return list(BudgetSection.objects.filter(code__in=['a', 'b', 'c', 'd.1', 'd.2', 'e']).order_by('code'))
+
+
+def build_entry_data(cleaned_data):
+    return {
+        'transport_mode': cleaned_data.get('transport_mode', ''),
+        'origin': cleaned_data.get('origin', ''),
+        'destination': cleaned_data.get('destination', ''),
+        'purpose': cleaned_data.get('purpose', ''),
+        'people_count': cleaned_data.get('people_count'),
+        'period': cleaned_data.get('period', ''),
+        'daily_type': cleaned_data.get('daily_type', ''),
+        'location': cleaned_data.get('location', ''),
+        'days_count': cleaned_data.get('days_count'),
+        'unit_value': float(cleaned_data.get('unit_value') or 0),
+        'scholarship_modality': cleaned_data.get('scholarship_modality', ''),
+        'duration_months': cleaned_data.get('duration_months'),
+        'monthly_value': float(cleaned_data.get('monthly_value') or 0),
+        'education_level': cleaned_data.get('education_level', ''),
+        'weekly_dedication': cleaned_data.get('weekly_dedication', ''),
+    }
 
 
 def generate_code():

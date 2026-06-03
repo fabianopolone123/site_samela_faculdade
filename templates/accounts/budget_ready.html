@@ -16,61 +16,94 @@
             <p>{{ project_budget_description }}</p>
             <div class="workspace-links">
                 <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
-                <a href="{% url 'budget_product_create' %}" class="button-primary">Cadastrar campos</a>
+                <a href="{% url 'budget_product_create' %}" class="button-primary">Cadastrar custos</a>
             </div>
         </section>
 
-        <section class="workspace-card">
-            <div class="budget-topic-header">
-                <div>
-                    <span class="dashboard-topic-code">{{ budget_section.code }}</span>
-                    <h3>{{ budget_section.title }}</h3>
+        {% for block in section_blocks %}
+            <section class="workspace-card">
+                <div class="budget-topic-header">
+                    <div>
+                        <span class="dashboard-topic-code">{{ block.section.code }}</span>
+                        <h3>{{ block.section.title }}</h3>
+                        <p>{{ block.section.description }}</p>
+                    </div>
+                    <div class="budget-total-box">
+                        <span>Total da seção</span>
+                        <strong>R$ {{ block.section_total }}</strong>
+                    </div>
                 </div>
-                <div class="budget-total-box">
-                    <span>Total selecionado</span>
-                    <strong>R$ {{ selected_total }}</strong>
-                </div>
-            </div>
 
-            {% if products %}
-                <div class="budget-products">
-                    {% for item in products %}
-                        <article class="budget-product-card">
-                            <h4>{{ item.product.name }}</h4>
-                            <table class="budget-table">
-                                <thead>
-                                    <tr>
-                                        <th>Orçamento</th>
-                                        <th>Preço</th>
-                                        <th>Quantidade</th>
-                                        <th>Total</th>
-                                        <th>Link</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for quote in item.quotes %}
-                                        <tr{% if quote.is_selected %} class="is-selected"{% endif %}>
-                                            <td>{{ quote.quote_number }}</td>
-                                            <td>R$ {{ quote.price }}</td>
-                                            <td>{{ quote.quantity }}</td>
-                                            <td>R$ {{ quote.total }}</td>
-                                            <td><a href="{{ quote.link }}" target="_blank" rel="noreferrer">Abrir</a></td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                            {% if item.selected_quote %}
-                                <p class="selected-summary">
-                                    Selecionado para o total: Orçamento {{ item.selected_quote.quote_number }}
-                                    com subtotal de R$ {{ item.selected_quote.total }}.
-                                </p>
-                            {% endif %}
-                        </article>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <p>Ainda não há produtos cadastrados para o tópico 5.1.</p>
-            {% endif %}
+                {% if block.entries %}
+                    <div class="budget-products">
+                        {% for entry in block.entries %}
+                            <article class="budget-product-card">
+                                <h4>{{ entry.title }}</h4>
+                                {% if entry.details %}<p>{{ entry.details }}</p>{% endif %}
+                                {% if entry.justification %}<p><strong>Justificativa:</strong> {{ entry.justification }}</p>{% endif %}
+                                {% if entry.section.code == 'd.1' %}
+                                    <p><strong>Transporte:</strong> {{ entry.data.transport_mode }} | <strong>Origem:</strong> {{ entry.data.origin }} | <strong>Destino:</strong> {{ entry.data.destination }}</p>
+                                    <p><strong>Finalidade:</strong> {{ entry.data.purpose }} | <strong>Pessoas:</strong> {{ entry.data.people_count }}</p>
+                                {% elif entry.section.code == 'd.2' %}
+                                    <p><strong>Tipo:</strong> {{ entry.data.daily_type }} | <strong>Localidade:</strong> {{ entry.data.location }}</p>
+                                    <p><strong>Pessoas:</strong> {{ entry.data.people_count }} | <strong>Dias:</strong> {{ entry.data.days_count }} | <strong>Valor unitário:</strong> R$ {{ entry.data.unit_value }}</p>
+                                {% elif entry.section.code == 'e' %}
+                                    <p><strong>Modalidade:</strong> {{ entry.data.scholarship_modality }}</p>
+                                    <p><strong>Quantidade:</strong> {{ entry.quantity }} | <strong>Duração:</strong> {{ entry.data.duration_months|default:'-' }} meses | <strong>Valor mensal/curso:</strong> R$ {{ entry.data.monthly_value }}</p>
+                                    {% if entry.data.education_level %}<p><strong>Formação exigida:</strong> {{ entry.data.education_level }}</p>{% endif %}
+                                    {% if entry.data.weekly_dedication %}<p><strong>Dedicação semanal:</strong> {{ entry.data.weekly_dedication }}</p>{% endif %}
+                                {% else %}
+                                    <p><strong>Quantidade:</strong> {{ entry.quantity }}{% if entry.unit %} {{ entry.unit }}{% endif %}</p>
+                                {% endif %}
+
+                                {% if entry.quotes.exists %}
+                                    <table class="budget-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Orçamento</th>
+                                                <th>Valor</th>
+                                                <th>Link</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for quote in entry.quotes.all %}
+                                                <tr{% if entry.selected_quote_number == quote.quote_number %} class="is-selected"{% endif %}>
+                                                    <td>{{ quote.quote_number }}</td>
+                                                    <td>R$ {{ quote.amount }}</td>
+                                                    <td><a href="{{ quote.link }}" target="_blank" rel="noreferrer">Abrir</a></td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                {% endif %}
+                                <p class="selected-summary">Valor total considerado: R$ {{ entry.total_considered }}</p>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>Nenhum item cadastrado nesta seção.</p>
+                {% endif %}
+            </section>
+        {% endfor %}
+
+        <section class="workspace-card">
+            <h2>Síntese do orçamento</h2>
+            <table class="budget-table">
+                <thead>
+                    <tr>
+                        <th>Categoria</th>
+                        <th>Valor total estimado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>a) Material permanente</td><td>R$ {{ category_totals.a }}</td></tr>
+                    <tr><td>b) Material de consumo</td><td>R$ {{ category_totals.b }}</td></tr>
+                    <tr><td>c) Serviços de terceiros</td><td>R$ {{ category_totals.c }}</td></tr>
+                    <tr><td>d) Transporte e diárias</td><td>R$ {{ category_totals.d }}</td></tr>
+                    <tr><td>e) Bolsas como item orçamentário</td><td>R$ {{ category_totals.e }}</td></tr>
+                    <tr class="is-selected"><td><strong>Total geral do projeto</strong></td><td><strong>R$ {{ general_total }}</strong></td></tr>
+                </tbody>
+            </table>
         </section>
     </main>
 </body>

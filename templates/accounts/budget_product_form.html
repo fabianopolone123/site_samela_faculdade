@@ -4,24 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Campos | NEEVY - UFSCar</title>
+    <title>Cadastrar Custos | NEEVY - UFSCar</title>
     <link rel="stylesheet" href="{% static 'css/app.css' %}">
 </head>
 <body class="dashboard-body">
     <main class="workspace-shell">
         <section class="workspace-header">
             <span class="eyebrow">Cadastrar custos</span>
-            <h1>{{ budget_section.code }}. {{ budget_section.title }}</h1>
-            <p>Cadastre o nome do produto e os três orçamentos. Um deles será marcado para entrar na soma do orçamento total.</p>
+            <h1>Cadastro de novos custos, orçamentos, transportes, diárias e bolsas</h1>
+            <p>Selecione a categoria e preencha os campos específicos. O orçamento pronto será atualizado com base nos dados salvos aqui.</p>
             <div class="workspace-links">
                 <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
-                <a href="{% url 'budget_ready' %}" class="button-primary">Ver orçamento pronto</a>
+                <a href="{% url 'budget_ready' %}" class="button-primary">Acessar orçamento pronto</a>
             </div>
         </section>
 
         <section class="workspace-grid">
             <article class="workspace-card">
-                <h2>Novo produto</h2>
+                <h2>Novo custo</h2>
                 {% if messages %}
                     <div class="messages">
                         {% for message in messages %}
@@ -35,38 +35,61 @@
                         <div class="field">
                             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                             {{ field }}
+                            {% if field.help_text %}
+                                <small>{{ field.help_text }}</small>
+                            {% endif %}
                             {% if field.errors %}
                                 <div class="field-errors">{{ field.errors }}</div>
                             {% endif %}
                         </div>
                     {% endfor %}
-                    <button type="submit" class="button-primary">Salvar produto</button>
+                    <button type="submit" class="button-primary">Salvar custo</button>
                 </form>
             </article>
 
             <article class="workspace-card">
-                <h2>Produtos cadastrados</h2>
-                {% if products %}
-                    <div class="product-list">
-                        {% for product in products %}
-                            <div class="product-item">
-                                <h3>{{ product.name }}</h3>
+                <h2>Categorias disponíveis</h2>
+                <div class="product-list">
+                    {% for section in sections %}
+                        <div class="product-item">
+                            <h3>{{ section.code }}. {{ section.title }}</h3>
+                            <p>{{ section.description }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </article>
+        </section>
+
+        <section class="workspace-card">
+            <h2>Custos já cadastrados</h2>
+            {% if entries %}
+                <div class="budget-products">
+                    {% for entry in entries %}
+                        <article class="budget-product-card">
+                            <span class="dashboard-topic-code">{{ entry.section.code }}</span>
+                            <h3>{{ entry.title }}</h3>
+                            {% if entry.details %}<p>{{ entry.details }}</p>{% endif %}
+                            {% if entry.justification %}<p><strong>Justificativa:</strong> {{ entry.justification }}</p>{% endif %}
+                            {% if entry.quantity %}<p><strong>Quantidade:</strong> {{ entry.quantity }}{% if entry.unit %} {{ entry.unit }}{% endif %}</p>{% endif %}
+                            {% if entry.quotes.exists %}
                                 <ul>
-                                    {% for quote in product.quotes.all %}
+                                    {% for quote in entry.quotes.all %}
                                         <li>
-                                            Orçamento {{ quote.quote_number }}:
-                                            R$ {{ quote.price }} x {{ quote.quantity }}
-                                            {% if quote.is_selected %}<strong> selecionado</strong>{% endif %}
+                                            Orçamento {{ quote.quote_number }}: R$ {{ quote.amount }} -
+                                            <a href="{{ quote.link }}" target="_blank" rel="noreferrer">abrir link</a>
+                                            {% if entry.selected_quote_number == quote.quote_number %}<strong> selecionado</strong>{% endif %}
                                         </li>
                                     {% endfor %}
                                 </ul>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <p>Nenhum produto cadastrado ainda.</p>
-                {% endif %}
-            </article>
+                            {% else %}
+                                <p><strong>Total considerado:</strong> R$ {{ entry.total_considered }}</p>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>Nenhum custo cadastrado ainda.</p>
+            {% endif %}
         </section>
     </main>
 </body>

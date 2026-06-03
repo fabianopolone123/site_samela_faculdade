@@ -4,7 +4,7 @@
 
 - Nome do repositório: `site_samela_faculdade`
 - Base técnica: `Django + Python + SQLite`
-- Objetivo atual: portal acadêmico com autenticação controlada e módulo inicial de orçamento
+- Objetivo atual: portal acadêmico com autenticação controlada e módulo de orçamento por categorias
 
 ## Escopo implementado
 
@@ -17,14 +17,6 @@
 - Painel autenticado com dois acessos principais:
   - `Cadastrar custos`
   - `Acessar orçamento pronto`
-- Módulo inicial do tópico `5.1. Custeio do projeto de pesquisa`
-- Cadastro de produto com exatamente 3 orçamentos
-- Cada orçamento possui:
-  - preço
-  - quantidade
-  - link
-- Um dos 3 orçamentos pode ser marcado para entrar na soma total
-- Tela `Orçamento pronto` alimentada pelos dados cadastrados
 - Tela inicial autenticada simplificada para exibir apenas um card central com os botões principais
 
 ## Logins de acesso seeded
@@ -41,13 +33,71 @@
 - A lista visível de e-mails autorizados foi removida da interface
 - O e-mail `fabianopolone@hotmail.com` foi adicionado à whitelist
 
-## Regras do orçamento atual
+## Estrutura atual do orçamento
 
 - O projeto exibido em `Orçamento pronto` é:
   - `INDICADORES E CRITÉRIOS DE AVALIAÇÃO DE DESENVOLVIMENTO CULTURAL DE CRIANÇAS DE PRÉ-ESCOLA NA THC`
 - O texto institucional de orçamento já aparece na tela pronta
-- O primeiro tópico ativo é `5.1`
-- Os próximos tópicos ainda serão adicionados depois
+- O módulo `Cadastrar custos` agora aceita estas categorias:
+  - `a) Material permanente adquirido no país ou importado`
+  - `b) Material de consumo adquirido no país ou importado`
+  - `c) Serviços de terceiros contratados no país ou no exterior`
+  - `d.1) Transporte`
+  - `d.2) Diárias`
+  - `e) Bolsas como item orçamentário`
+
+## Campos e comportamento do orçamento
+
+- Materiais permanentes e de consumo:
+  - descrição principal
+  - detalhes
+  - quantidade
+  - 3 orçamentos com valor e link
+  - orçamento selecionado para a soma
+- Serviços de terceiros:
+  - serviço solicitado
+  - justificativa
+  - quantidade
+  - unidade
+  - 3 orçamentos com valor e link
+  - orçamento selecionado
+- Transporte:
+  - meio de transporte
+  - origem
+  - destino
+  - finalidade
+  - quantidade de pessoas
+  - 3 orçamentos com valor e link
+  - orçamento selecionado
+- Diárias:
+  - tipo de diária
+  - localidade
+  - quantidade de pessoas
+  - número de dias
+  - valor unitário
+- Bolsas:
+  - modalidade
+  - quantidade
+  - duração em meses quando aplicável
+  - valor mensal ou valor do curso
+  - justificativa
+  - formação exigida e dedicação semanal quando a modalidade for Ensino Público
+
+## Regras de cálculo atuais
+
+- Categorias com 3 orçamentos:
+  - o sistema considera o orçamento selecionado
+  - o total é calculado com base no valor selecionado e na quantidade
+- Diárias:
+  - total = quantidade de pessoas × número de dias × valor unitário
+- Bolsas:
+  - total = quantidade × duração × valor mensal
+  - para `Participação em Curso`, total = quantidade × valor do curso
+- A tela `Orçamento pronto` mostra:
+  - cada seção individual
+  - total por seção
+  - síntese por categoria
+  - total geral do projeto
 
 ## Ajustes visuais e textuais
 
@@ -72,6 +122,7 @@
 - `accounts/forms.py`
 - `accounts/models.py`
 - `accounts/migrations/0002_budget_and_login_name.py`
+- `accounts/migrations/0003_budget_cost_entry.py`
 - `templates/accounts/login.html`
 - `templates/accounts/dashboard.html`
 - `templates/accounts/budget_product_form.html`
@@ -100,6 +151,5 @@
 - Etapa de digitação do código atualizada para exibir também o aviso sobre verificar Spam e Lixo eletrônico
 - Autenticação ampliada para aceitar login por alias ou e-mail
 - Contas seeded criadas para `adm / 123` e `fabiano / 123`
-- Painel pós-login criado com botões para `Cadastrar campos` e `Acessar orçamento pronto`
-- Painel pós-login simplificado para remover o bloco visual do tópico 5.1 e o título do projeto
-- Tópico `5.1. Custeio do projeto de pesquisa` implementado com cadastro de produto, 3 orçamentos e seleção para soma total
+- Painel pós-login simplificado para exibir apenas os botões principais
+- Módulo de orçamento expandido para materiais, serviços, transporte, diárias e bolsas
