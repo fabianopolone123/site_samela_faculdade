@@ -80,6 +80,20 @@
                         </div>
                     </div>
 
+                    {% if selected_topic.description %}
+                    <div class="topic-description-box">
+                        <div class="topic-description-header">
+                            <span class="eyebrow">Observações do tópico</span>
+                            <button type="button" class="icon-button icon-button--sm" data-open-modal="descricao-modal" title="Editar observação">✎</button>
+                        </div>
+                        <p>{{ selected_topic.description }}</p>
+                    </div>
+                    {% else %}
+                    <div class="topic-description-empty">
+                        <button type="button" class="button-text" data-open-modal="descricao-modal">+ Adicionar observação ao tópico</button>
+                    </div>
+                    {% endif %}
+
                     <div class="topic-total-card">
                         <div class="topic-total-info">
                             <span class="eyebrow">Total estimado do tópico</span>
@@ -160,6 +174,28 @@
     </div>
 
     {% if selected_topic %}
+    <!-- Modal: Observação do tópico -->
+    <div class="modal" id="descricao-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="descricao-modal"></div>
+        <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">Observação do tópico</span>
+                    <h2>{{ selected_topic.name }}</h2>
+                </div>
+                <button type="button" class="icon-button" data-close-modal="descricao-modal">×</button>
+            </div>
+            <form method="post" action="{% url 'update_topic_description' selected_topic.id %}" class="form-stack">
+                {% csrf_token %}
+                <div class="field">
+                    <label for="{{ description_form.description.id_for_label }}">{{ description_form.description.label }}</label>
+                    {{ description_form.description }}
+                </div>
+                <button type="submit" class="button-primary">Salvar observação</button>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal: Campos do tópico -->
     <div class="modal" id="campos-modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal="campos-modal"></div>

@@ -155,3 +155,7 @@
 - `build_topic_groups()` atualizado para incluir `field_role` (preco/frete) e `has_price_calc` por grupo
 - Tópico `Material de consumo adquirido no país e importado` criado com estrutura idêntica ao de Material permanente: Nome do produto, Orçamento 1/2/3 (Preço, Link, Quantidade, Frete), Selecionar para orçar
 - Tópico `Serviços de Terceiros contratados no país e no exterior` criado: Nome do serviço, Orçamento 1/2/3 (Preço, Link, Frete — sem Quantidade), Selecionar para orçar
+- Campo `description` (TextField) adicionado ao modelo `CostTopic` via migration 0006
+- Caixa de observação exibida na área principal de cada tópico; botão "✎" abre modal para editar
+- Tópicos sem descrição exibem link "+ Adicionar observação ao tópico"
+- Descrições pre-populadas para Material permanente e Serviços de Terceiros

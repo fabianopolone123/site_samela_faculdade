@@ -1266,6 +1266,53 @@ tr.is-selected {
     }
 }
 
+/* Caixa de descrição/observação do tópico */
+.topic-description-box {
+    display: grid;
+    gap: 10px;
+    padding: 20px 24px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(215, 240, 239, 0.5), rgba(255, 255, 255, 0.9));
+    border: 1px solid rgba(0, 95, 115, 0.14);
+}
+
+.topic-description-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.topic-description-box p {
+    margin: 0;
+    color: var(--ink);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    white-space: pre-wrap;
+}
+
+.topic-description-empty {
+    display: flex;
+}
+
+.button-text {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--accent);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 6px 0;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.button-text:hover {
+    color: var(--accent-strong);
+}
+
 /* Card de total geral do tópico */
 .topic-total-card {
     display: flex;

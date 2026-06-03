@@ -63,6 +63,19 @@ class TopicForm(forms.Form):
     )
 
 
+class TopicDescriptionForm(forms.Form):
+    description = forms.CharField(
+        label='Observações / Regras do tópico',
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                'rows': 6,
+                'placeholder': 'Descreva regras, limites ou observações relevantes para este tópico...',
+            }
+        ),
+    )
+
+
 class TopicFieldForm(forms.Form):
     name = forms.CharField(
         label='Nome do campo',

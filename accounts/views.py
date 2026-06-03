@@ -16,6 +16,7 @@ from .forms import (
     SignupCodeForm,
     SignupEmailForm,
     SignupPasswordForm,
+    TopicDescriptionForm,
     TopicFieldForm,
     TopicForm,
 )
@@ -104,6 +105,9 @@ def budget_product_create_view(request):
         'selected_topic': selected_topic,
         'topic_form': TopicForm(),
         'field_form': TopicFieldForm(topic=selected_topic),
+        'description_form': TopicDescriptionForm(
+            initial={'description': selected_topic.description} if selected_topic else {}
+        ),
         'selected_rows': selected_rows,
         'selected_groups': selected_groups,
         'selected_records': selected_records,
@@ -151,6 +155,21 @@ def create_topic_field_view(request):
         messages.error(request, 'Não foi possível cadastrar o campo.')
 
     return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+
+@login_required
+def update_topic_description_view(request, topic_id):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+    topic = get_object_or_404(CostTopic, id=topic_id)
+    form = TopicDescriptionForm(request.POST)
+    if form.is_valid():
+        topic.description = form.cleaned_data['description']
+        topic.save()
+        messages.success(request, 'Observação salva com sucesso.')
+    else:
+        messages.error(request, 'Não foi possível salvar a observação.')
+    return redirect(f"{reverse('budget_product_create')}?topic={topic_id}")
 
 
 @login_required

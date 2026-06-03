@@ -175,6 +175,7 @@ class BudgetCostQuote(models.Model):
 
 class CostTopic(models.Model):
     name = models.CharField('nome', max_length=255)
+    description = models.TextField('descrição', blank=True, default='')
     created_at = models.DateTimeField('criado em', auto_now_add=True)
 
     class Meta:
