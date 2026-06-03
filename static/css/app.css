@@ -505,9 +505,19 @@ body {
     grid-template-columns: 1.2fr 0.8fr;
 }
 
+.dashboard-shell-centered {
+    grid-template-columns: 1fr;
+    max-width: 760px;
+    justify-items: center;
+}
+
 .dashboard-hero,
 .dashboard-card {
     padding: 42px;
+}
+
+.dashboard-card-centered {
+    width: min(100%, 560px);
 }
 
 .dashboard-card p {

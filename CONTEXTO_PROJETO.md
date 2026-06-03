@@ -15,7 +15,7 @@
   - envio de código curto por e-mail
   - criação e confirmação de senha
 - Painel autenticado com dois acessos principais:
-  - `Cadastrar campos`
+  - `Cadastrar custos`
   - `Acessar orçamento pronto`
 - Módulo inicial do tópico `5.1. Custeio do projeto de pesquisa`
 - Cadastro de produto com exatamente 3 orçamentos
@@ -25,6 +25,7 @@
   - link
 - Um dos 3 orçamentos pode ser marcado para entrar na soma total
 - Tela `Orçamento pronto` alimentada pelos dados cadastrados
+- Tela inicial autenticada simplificada para exibir apenas um card central com os botões principais
 
 ## Logins de acesso seeded
 
@@ -100,4 +101,5 @@
 - Autenticação ampliada para aceitar login por alias ou e-mail
 - Contas seeded criadas para `adm / 123` e `fabiano / 123`
 - Painel pós-login criado com botões para `Cadastrar campos` e `Acessar orçamento pronto`
+- Painel pós-login simplificado para remover o bloco visual do tópico 5.1 e o título do projeto
 - Tópico `5.1. Custeio do projeto de pesquisa` implementado com cadastro de produto, 3 orçamentos e seleção para soma total
