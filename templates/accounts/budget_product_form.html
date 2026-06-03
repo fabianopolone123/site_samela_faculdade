@@ -157,9 +157,16 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="field" data-field-name="selected_quote">
-                            <label>{{ form.selected_quote.label }}</label>
-                            <div class="radio-group">{{ form.selected_quote }}</div>
+                        <div class="field selected-quote-field" data-field-name="selected_quote">
+                            <div class="selected-quote-header">
+                                <label>{{ form.selected_quote.label }}</label>
+                                <p>Escolha qual orçamento deve entrar no cálculo final deste item.</p>
+                            </div>
+                            <div class="radio-group radio-group-cards">{{ form.selected_quote }}</div>
+                            <div class="selected-quote-summary" id="selected-quote-summary">
+                                <span>Orçamento escolhido</span>
+                                <strong id="selected-quote-summary-value">Nenhum selecionado</strong>
+                            </div>
                             {% if form.selected_quote.errors %}<div class="field-errors">{{ form.selected_quote.errors }}</div>{% endif %}
                         </div>
                     </div>
@@ -356,12 +363,31 @@
         const baseGroupTitle = document.getElementById('base-group-title');
         const titleFieldLabel = document.getElementById('title-field-label');
         const titleInput = document.getElementById('id_title');
+        const quoteSummaryValue = document.getElementById('selected-quote-summary-value');
 
         function setFieldsEnabled(group, enabled) {
             group.querySelectorAll('input, select, textarea').forEach((field) => {
                 if (field.id === 'id_section_code') return;
                 field.disabled = !enabled;
             });
+        }
+
+        function updateSelectedQuoteVisual() {
+            const radios = Array.from(document.querySelectorAll('input[name="selected_quote"]'));
+            let selectedLabel = 'Nenhum selecionado';
+
+            radios.forEach((radio) => {
+                const item = radio.closest('li');
+                const label = radio.closest('label');
+                const checked = radio.checked;
+                if (item) item.classList.toggle('is-selected', checked);
+                if (label) label.classList.toggle('is-selected', checked);
+                if (checked) selectedLabel = `Orçamento ${radio.value}`;
+            });
+
+            if (quoteSummaryValue) {
+                quoteSummaryValue.textContent = selectedLabel;
+            }
         }
 
         function applyCategory(category) {
@@ -410,9 +436,14 @@
                 titleFieldLabel.textContent = 'Descrição da bolsa';
                 titleInput.placeholder = 'Digite uma descrição da bolsa';
             }
+
+            updateSelectedQuoteVisual();
         }
 
         hiddenSelect.addEventListener('change', (event) => applyCategory(event.target.value));
+        document.querySelectorAll('input[name="selected_quote"]').forEach((radio) => {
+            radio.addEventListener('change', updateSelectedQuoteVisual);
+        });
 
         applyCategory(hiddenSelect.value || 'a');
     </script>

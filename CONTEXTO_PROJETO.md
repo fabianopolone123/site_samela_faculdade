@@ -116,6 +116,7 @@
 - Ao selecionar uma categoria, o formulário habilita dinamicamente apenas os campos correspondentes
 - O painel lateral de `Cadastrar custos` passou a mostrar os itens já cadastrados da categoria selecionada
 - O seletor voltou para lista suspensa estilizada e os campos não relacionados agora ficam invisíveis
+- A área de `Orçamento selecionado` foi redesenhada com opções em cards e resumo visual da escolha ativa
 
 ## Mensagens e comportamento
 
@@ -166,4 +167,5 @@
 - Área lateral da tela de cadastro ajustada para acompanhar a categoria selecionada e listar seus itens salvos
 - Campos não relacionados à categoria escolhida passam a ser ocultados completamente
 - Categoria `a)` simplificada visualmente para mostrar apenas os campos solicitados
+- Bloco de seleção do orçamento destacado visualmente para facilitar a decisão do usuário
 - Regra definida para manter mensagens de commit sempre em português
