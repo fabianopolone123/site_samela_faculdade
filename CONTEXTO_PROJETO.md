@@ -170,3 +170,4 @@
 - Tópico `Bolsas — Treinamento Técnico e Participação em Curso` criado: mesmos campos
 - Tópico `Bolsas — Ensino Público - Aperfeiçoamento Pedagógico (EP)` criado: Valor orçamentário (por candidato), Quantidade de candidatos, Duração em meses
 - Tópico `Bolsas — EP-1 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com nível superior, dedicação de 4h semanais
+- Tópico `Bolsas — EP-2 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com nível superior, dedicação de 8h semanais
