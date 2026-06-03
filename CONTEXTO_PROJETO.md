@@ -117,6 +117,7 @@
 - O painel lateral de `Cadastrar custos` passou a mostrar os itens já cadastrados da categoria selecionada
 - O seletor voltou para lista suspensa estilizada e os campos não relacionados agora ficam invisíveis
 - A área de `Orçamento selecionado` foi redesenhada com opções em cards e resumo visual da escolha ativa
+- As opções de orçamento selecionado agora têm texto de apoio e hierarquia visual mais clara
 
 ## Mensagens e comportamento
 

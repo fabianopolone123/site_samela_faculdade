@@ -162,7 +162,27 @@
                                 <label>{{ form.selected_quote.label }}</label>
                                 <p>Escolha qual orçamento deve entrar no cálculo final deste item.</p>
                             </div>
-                            <div class="radio-group radio-group-cards">{{ form.selected_quote }}</div>
+                            <div class="radio-group radio-group-cards">
+                                <ul>
+                                    {% for value, label in form.selected_quote.field.choices %}
+                                        <li>
+                                            <label class="quote-choice-card" for="id_selected_quote_{{ forloop.counter0 }}">
+                                                <span class="quote-choice-copy">
+                                                    <strong>{{ label }}</strong>
+                                                    <small>Usar este orçamento na soma final</small>
+                                                </span>
+                                                <input
+                                                    type="radio"
+                                                    name="{{ form.selected_quote.name }}"
+                                                    value="{{ value }}"
+                                                    id="id_selected_quote_{{ forloop.counter0 }}"
+                                                    {% if form.selected_quote.value == value %}checked{% endif %}
+                                                >
+                                            </label>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
                             <div class="selected-quote-summary" id="selected-quote-summary">
                                 <span>Orçamento escolhido</span>
                                 <strong id="selected-quote-summary-value">Nenhum selecionado</strong>

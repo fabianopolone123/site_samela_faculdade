@@ -734,6 +734,27 @@ body {
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+.quote-choice-card strong,
+.quote-choice-card small {
+    display: block;
+}
+
+.quote-choice-card strong {
+    font-size: 1rem;
+    color: var(--ink);
+}
+
+.quote-choice-card small {
+    margin-top: 4px;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.quote-choice-copy {
+    display: grid;
+    gap: 2px;
+}
+
 .radio-group-cards label.is-selected,
 .radio-group-cards li.is-selected label {
     border-color: var(--accent-strong);
