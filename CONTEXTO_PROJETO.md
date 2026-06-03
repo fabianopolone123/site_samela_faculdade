@@ -100,3 +100,4 @@
 - Credenciais seeded mantidas apenas no backend, sem exibicao visual na tela de login
 - Painel pos-login criado com botoes para `Cadastrar campos` e `Acessar orcamento pronto`
 - Topico `5.1. Custeio do projeto de pesquisa` implementado com cadastro de produto, 3 orcamentos e selecao para soma total
+- Texto do selo principal da home simplificado de `Portal Academico` para `Portal`
