@@ -414,6 +414,18 @@
             button.addEventListener('click', () => closeModal(button.dataset.closeModal));
         });
 
+        // Preservar posição de scroll ao trocar de tópico
+        document.querySelectorAll('.topic-card').forEach(link => {
+            link.addEventListener('click', () => {
+                sessionStorage.setItem('topicScrollY', window.scrollY);
+            });
+        });
+        const savedScroll = sessionStorage.getItem('topicScrollY');
+        if (savedScroll !== null) {
+            window.scrollTo(0, parseInt(savedScroll));
+            sessionStorage.removeItem('topicScrollY');
+        }
+
         const urlParams = new URLSearchParams(window.location.search);
         const autoOpen = urlParams.get('open');
         if (autoOpen === 'campos') openModal('campos-modal');
