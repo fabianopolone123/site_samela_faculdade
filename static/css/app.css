@@ -1291,6 +1291,7 @@ tr.is-selected {
     gap: 8px;
     margin-bottom: 28px;
     text-align: center;
+    justify-items: center;
 }
 
 .dashboard-welcome-header h1 {
