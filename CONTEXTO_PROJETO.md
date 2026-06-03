@@ -164,3 +164,4 @@
 - Tópico `Bolsas — Iniciação Científica` criado: Valor orçamentário (por estudante), Quantidade de estudantes, Duração em meses; descrição específica da modalidade IC
 - Tópico `Bolsas — Mestrado` criado: mesmos campos; descrição específica da modalidade Mestrado
 - Tópico `Bolsas — Doutorado Direto` criado: mesmos campos; mesma descrição do Mestrado
+- Tópico `Bolsas — Doutorado` criado: mesmos campos; mesma descrição do Mestrado
