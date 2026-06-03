@@ -96,7 +96,7 @@ def budget_product_create_view(request):
     selected_rows = build_topic_rows(selected_topic) if selected_topic else []
     selected_groups = build_topic_groups(selected_topic) if selected_topic else []
     selected_records, topic_grand_total = (
-        build_record_cards(selected_topic, selected_rows) if selected_topic else ([], None)
+        build_record_cards(selected_topic, selected_rows) if selected_topic else ([], Decimal('0'))
     )
 
     context = {
@@ -588,7 +588,7 @@ def build_record_cards(topic, selected_rows):
             has_totals = True
         records.append({'record': record, 'values': values, 'selected_total': selected_total})
 
-    return records, (grand_total if has_totals else None)
+    return records, grand_total
 
 
 def get_field_level(field):
