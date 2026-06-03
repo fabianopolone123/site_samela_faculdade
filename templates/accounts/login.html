@@ -116,7 +116,10 @@
             {% elif signup_step == 'code' %}
                 <form method="post" action="{% url 'signup_code' %}" class="form-stack">
                     {% csrf_token %}
-                    <p class="modal-copy">Digite o código curto enviado para <strong>{{ signup_email }}</strong>.</p>
+                    <p class="modal-copy">
+                        Digite o código curto enviado para <strong>{{ signup_email }}</strong>.
+                        Se não encontrar na caixa de entrada, verifique também Spam e Lixo eletrônico.
+                    </p>
                     <div class="field">
                         <label for="{{ code_form.code.id_for_label }}">{{ code_form.code.label }}</label>
                         {{ code_form.code }}

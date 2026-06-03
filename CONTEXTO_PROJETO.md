@@ -67,3 +67,4 @@
 - Lista visível de e-mails autorizados removida da tela de cadastro
 - Regra definida para manter este documento atualizado a cada alteração e sempre versionar com commit e push
 - Título institucional da página inicial ajustado para remover "Fundação Bracell – Fundação Itaú"
+- Etapa de digitação do código atualizada para exibir também o aviso sobre verificar Spam e Lixo eletrônico
