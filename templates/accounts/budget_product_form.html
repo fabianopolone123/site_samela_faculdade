@@ -9,14 +9,11 @@
 </head>
 <body class="dashboard-body">
     <main class="workspace-shell">
+
         <section class="workspace-header builder-hero">
             <div class="builder-hero-copy">
                 <span class="eyebrow">Cadastrar custos</span>
-                <h1>Monte os tópicos, campos e subcampos do orçamento</h1>
-                <p>
-                    Primeiro crie o tópico. Depois abra o tópico desejado, crie os campos e subcampos e,
-                    por fim, registre um novo custo usando exatamente a estrutura que você montou.
-                </p>
+                <h1>Monte os tópicos e registre os custos do orçamento</h1>
             </div>
             <div class="workspace-links">
                 <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
@@ -38,9 +35,8 @@
             <article class="workspace-card builder-sidebar">
                 <div class="builder-sidebar-header">
                     <h2>Tópicos cadastrados</h2>
-                    <p>Clique em um tópico para abrir a estrutura e registrar novos custos nele.</p>
+                    <p>Selecione um tópico para gerenciar campos e registrar custos.</p>
                 </div>
-
                 <div class="topic-list">
                     {% if topics %}
                         {% for topic in topics %}
@@ -56,7 +52,7 @@
                     {% else %}
                         <div class="empty-state">
                             <strong>Nenhum tópico cadastrado.</strong>
-                            <p>Use o botão <em>Cadastrar tópico</em> para começar a montar o orçamento.</p>
+                            <p>Use o botão <em>Cadastrar tópico</em> para começar.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -64,157 +60,31 @@
 
             <article class="workspace-card builder-main">
                 {% if selected_topic %}
-                    <div class="builder-section-header">
-                        <div>
-                            <span class="dashboard-topic-code">Tópico selecionado</span>
+                    <div class="topic-action-header">
+                        <div class="topic-action-title">
+                            <span class="eyebrow">Tópico selecionado</span>
                             <h2>{{ selected_topic.name }}</h2>
-                            <p>Crie os campos deste tópico e depois use a mesma estrutura em <strong>Novo custo</strong>.</p>
                         </div>
-                        <button type="button" class="button-primary" data-open-modal="field-modal">Criar campos</button>
+                        <div class="topic-action-buttons">
+                            <button type="button" class="button-secondary dashboard-secondary" data-open-modal="campos-modal">
+                                Campos do tópico
+                                {% if selected_rows %}<span class="action-badge">{{ selected_rows|length }}</span>{% endif %}
+                            </button>
+                            <button
+                                type="button"
+                                class="button-primary{% if not selected_groups %} button-disabled{% endif %}"
+                                {% if selected_groups %}data-open-modal="custo-modal"{% else %}disabled title="Crie campos primeiro"{% endif %}
+                            >
+                                Novo custo
+                            </button>
+                        </div>
                     </div>
-
-                    <section class="builder-panel">
-                        <div class="builder-panel-header">
-                            <h3>Estrutura do tópico</h3>
-                            <span>{{ selected_rows|length }} item(ns) na estrutura</span>
-                        </div>
-
-                        {% if selected_groups %}
-                            <div class="structure-group-list">
-                                {% for group in selected_groups %}
-                                    <article class="structure-group-card">
-                                        <div class="structure-group-header">
-                                            <div>
-                                                <span class="topic-card-badge">Campo principal</span>
-                                                <h4>{{ group.root.field.name }}</h4>
-                                                <p>{{ group.root.type_label }}</p>
-                                            </div>
-                                        </div>
-
-                                        {% if group.children %}
-                                            <div class="structure-list">
-                                                {% for row in group.children %}
-                                                    <article class="structure-item level-{{ row.level }}">
-                                                        <div class="structure-item-copy">
-                                                            <strong>{{ row.field.name }}</strong>
-                                                            <small>{{ row.type_label }}</small>
-                                                        </div>
-                                                        <span class="structure-tag">Subcampo</span>
-                                                    </article>
-                                                {% endfor %}
-                                            </div>
-                                        {% else %}
-                                            <div class="empty-inline-note">
-                                                Este campo principal ainda não possui subcampos.
-                                            </div>
-                                        {% endif %}
-                                    </article>
-                                {% endfor %}
-                            </div>
-                        {% else %}
-                            <div class="empty-state">
-                                <strong>Este tópico ainda não possui campos.</strong>
-                                <p>Clique em <em>Criar campos</em> para começar a desenhar a estrutura.</p>
-                            </div>
-                        {% endif %}
-                    </section>
-
-                    <section class="builder-panel builder-panel-highlight">
-                        <div class="builder-panel-header">
-                            <h3>Novo custo</h3>
-                            <span>Preencha os campos do tópico selecionado</span>
-                        </div>
-
-                        <div class="builder-tip">
-                            <strong>Como preencher</strong>
-                            <p>
-                                Cada bloco abaixo representa um campo principal. Se esse campo tiver
-                                subcampos, eles aparecerão logo abaixo dentro do mesmo bloco.
-                            </p>
-                        </div>
-
-                        {% if selected_groups %}
-                            <form method="post" action="{% url 'create_topic_record' %}" class="form-stack">
-                                {% csrf_token %}
-                                <input type="hidden" name="topic_id" value="{{ selected_topic.id }}">
-
-                                <div class="dynamic-form-grid grouped-form-grid">
-                                    {% for group in selected_groups %}
-                                        <article class="cost-group-card">
-                                            <div class="cost-group-header">
-                                                <div>
-                                                    <span class="topic-card-badge">Campo principal</span>
-                                                    <h4>{{ group.root.field.name }}</h4>
-                                                    <p>{{ group.root.type_label }}</p>
-                                                </div>
-                                            </div>
-
-                                            <div class="field dynamic-entry-field root-entry-field">
-                                                <label for="field_{{ group.root.field.id }}">
-                                                    {{ group.root.field.name }}
-                                                    <small>{{ group.root.type_label }}</small>
-                                                </label>
-
-                                                {% if group.root.field.field_type == 'texto' %}
-                                                    <input type="text" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
-                                                {% elif group.root.field.field_type == 'numero' %}
-                                                    <input type="number" step="1" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
-                                                {% elif group.root.field.field_type == 'link' %}
-                                                    <input type="url" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
-                                                {% elif group.root.field.field_type == 'valor' %}
-                                                    <input type="number" step="0.01" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
-                                                {% endif %}
-                                            </div>
-
-                                            {% if group.children %}
-                                                <div class="subfield-zone">
-                                                    <div class="subfield-zone-header">
-                                                        <strong>Subcampos deste bloco</strong>
-                                                        <span>{{ group.children|length }} item(ns)</span>
-                                                    </div>
-
-                                                    <div class="subfield-grid">
-                                                        {% for row in group.children %}
-                                                            <div class="field dynamic-entry-field subfield-entry level-{{ row.level }}">
-                                                                <label for="field_{{ row.field.id }}">
-                                                                    {{ row.field.name }}
-                                                                    <small>{{ row.type_label }}</small>
-                                                                </label>
-
-                                                                {% if row.field.field_type == 'texto' %}
-                                                                    <input type="text" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
-                                                                {% elif row.field.field_type == 'numero' %}
-                                                                    <input type="number" step="1" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
-                                                                {% elif row.field.field_type == 'link' %}
-                                                                    <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
-                                                                {% elif row.field.field_type == 'valor' %}
-                                                                    <input type="number" step="0.01" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
-                                                                {% endif %}
-                                                            </div>
-                                                        {% endfor %}
-                                                    </div>
-                                                </div>
-                                            {% endif %}
-                                        </article>
-                                    {% endfor %}
-                                </div>
-
-                                <button type="submit" class="button-primary">Salvar novo custo</button>
-                            </form>
-                        {% else %}
-                            <div class="empty-state">
-                                <strong>Nada para preencher ainda.</strong>
-                                <p>Primeiro crie os campos e subcampos deste tópico.</p>
-                            </div>
-                        {% endif %}
-                    </section>
 
                     <section class="builder-panel">
                         <div class="builder-panel-header">
                             <h3>Custos já registrados</h3>
                             <span>{{ selected_records|length }} registro(s)</span>
                         </div>
-
                         {% if selected_records %}
                             <div class="record-list">
                                 {% for record_card in selected_records %}
@@ -236,8 +106,8 @@
                             </div>
                         {% else %}
                             <div class="empty-state">
-                                <strong>Nenhum custo salvo neste tópico.</strong>
-                                <p>Assim que você cadastrar um novo custo, ele aparecerá aqui.</p>
+                                <strong>Nenhum custo salvo neste tópico ainda.</strong>
+                                <p>Clique em <em>Novo custo</em> para registrar o primeiro.</p>
                             </div>
                         {% endif %}
                     </section>
@@ -251,6 +121,7 @@
         </section>
     </main>
 
+    <!-- Modal: Novo tópico -->
     <div class="modal" id="topic-modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal="topic-modal"></div>
         <div class="modal-content" role="dialog" aria-modal="true">
@@ -272,40 +143,187 @@
         </div>
     </div>
 
-    <div class="modal" id="field-modal" aria-hidden="true">
-        <div class="modal-backdrop" data-close-modal="field-modal"></div>
-        <div class="modal-content" role="dialog" aria-modal="true">
+    {% if selected_topic %}
+    <!-- Modal: Campos do tópico -->
+    <div class="modal" id="campos-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="campos-modal"></div>
+        <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
             <div class="modal-header">
                 <div>
-                    <span class="eyebrow">Novo campo</span>
-                    <h2>Criar campo ou subcampo</h2>
+                    <span class="eyebrow">Campos do tópico</span>
+                    <h2>{{ selected_topic.name }}</h2>
                 </div>
-                <button type="button" class="icon-button" data-close-modal="field-modal">×</button>
+                <button type="button" class="icon-button" data-close-modal="campos-modal">×</button>
             </div>
 
-            {% if selected_topic %}
-                <form method="post" action="{% url 'create_topic_field' %}" class="form-stack">
+            <div class="campos-modal-body">
+                <div class="campos-section">
+                    <div class="campos-section-header">
+                        <h3>Campos cadastrados</h3>
+                        <span>{{ selected_rows|length }} item(ns)</span>
+                    </div>
+
+                    {% if selected_groups %}
+                        <div class="structure-group-list">
+                            {% for group in selected_groups %}
+                                <article class="structure-group-card">
+                                    <div class="structure-group-header">
+                                        <div>
+                                            <span class="topic-card-badge">Campo principal</span>
+                                            <h4>{{ group.root.field.name }}</h4>
+                                            <p>{{ group.root.type_label }}</p>
+                                        </div>
+                                        <form method="post" action="{% url 'delete_topic_field' group.root.field.id %}" class="inline-delete-form">
+                                            {% csrf_token %}
+                                            <button type="submit" class="icon-button icon-button--danger"
+                                                    title="Excluir campo e subcampos"
+                                                    onclick="return confirm('Excluir o campo e todos os seus subcampos?')">×</button>
+                                        </form>
+                                    </div>
+                                    {% if group.children %}
+                                        <div class="structure-list">
+                                            {% for row in group.children %}
+                                                <article class="structure-item level-{{ row.level }}">
+                                                    <div class="structure-item-copy">
+                                                        <strong>{{ row.field.name }}</strong>
+                                                        <small>{{ row.type_label }}</small>
+                                                    </div>
+                                                    <div class="structure-item-actions">
+                                                        <span class="structure-tag">Subcampo</span>
+                                                        <form method="post" action="{% url 'delete_topic_field' row.field.id %}" class="inline-delete-form">
+                                                            {% csrf_token %}
+                                                            <button type="submit" class="icon-button icon-button--danger icon-button--sm"
+                                                                    title="Excluir subcampo"
+                                                                    onclick="return confirm('Excluir este subcampo?')">×</button>
+                                                        </form>
+                                                    </div>
+                                                </article>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="empty-inline-note">Nenhum subcampo cadastrado.</div>
+                                    {% endif %}
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <strong>Nenhum campo cadastrado ainda.</strong>
+                            <p>Use o formulário abaixo para criar o primeiro campo deste tópico.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="campos-section campos-section--add">
+                    <div class="campos-section-header">
+                        <h3>Adicionar campo</h3>
+                    </div>
+                    <form method="post" action="{% url 'create_topic_field' %}" class="form-stack">
+                        {% csrf_token %}
+                        <input type="hidden" name="topic_id" value="{{ selected_topic.id }}">
+                        <div class="campos-add-grid">
+                            <div class="field">
+                                <label for="{{ field_form.name.id_for_label }}">{{ field_form.name.label }}</label>
+                                {{ field_form.name }}
+                            </div>
+                            <div class="field">
+                                <label for="{{ field_form.field_type.id_for_label }}">{{ field_form.field_type.label }}</label>
+                                {{ field_form.field_type }}
+                            </div>
+                            <div class="field">
+                                <label for="{{ field_form.parent_id.id_for_label }}">{{ field_form.parent_id.label }}</label>
+                                {{ field_form.parent_id }}
+                            </div>
+                        </div>
+                        <button type="submit" class="button-primary">Salvar campo</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Novo custo -->
+    <div class="modal" id="custo-modal" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="custo-modal"></div>
+        <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">Novo custo</span>
+                    <h2>{{ selected_topic.name }}</h2>
+                </div>
+                <button type="button" class="icon-button" data-close-modal="custo-modal">×</button>
+            </div>
+
+            {% if selected_groups %}
+                <form method="post" action="{% url 'create_topic_record' %}" class="form-stack">
                     {% csrf_token %}
                     <input type="hidden" name="topic_id" value="{{ selected_topic.id }}">
-                    <div class="field">
-                        <label for="{{ field_form.name.id_for_label }}">{{ field_form.name.label }}</label>
-                        {{ field_form.name }}
+                    <div class="dynamic-form-grid grouped-form-grid">
+                        {% for group in selected_groups %}
+                            <article class="cost-group-card">
+                                <div class="cost-group-header">
+                                    <div>
+                                        <span class="topic-card-badge">Campo principal</span>
+                                        <h4>{{ group.root.field.name }}</h4>
+                                        <p>{{ group.root.type_label }}</p>
+                                    </div>
+                                </div>
+                                <div class="field dynamic-entry-field root-entry-field">
+                                    <label for="field_{{ group.root.field.id }}">
+                                        {{ group.root.field.name }}
+                                        <small>{{ group.root.type_label }}</small>
+                                    </label>
+                                    {% if group.root.field.field_type == 'texto' %}
+                                        <input type="text" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                    {% elif group.root.field.field_type == 'numero' %}
+                                        <input type="number" step="1" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                    {% elif group.root.field.field_type == 'link' %}
+                                        <input type="url" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                    {% elif group.root.field.field_type == 'valor' %}
+                                        <input type="number" step="0.01" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                    {% endif %}
+                                </div>
+                                {% if group.children %}
+                                    <div class="subfield-zone">
+                                        <div class="subfield-zone-header">
+                                            <strong>Subcampos</strong>
+                                            <span>{{ group.children|length }}</span>
+                                        </div>
+                                        <div class="subfield-grid">
+                                            {% for row in group.children %}
+                                                <div class="field dynamic-entry-field subfield-entry level-{{ row.level }}">
+                                                    <label for="field_{{ row.field.id }}">
+                                                        {{ row.field.name }}
+                                                        <small>{{ row.type_label }}</small>
+                                                    </label>
+                                                    {% if row.field.field_type == 'texto' %}
+                                                        <input type="text" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                    {% elif row.field.field_type == 'numero' %}
+                                                        <input type="number" step="1" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                    {% elif row.field.field_type == 'link' %}
+                                                        <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                    {% elif row.field.field_type == 'valor' %}
+                                                        <input type="number" step="0.01" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                    {% endif %}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </article>
+                        {% endfor %}
                     </div>
-                    <div class="field">
-                        <label for="{{ field_form.field_type.id_for_label }}">{{ field_form.field_type.label }}</label>
-                        {{ field_form.field_type }}
-                    </div>
-                    <div class="field">
-                        <label for="{{ field_form.parent_id.id_for_label }}">{{ field_form.parent_id.label }}</label>
-                        {{ field_form.parent_id }}
-                    </div>
-                    <button type="submit" class="button-primary">Salvar campo</button>
+                    <button type="submit" class="button-primary">Salvar novo custo</button>
                 </form>
             {% else %}
-                <p>Selecione um tópico antes de criar campos.</p>
+                <div class="empty-state">
+                    <strong>Nenhum campo criado ainda.</strong>
+                    <p>Use <em>Campos do tópico</em> para criar a estrutura primeiro.</p>
+                </div>
             {% endif %}
         </div>
     </div>
+    {% endif %}
 
     <script>
         function openModal(id) {
@@ -329,6 +347,11 @@
         document.querySelectorAll('[data-close-modal]').forEach((button) => {
             button.addEventListener('click', () => closeModal(button.dataset.closeModal));
         });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const autoOpen = urlParams.get('open');
+        if (autoOpen === 'campos') openModal('campos-modal');
+        else if (autoOpen === 'custo') openModal('custo-modal');
     </script>
 </body>
 </html>

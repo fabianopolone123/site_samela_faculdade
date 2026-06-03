@@ -133,3 +133,14 @@
 - O fluxo antigo de categorias em `Cadastrar custos` foi substituído por um construtor dinâmico de tópicos, campos e subcampos
 - A tela `Cadastrar custos` agora permite montar a estrutura e registrar novos custos com base no tópico selecionado
 - A área de `Novo custo` foi reorganizada para ficar mais clara, separando cada campo principal em um bloco próprio e mantendo os subcampos logo abaixo
+
+### 2026-06-03
+
+- Tópico `Material permanente adquirido no país e importado` criado via Django shell com campos: Nome do produto, Orçamento 1/2/3 (Preço, Link, Quantidade), Selecionar para orçar
+- Interface de `Cadastrar custos` reestruturada: ao selecionar um tópico, a área principal exibe apenas dois botões de ação e a lista de registros
+- Botão `Campos do tópico` abre modal com a estrutura de campos cadastrados (com botão de exclusão por campo/subcampo) e formulário de adição inline
+- Botão `Novo custo` abre modal com o formulário dinâmico de preenchimento
+- Após adicionar ou excluir campo, o modal `Campos do tópico` reabre automaticamente via parâmetro `?open=campos` na URL
+- Adicionada view `delete_topic_field_view` e rota `cadastrar-campos/campos/<id>/excluir/` para exclusão de campos
+- Botão `Novo custo` fica desabilitado enquanto não houver campos cadastrados no tópico
+- Novos estilos CSS: `.modal-content--wide`, `.topic-action-header`, `.campos-modal-body`, `.campos-add-grid`, `.icon-button--danger`, `.action-badge`, entre outros

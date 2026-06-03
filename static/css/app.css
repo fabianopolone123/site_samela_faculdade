@@ -1266,6 +1266,139 @@ tr.is-selected {
     }
 }
 
+/* Wide modal */
+.modal-content--wide {
+    width: min(860px, calc(100% - 24px));
+    max-height: calc(100vh - 96px);
+    overflow-y: auto;
+}
+
+/* Topic action header */
+.topic-action-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.topic-action-title {
+    display: grid;
+    gap: 8px;
+}
+
+.topic-action-title h2 {
+    margin: 0;
+}
+
+.topic-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+}
+
+/* Badge de contagem no botão */
+.action-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(0, 95, 115, 0.15);
+    color: var(--accent);
+    font-size: 0.76rem;
+    font-weight: 700;
+    margin-left: 6px;
+}
+
+/* Botão desabilitado */
+.button-primary.button-disabled,
+.button-primary:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Campos modal body */
+.campos-modal-body {
+    display: grid;
+    gap: 0;
+}
+
+.campos-section {
+    display: grid;
+    gap: 16px;
+    padding: 20px 0;
+}
+
+.campos-section:not(:last-child) {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 28px;
+}
+
+.campos-section--add {
+    padding-top: 24px;
+}
+
+.campos-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.campos-section-header h3 {
+    margin: 0;
+}
+
+.campos-section-header span {
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9rem;
+}
+
+.campos-add-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+/* Form de exclusão inline */
+.inline-delete-form {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+/* Botão de perigo (excluir) */
+.icon-button--danger {
+    background: rgba(155, 34, 38, 0.07);
+    color: var(--danger);
+    transition: background 0.2s ease;
+}
+
+.icon-button--danger:hover {
+    background: rgba(155, 34, 38, 0.16);
+}
+
+/* Botão pequeno */
+.icon-button--sm {
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+}
+
+/* Ações inline na estrutura de item */
+.structure-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
 @keyframes drift {
     from {
         transform: translate3d(0, 0, 0) scale(1);

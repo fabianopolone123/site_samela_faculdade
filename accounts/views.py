@@ -149,7 +149,19 @@ def create_topic_field_view(request):
     else:
         messages.error(request, 'Não foi possível cadastrar o campo.')
 
-    return redirect(f"{reverse('budget_product_create')}?topic={topic.id}")
+    return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+
+@login_required
+def delete_topic_field_view(request, field_id):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    field = get_object_or_404(CostField, id=field_id)
+    topic_id = field.topic_id
+    field.delete()
+    messages.success(request, 'Campo excluído com sucesso.')
+    return redirect(f"{reverse('budget_product_create')}?topic={topic_id}&open=campos")
 
 
 @login_required
