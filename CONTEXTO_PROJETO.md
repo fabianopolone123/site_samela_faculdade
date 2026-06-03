@@ -174,3 +174,4 @@
 - Tópico `Bolsas — EP-3 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com Mestrado concluído, dedicação de 4h semanais
 - Tópico `Bolsas — EP-4 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com Mestrado concluído, dedicação de 8h semanais
 - Tópico `Bolsas — EP-5 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com Doutorado concluído, dedicação de 4h semanais
+- Tópico `Bolsas — EP-6 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com Doutorado concluído, dedicação de 8h semanais
