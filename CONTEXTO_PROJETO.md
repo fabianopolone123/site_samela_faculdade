@@ -163,3 +163,4 @@
 - Tópico `Bolsas como Item Orçamentário` criado: Modalidade da bolsa, Valor orçamentário (por estudante), Quantidade de estudantes, Duração em meses — sem orçamentos comparativos pois valor é tabelado pela FAPESP
 - Tópico `Bolsas — Iniciação Científica` criado: Valor orçamentário (por estudante), Quantidade de estudantes, Duração em meses; descrição específica da modalidade IC
 - Tópico `Bolsas — Mestrado` criado: mesmos campos; descrição específica da modalidade Mestrado
+- Tópico `Bolsas — Doutorado Direto` criado: mesmos campos; mesma descrição do Mestrado
