@@ -1266,6 +1266,47 @@ tr.is-selected {
     }
 }
 
+/* Card de total geral (todos os tópicos) no cabeçalho */
+.builder-hero-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+    flex-shrink: 0;
+}
+
+.all-topics-total-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    padding: 16px 22px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(0, 95, 115, 0.12), rgba(238, 155, 0, 0.16));
+    border: 1px solid rgba(0, 95, 115, 0.2);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.all-topics-total-card span {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+}
+
+.all-topics-total-card strong {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.1;
+}
+
+.all-topics-total-card small {
+    font-size: 0.78rem;
+    color: var(--muted);
+}
+
 /* Dropdown flutuante de tópicos */
 .topic-dropdown-wrap {
     position: relative;

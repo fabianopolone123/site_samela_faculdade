@@ -100,6 +100,8 @@ def budget_product_create_view(request):
         build_record_cards(selected_topic, selected_rows) if selected_topic else ([], Decimal('0'))
     )
 
+    all_topics_total = sum(calculate_topic_total(t) for t in topics)
+
     context = {
         'topics': topics,
         'selected_topic': selected_topic,
@@ -112,6 +114,7 @@ def budget_product_create_view(request):
         'selected_groups': selected_groups,
         'selected_records': selected_records,
         'topic_grand_total': topic_grand_total,
+        'all_topics_total': all_topics_total,
     }
     return render(request, 'accounts/budget_product_form.html', context)
 
@@ -532,6 +535,16 @@ def build_topic_groups(topic):
             current_group['children'].append({**row, 'field_role': field_role})
 
     return groups
+
+
+def calculate_topic_total(topic):
+    all_fields = list(topic.fields.all())
+    total = Decimal('0')
+    for record in topic.records.prefetch_related('values__field').all():
+        t = get_selected_total_for_record(record, all_fields)
+        if t is not None:
+            total += t
+    return total
 
 
 def get_selected_total_for_record(record, topic_fields):
