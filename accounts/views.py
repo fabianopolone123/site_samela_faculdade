@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
-from django.core.mail import EmailMessage, send_mail
+from django.core.mail import EmailMessage
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -110,7 +110,7 @@ def budget_product_create_view(request):
         build_record_cards(selected_topic, selected_rows) if selected_topic else ([], Decimal('0'))
     )
 
-    all_topics_total = sum(calculate_topic_total(t) for t in topics)
+    all_topics_total = sum(calculate_topic_total(topic) for topic in topics)
 
     context = {
         'topics': topics,
@@ -534,17 +534,17 @@ def calculate_topic_total(topic):
     all_fields = list(topic.fields.all())
     total = Decimal('0')
     for record in topic.records.prefetch_related('values__field').all():
-        t = get_selected_total_for_record(record, all_fields)
-        if t is not None:
-            total += t
+        topic_total = get_selected_total_for_record(record, all_fields)
+        if topic_total is not None:
+            total += topic_total
     return total
 
 
 def get_selected_total_for_record(record, topic_fields):
-    values_map = {rv.field_id: rv.value for rv in record.values.all()}
+    values_map = {record_value.field_id: record_value.value for record_value in record.values.all()}
 
     selector = next(
-        (f for f in topic_fields if f.parent_id is None and 'selecionar' in f.name.lower()),
+        (field for field in topic_fields if field.parent_id is None and 'selecionar' in field.name.lower()),
         None,
     )
     if not selector:
@@ -554,36 +554,36 @@ def get_selected_total_for_record(record, topic_fields):
     if not selected_str:
         return None
 
-    orc_parent = next(
+    budget_parent = next(
         (
-            f for f in topic_fields
-            if f.parent_id is None and f.name.strip() == f'Orçamento {selected_str}'
+            field for field in topic_fields
+            if field.parent_id is None and field.name.strip() == f'Orçamento {selected_str}'
         ),
         None,
     )
-    if not orc_parent:
+    if not budget_parent:
         return None
 
-    preco_val = Decimal('0')
-    frete_val = Decimal('0')
+    price_value = Decimal('0')
+    freight_value = Decimal('0')
 
-    for f in topic_fields:
-        if f.parent_id != orc_parent.id:
+    for field in topic_fields:
+        if field.parent_id != budget_parent.id:
             continue
-        val_str = values_map.get(f.id, '').strip()
-        if not val_str:
+        value_str = values_map.get(field.id, '').strip()
+        if not value_str:
             continue
         try:
-            amount = Decimal(val_str)
+            amount = Decimal(value_str)
         except (InvalidOperation, ValueError):
             continue
-        name_lower = f.name.lower().strip()
+        name_lower = field.name.lower().strip()
         if name_lower in ('preço', 'preco'):
-            preco_val = amount
+            price_value = amount
         elif name_lower == 'frete':
-            frete_val = amount
+            freight_value = amount
 
-    return preco_val + frete_val
+    return price_value + freight_value
 
 
 def build_record_cards(topic, selected_rows):

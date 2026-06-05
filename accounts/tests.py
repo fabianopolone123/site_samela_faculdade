@@ -7,6 +7,14 @@ from .models import CostField, CostRecord, CostRecordValue, CostTopic, SignupCod
 
 
 class SignupFlowTests(TestCase):
+    def test_login_page_displays_ptbr_texts_correctly(self):
+        response = self.client.get(reverse('login'))
+
+        self.assertContains(response, 'Instituição')
+        self.assertContains(response, 'Código')
+        self.assertNotContains(response, 'InstituiÃ§Ã£o', html=False)
+        self.assertNotContains(response, 'CÃ³digo', html=False)
+
     def test_disallowed_email_cannot_start_signup(self):
         response = self.client.post(
             reverse('signup_email'),
@@ -162,6 +170,8 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, 'Monte os tópicos e registre os custos do orçamento')
         self.assertContains(response, 'Bolsas')
         self.assertContains(response, 'Modalidade')
+        self.assertNotContains(response, 'tÃ³picos', html=False)
+        self.assertNotContains(response, 'orÃ§amento', html=False)
 
     def test_budget_ready_reflects_dynamic_topics_and_records(self):
         topic = CostTopic.objects.create(

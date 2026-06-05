@@ -231,3 +231,4 @@
 - `Orçamento pronto` passou a refletir os tópicos e registros do construtor dinâmico
 - Os registros salvos em `Cadastrar custos` passaram a aparecer de forma resumida, com detalhes em janela suspensa
 - Foi criada a migration `accounts/migrations/0008_alter_budgetcostentry_selected_quote_number_and_more.py` para sincronizar campos legados do orçamento antigo e eliminar o aviso de migração pendente no deploy
+- Foi criada a migration `accounts/migrations/0009_normalize_ptbr_texts.py` para corrigir textos quebrados e normalizar acentuação em tópicos, campos e seções já salvos no banco
