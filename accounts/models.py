@@ -249,6 +249,36 @@ class CostRecordValue(models.Model):
         unique_together = [('record', 'field')]
 
 
+class AuditLog(models.Model):
+    ACTION_CREATE = 'cadastro'
+    ACTION_UPDATE = 'alteracao'
+    ACTION_DELETE = 'exclusao'
+    ACTION_CHOICES = [
+        (ACTION_CREATE, 'Cadastro'),
+        (ACTION_UPDATE, 'Alteração'),
+        (ACTION_DELETE, 'Exclusão'),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_logs',
+    )
+    action = models.CharField('ação', max_length=20, choices=ACTION_CHOICES)
+    target_type = models.CharField('tipo do registro', max_length=100)
+    target_name = models.CharField('registro', max_length=255)
+    description = models.TextField('detalhes', blank=True)
+    created_at = models.DateTimeField('criado em', auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.get_action_display()} - {self.target_type}: {self.target_name}'
+
+
 class SignupCode(models.Model):
     email = models.EmailField('e-mail')
     code = models.CharField('código', max_length=6)

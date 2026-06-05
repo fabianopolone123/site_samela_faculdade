@@ -21,6 +21,7 @@ from .forms import (
     TopicForm,
 )
 from .models import (
+    AuditLog,
     CostField,
     CostRecord,
     CostRecordValue,
@@ -86,6 +87,16 @@ def dashboard_view(request):
 
 
 @login_required
+def audit_log_view(request):
+    if not request.user.is_staff:
+        messages.error(request, 'A auditoria está disponível apenas para o login de administração.')
+        return redirect('dashboard')
+
+    audit_logs = AuditLog.objects.select_related('user').all()[:300]
+    return render(request, 'accounts/audit_log.html', {'audit_logs': audit_logs})
+
+
+@login_required
 def budget_product_create_view(request):
     topics = list(
         CostTopic.objects.prefetch_related(
@@ -137,6 +148,13 @@ def create_topic_view(request):
     form = TopicForm(request.POST)
     if form.is_valid():
         topic = CostTopic.objects.create(name=form.cleaned_data['name'])
+        register_audit_log(
+            request.user,
+            AuditLog.ACTION_CREATE,
+            'Tópico',
+            topic.name,
+            'Cadastro de novo tópico na área de custos.',
+        )
         messages.success(request, 'Tópico cadastrado com sucesso.')
         return redirect(f"{reverse('budget_product_create')}?topic={topic.id}")
 
@@ -150,7 +168,15 @@ def delete_topic_view(request, topic_id):
         return redirect('budget_product_create')
 
     topic = get_object_or_404(CostTopic, id=topic_id)
+    topic_name = topic.name
     topic.delete()
+    register_audit_log(
+        request.user,
+        AuditLog.ACTION_DELETE,
+        'Tópico',
+        topic_name,
+        'Exclusão do tópico e dos registros vinculados.',
+    )
     messages.success(request, 'Tópico excluído com sucesso.')
     return redirect('budget_product_create')
 
@@ -174,6 +200,13 @@ def create_topic_field_view(request):
             name=form.cleaned_data['name'],
             field_type=form.cleaned_data['field_type'],
         )
+        register_audit_log(
+            request.user,
+            AuditLog.ACTION_CREATE,
+            'Campo',
+            form.cleaned_data['name'],
+            f'Cadastro de campo no tópico {topic.name}.',
+        )
         messages.success(request, 'Campo cadastrado com sucesso.')
     else:
         messages.error(request, 'Não foi possível cadastrar o campo.')
@@ -190,6 +223,13 @@ def update_topic_description_view(request, topic_id):
     if form.is_valid():
         topic.description = form.cleaned_data['description']
         topic.save()
+        register_audit_log(
+            request.user,
+            AuditLog.ACTION_UPDATE,
+            'Tópico',
+            topic.name,
+            'Atualização da observação do tópico.',
+        )
         messages.success(request, 'Observação salva com sucesso.')
     else:
         messages.error(request, 'Não foi possível salvar a observação.')
@@ -203,7 +243,16 @@ def delete_topic_field_view(request, field_id):
 
     field = get_object_or_404(CostField, id=field_id)
     topic_id = field.topic_id
+    field_name = field.name
+    topic_name = field.topic.name
     field.delete()
+    register_audit_log(
+        request.user,
+        AuditLog.ACTION_DELETE,
+        'Campo',
+        field_name,
+        f'Exclusão de campo do tópico {topic_name}.',
+    )
     messages.success(request, 'Campo excluído com sucesso.')
     return redirect(f"{reverse('budget_product_create')}?topic={topic_id}&open=campos")
 
@@ -237,6 +286,13 @@ def create_topic_record_view(request):
         record.delete()
         messages.error(request, 'Preencha ao menos um campo para salvar o novo custo.')
     else:
+        register_audit_log(
+            request.user,
+            AuditLog.ACTION_CREATE,
+            'Custo',
+            get_record_title_from_record(record),
+            f'Cadastro de novo custo no tópico {topic.name}.',
+        )
         messages.success(request, 'Novo custo cadastrado com sucesso.')
 
     return redirect(f"{reverse('budget_product_create')}?topic={topic.id}")
@@ -249,8 +305,17 @@ def delete_topic_record_view(request, record_id):
 
     record = get_object_or_404(CostRecord, id=record_id)
     topic_id = record.topic_id
+    topic_name = record.topic.name
+    record_title = get_record_title_from_record(record)
     next_url = request.POST.get('next', '').strip()
     record.delete()
+    register_audit_log(
+        request.user,
+        AuditLog.ACTION_DELETE,
+        'Custo',
+        record_title,
+        f'Exclusão de custo do tópico {topic_name}.',
+    )
     messages.success(request, 'Custo excluído com sucesso.')
 
     if next_url.startswith('/'):
@@ -551,6 +616,9 @@ def build_topic_groups(topic):
             if name_lower in ('preço', 'preco', 'price'):
                 field_role = 'preco'
                 current_group['has_price_calc'] = True
+            elif name_lower == 'quantidade':
+                field_role = 'quantidade'
+                current_group['has_price_calc'] = True
             elif name_lower == 'frete':
                 field_role = 'frete'
                 current_group['has_price_calc'] = True
@@ -596,6 +664,7 @@ def get_selected_total_for_record(record, topic_fields):
         return None
 
     price_value = Decimal('0')
+    quantity_value = Decimal('1')
     freight_value = Decimal('0')
 
     for field in topic_fields:
@@ -610,10 +679,12 @@ def get_selected_total_for_record(record, topic_fields):
         name_lower = field.name.lower().strip()
         if name_lower in ('preço', 'preco'):
             price_value = amount
+        elif name_lower == 'quantidade':
+            quantity_value = amount
         elif name_lower == 'frete':
             freight_value = amount
 
-    return price_value + freight_value
+    return (price_value * quantity_value) + freight_value
 
 
 def build_record_cards(topic, selected_rows):
@@ -631,6 +702,7 @@ def build_record_cards(topic, selected_rows):
                     'field_type_code': value.field.field_type,
                     'value': value.value,
                     'display_value': format_value_for_display(value.field.field_type, value.value),
+                    'is_url_value': is_probably_url(value.value),
                     'level': get_field_level(value.field),
                     'order': field_order.get(value.field_id, 9999),
                 }
@@ -675,6 +747,17 @@ def get_record_title(values, index):
     return f'Cadastro {index}'
 
 
+def get_record_title_from_record(record):
+    values = [
+        {
+            'field_name': value.field.name,
+            'value': value.value,
+        }
+        for value in record.values.select_related('field').all()
+    ]
+    return get_record_title(values, record.id or 0)
+
+
 def get_field_level(field):
     level = 0
     current = field.parent
@@ -717,3 +800,18 @@ def format_value_for_display(field_type_code, value):
         if parsed is not None:
             return format_decimal_br(parsed)
     return value
+
+
+def is_probably_url(value):
+    normalized = value.strip().lower()
+    return normalized.startswith('http://') or normalized.startswith('https://')
+
+
+def register_audit_log(user, action, target_type, target_name, description=''):
+    AuditLog.objects.create(
+        user=user if getattr(user, 'is_authenticated', False) else None,
+        action=action,
+        target_type=target_type,
+        target_name=target_name,
+        description=description,
+    )

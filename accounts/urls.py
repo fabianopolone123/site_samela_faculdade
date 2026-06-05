@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.login_view, name='login'),
     path('sair/', views.logout_view, name='logout'),
     path('painel/', views.dashboard_view, name='dashboard'),
+    path('auditoria/', views.audit_log_view, name='audit_log'),
     path('cadastrar-campos/', views.budget_product_create_view, name='budget_product_create'),
     path('cadastrar-campos/topicos/', views.create_topic_view, name='create_topic'),
     path('cadastrar-campos/topicos/<int:topic_id>/excluir/', views.delete_topic_view, name='delete_topic'),

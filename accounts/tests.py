@@ -3,7 +3,7 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import CostField, CostRecord, CostRecordValue, CostTopic, SignupCode, User
+from .models import AuditLog, CostField, CostRecord, CostRecordValue, CostTopic, SignupCode, User
 
 
 class SignupFlowTests(TestCase):
@@ -278,3 +278,53 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertRedirects(response, reverse('budget_product_create'))
         self.assertFalse(CostTopic.objects.filter(id=topic.id).exists())
         self.assertFalse(CostRecord.objects.filter(id=record.id).exists())
+
+
+class AuditLogTests(TestCase):
+    def test_admin_dashboard_shows_audit_button(self):
+        self.client.post(reverse('login'), {'username': 'adm', 'password': '123'})
+
+        response = self.client.get(reverse('dashboard'))
+
+        self.assertContains(response, 'Auditoria')
+
+    def test_non_admin_cannot_access_audit_page(self):
+        self.client.post(reverse('login'), {'username': 'fabiano', 'password': '123'})
+
+        response = self.client.get(reverse('audit_log'))
+
+        self.assertRedirects(response, reverse('dashboard'))
+
+    def test_creating_topic_generates_audit_log(self):
+        self.client.post(reverse('login'), {'username': 'adm', 'password': '123'})
+
+        response = self.client.post(reverse('create_topic'), {'name': 'Tópico auditado'})
+
+        topic = CostTopic.objects.get(name='Tópico auditado')
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}",
+        )
+        audit_log = AuditLog.objects.get(
+            action=AuditLog.ACTION_CREATE,
+            target_type='Tópico',
+            target_name='Tópico auditado',
+        )
+        self.assertEqual(audit_log.user.login_name, 'adm')
+
+    def test_audit_page_lists_registered_actions(self):
+        admin_user = User.objects.get(login_name='adm')
+        AuditLog.objects.create(
+            user=admin_user,
+            action=AuditLog.ACTION_DELETE,
+            target_type='Custo',
+            target_name='Notebook',
+            description='Exclusão de custo no tópico Material permanente.',
+        )
+        self.client.post(reverse('login'), {'username': 'adm', 'password': '123'})
+
+        response = self.client.get(reverse('audit_log'))
+
+        self.assertContains(response, 'Notebook')
+        self.assertContains(response, 'Exclusão')
+        self.assertContains(response, 'adm')

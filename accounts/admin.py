@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .models import (
+    AuditLog,
     BudgetCostEntry,
     BudgetCostQuote,
     BudgetProduct,
@@ -14,6 +15,14 @@ from .models import (
     SignupCode,
     User,
 )
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'action', 'target_type', 'target_name', 'user')
+    list_filter = ('action', 'target_type', 'created_at')
+    search_fields = ('target_name', 'description', 'user__email', 'user__login_name')
+    readonly_fields = ('user', 'action', 'target_type', 'target_name', 'description', 'created_at')
 
 
 @admin.register(User)

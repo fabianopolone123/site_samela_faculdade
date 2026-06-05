@@ -100,7 +100,7 @@
                         {% for value in record_card.values %}
                             <div class="record-value level-{{ value.level }}">
                                 <span>{{ value.field_name }}</span>
-                                {% if value.field_type_code == 'link' %}
+                                {% if value.field_type_code == 'link' and value.is_url_value %}
                                     <a href="{{ value.value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
                                 {% else %}
                                     <strong>{{ value.display_value }}</strong>

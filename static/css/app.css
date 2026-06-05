@@ -1922,6 +1922,62 @@ tr.is-selected {
     flex-shrink: 0;
 }
 
+.audit-card {
+    display: grid;
+    gap: 18px;
+}
+
+.audit-log-list {
+    display: grid;
+    gap: 14px;
+}
+
+.audit-log-item {
+    display: grid;
+    gap: 10px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.88);
+}
+
+.audit-log-item--cadastro {
+    border-left: 5px solid #2a9d8f;
+}
+
+.audit-log-item--alteracao {
+    border-left: 5px solid #e9c46a;
+}
+
+.audit-log-item--exclusao {
+    border-left: 5px solid #9b2226;
+}
+
+.audit-log-topline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.audit-log-topline strong {
+    color: var(--ink);
+}
+
+.audit-log-meta {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-size: 0.92rem;
+}
+
+.audit-log-item p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.6;
+}
+
 @keyframes drift {
     from {
         transform: translate3d(0, 0, 0) scale(1);

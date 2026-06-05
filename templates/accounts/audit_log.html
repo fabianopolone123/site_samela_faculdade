@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoria | NEEVY - UFSCar</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="dashboard-body">
+    <main class="budget-shell">
+        <section class="workspace-header">
+            <span class="eyebrow">Auditoria</span>
+            <h1>Histórico de ações do sistema</h1>
+            <p>Registro consolidado de cadastros, exclusões e alterações feitas pelos usuários autenticados.</p>
+            <div class="workspace-links">
+                <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
+            </div>
+        </section>
+
+        <section class="workspace-card audit-card">
+            <div class="builder-panel-header">
+                <h2>Últimas ações</h2>
+                <span>{{ audit_logs|length }} registro(s)</span>
+            </div>
+
+            {% if audit_logs %}
+                <div class="audit-log-list">
+                    {% for audit in audit_logs %}
+                        <article class="audit-log-item audit-log-item--{{ audit.action }}">
+                            <div class="audit-log-topline">
+                                <span class="topic-card-badge">{{ audit.get_action_display }}</span>
+                                <strong>{{ audit.target_type }}: {{ audit.target_name }}</strong>
+                            </div>
+                            <div class="audit-log-meta">
+                                <span>Usuário: {{ audit.user.login_name|default:audit.user.email|default:"sistema" }}</span>
+                                <span>Quando: {{ audit.created_at|date:"d/m/Y H:i" }}</span>
+                            </div>
+                            {% if audit.description %}
+                                <p>{{ audit.description }}</p>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <strong>Nenhuma ação registrada ainda.</strong>
+                    <p>Os próximos cadastros, alterações e exclusões aparecerão aqui.</p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+</body>
+</html>

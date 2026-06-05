@@ -10,7 +10,6 @@
 <body class="dashboard-body">
     <main class="dashboard-centered-shell">
         <section class="dashboard-welcome-card">
-
             <div class="dashboard-welcome-header">
                 <span class="eyebrow">Portal NEEVY - UFSCar</span>
                 <h1>Bem-vindo</h1>
@@ -36,6 +35,15 @@
                         <small>Visualizar resumo do orçamento</small>
                     </div>
                 </a>
+                {% if request.user.is_staff %}
+                <a href="{% url 'audit_log' %}" class="dashboard-nav-item">
+                    <span class="dashboard-nav-icon">🔎</span>
+                    <div>
+                        <strong>Auditoria</strong>
+                        <small>Ver cadastros, exclusões e alterações</small>
+                    </div>
+                </a>
+                {% endif %}
             </div>
 
             <div class="dashboard-divider"></div>

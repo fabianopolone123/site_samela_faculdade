@@ -235,3 +235,9 @@
 - Os registros salvos em `Cadastrar custos` passaram a aparecer de forma resumida, com detalhes em janela suspensa
 - Foi criada a migration `accounts/migrations/0008_alter_budgetcostentry_selected_quote_number_and_more.py` para sincronizar campos legados do orçamento antigo e eliminar o aviso de migração pendente no deploy
 - Foi criada a migration `accounts/migrations/0009_normalize_ptbr_texts.py` para corrigir textos quebrados e normalizar acentuação em tópicos, campos e seções já salvos no banco
+- O painel principal passou a exibir o botão `Auditoria` apenas para o login `adm`
+- Foi criada a migration `accounts/migrations/0010_auditlog.py` com o modelo `AuditLog`
+- A auditoria registra cadastros, alterações e exclusões de tópicos, campos e custos, com usuário responsável e data/hora
+- Foi criada a tela `templates/accounts/audit_log.html` para consulta do histórico administrativo
+- O cálculo do total do orçamento selecionado passou a considerar `preço × quantidade + frete`
+- Campos do tipo `Link` agora só exibem o botão `Abrir link` quando o valor salvo for uma URL válida
