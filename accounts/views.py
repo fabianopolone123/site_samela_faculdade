@@ -598,6 +598,7 @@ def build_record_cards(topic, selected_rows):
                 {
                     'field_name': value.field.name,
                     'field_type': value.field.get_field_type_display(),
+                    'field_type_code': value.field.field_type,
                     'value': value.value,
                     'level': get_field_level(value.field),
                     'order': field_order.get(value.field_id, 9999),

@@ -195,12 +195,19 @@ class DynamicTopicBudgetTests(TestCase):
             name='Frete',
             field_type='valor',
         )
+        quote_link = CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='Link',
+            field_type='link',
+        )
 
         record = CostRecord.objects.create(topic=topic)
         CostRecordValue.objects.create(record=record, field=service_name, value='Transcrição de entrevistas')
         CostRecordValue.objects.create(record=record, field=selector, value='1')
         CostRecordValue.objects.create(record=record, field=quote_price, value='120.00')
         CostRecordValue.objects.create(record=record, field=quote_freight, value='30.00')
+        CostRecordValue.objects.create(record=record, field=quote_link, value='https://example.com/orcamento')
 
         response = self.client.get(reverse('budget_ready'))
 
@@ -208,3 +215,5 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, 'Transcrição de entrevistas')
         self.assertContains(response, 'Resumo dinâmico do tópico.')
         self.assertContains(response, 'R$ 150,00', html=False)
+        self.assertContains(response, 'Abrir link')
+        self.assertContains(response, 'https://example.com/orcamento')

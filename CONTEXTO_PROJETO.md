@@ -119,6 +119,7 @@
 - Cada tópico mostra apenas os cadastros realmente salvos naquele tópico
 - O total do tópico e o total geral passam a refletir os registros dinâmicos cadastrados
 - Cada cadastro aparece em formato resumido e, ao clicar, abre uma janela suspensa com os detalhes
+- Quando um detalhe contém campo do tipo link, a janela suspensa exibe botão para abrir o endereço no navegador
 
 ## Ajustes visuais e textuais
 
