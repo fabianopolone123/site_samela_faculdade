@@ -187,6 +187,9 @@ def budget_product_create_view(request):
         selected_topic = topics[0]
 
     selected_rows = build_topic_rows(selected_topic) if selected_topic else []
+    field_edit_forms = build_field_edit_forms(selected_topic)
+    for row in selected_rows:
+        row['edit_form'] = field_edit_forms.get(row['field'].id)
     selected_groups = build_topic_groups(selected_topic) if selected_topic else []
     selected_records, topic_grand_total = (
         build_record_cards(selected_topic, selected_rows) if selected_topic else ([], Decimal('0'))
@@ -282,6 +285,40 @@ def create_topic_field_view(request):
         messages.success(request, 'Campo cadastrado com sucesso.')
     else:
         messages.error(request, 'Não foi possível cadastrar o campo.')
+
+    return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+
+@login_required
+def update_topic_field_view(request, field_id):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    field = get_object_or_404(CostField, id=field_id)
+    topic = field.topic
+    form = TopicFieldForm(request.POST, topic=topic, current_field=field)
+    if form.is_valid():
+        parent = None
+        parent_id = form.cleaned_data.get('parent_id')
+        if parent_id:
+            parent = get_object_or_404(CostField, id=parent_id, topic=topic)
+
+        previous_name = field.name
+        field.name = form.cleaned_data['name']
+        field.field_type = form.cleaned_data['field_type']
+        field.calculation_role = form.cleaned_data['calculation_role'] or CostField.ROLE_NONE
+        field.parent = parent
+        field.save()
+        register_audit_log(
+            request.user,
+            AuditLog.ACTION_UPDATE,
+            'Campo',
+            field.name,
+            f'Edição do campo {previous_name} no tópico {topic.name}.',
+        )
+        messages.success(request, 'Campo atualizado com sucesso.')
+    else:
+        messages.error(request, 'Não foi possível atualizar o campo.')
 
     return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
 
@@ -680,6 +717,25 @@ def build_topic_rows(topic):
         walk(root, 0)
 
     return rows
+
+
+def build_field_edit_forms(topic):
+    if topic is None:
+        return {}
+
+    forms_map = {}
+    for field in topic.fields.all():
+        forms_map[field.id] = TopicFieldForm(
+            topic=topic,
+            current_field=field,
+            initial={
+                'name': field.name,
+                'field_type': field.field_type,
+                'calculation_role': field.calculation_role,
+                'parent_id': str(field.parent_id) if field.parent_id else '',
+            },
+        )
+    return forms_map
 
 
 def build_topic_groups(topic):

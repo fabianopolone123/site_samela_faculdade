@@ -144,6 +144,35 @@ class DynamicTopicBudgetTests(TestCase):
         field = CostField.objects.get(topic=topic, name='Preço unitário')
         self.assertEqual(field.calculation_role, CostField.ROLE_UNIT_PRICE)
 
+    def test_can_update_field_with_calculation_role(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        parent = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        field = CostField.objects.create(
+            topic=topic,
+            name='Campo antigo',
+            field_type='texto',
+        )
+
+        response = self.client.post(
+            reverse('update_topic_field', args=[field.id]),
+            {
+                'name': 'Preço ajustado',
+                'field_type': 'valor',
+                'calculation_role': CostField.ROLE_UNIT_PRICE,
+                'parent_id': str(parent.id),
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}&open=campos",
+        )
+        field.refresh_from_db()
+        self.assertEqual(field.name, 'Preço ajustado')
+        self.assertEqual(field.field_type, 'valor')
+        self.assertEqual(field.calculation_role, CostField.ROLE_UNIT_PRICE)
+        self.assertEqual(field.parent, parent)
+
     def test_can_create_dynamic_cost_record(self):
         topic = CostTopic.objects.create(name='Material permanente')
         product = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')

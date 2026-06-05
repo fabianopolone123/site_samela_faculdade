@@ -249,3 +249,5 @@
 - A tela `Campos do tópico` agora permite definir a função do campo, como `Preço unitário`, `Multiplicador / Quantidade`, `Frete / Adicional`, `Seletor de orçamento` e `Total calculado`
 - O formulário de `Novo custo` passou a usar essas funções para calcular automaticamente `preço × quantidade + frete`
 - Campos marcados como `Total calculado` são preenchidos automaticamente no cadastro e aparecem nos detalhes do custo salvo
+- A lista de campos ganhou botão de editar ao lado do excluir, tanto para campo principal quanto para subcampo
+- A edição do campo abre janela suspensa e permite alterar nome, tipo, função do campo e vínculo com campo pai

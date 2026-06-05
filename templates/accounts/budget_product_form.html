@@ -225,14 +225,22 @@
                                         <div>
                                             <span class="topic-card-badge">Campo principal</span>
                                             <h4>{{ group.root.field.name }}</h4>
-                                            <p>{{ group.root.type_label }}</p>
+                                            <p>{{ group.root.type_label }}{% if group.root.field.calculation_role != 'nenhuma' %} · {{ group.root.field.get_calculation_role_display }}{% endif %}</p>
                                         </div>
-                                        <form method="post" action="{% url 'delete_topic_field' group.root.field.id %}" class="inline-delete-form">
-                                            {% csrf_token %}
-                                            <button type="submit" class="icon-button icon-button--danger"
-                                                    title="Excluir campo e subcampos"
-                                                    onclick="return confirm('Excluir o campo e todos os seus subcampos?')">×</button>
-                                        </form>
+                                        <div class="structure-item-actions">
+                                            <button
+                                                type="button"
+                                                class="icon-button icon-button--sm"
+                                                title="Editar campo"
+                                                data-open-modal="edit-field-modal-{{ group.root.field.id }}"
+                                            >✎</button>
+                                            <form method="post" action="{% url 'delete_topic_field' group.root.field.id %}" class="inline-delete-form">
+                                                {% csrf_token %}
+                                                <button type="submit" class="icon-button icon-button--danger"
+                                                        title="Excluir campo e subcampos"
+                                                        onclick="return confirm('Excluir o campo e todos os seus subcampos?')">×</button>
+                                            </form>
+                                        </div>
                                     </div>
                                     {% if group.children %}
                                         <div class="structure-list">
@@ -244,6 +252,12 @@
                                                     </div>
                                                     <div class="structure-item-actions">
                                                         <span class="structure-tag">Subcampo</span>
+                                                        <button
+                                                            type="button"
+                                                            class="icon-button icon-button--sm"
+                                                            title="Editar subcampo"
+                                                            data-open-modal="edit-field-modal-{{ row.field.id }}"
+                                                        >✎</button>
                                                         <form method="post" action="{% url 'delete_topic_field' row.field.id %}" class="inline-delete-form">
                                                             {% csrf_token %}
                                                             <button type="submit" class="icon-button icon-button--danger icon-button--sm"
@@ -400,6 +414,43 @@
             {% endif %}
         </div>
     </div>
+
+    {% for row in selected_rows %}
+    <div class="modal" id="edit-field-modal-{{ row.field.id }}" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="edit-field-modal-{{ row.field.id }}"></div>
+        <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">Editar campo</span>
+                    <h2>{{ row.field.name }}</h2>
+                </div>
+                <button type="button" class="icon-button" data-close-modal="edit-field-modal-{{ row.field.id }}">×</button>
+            </div>
+            <form method="post" action="{% url 'update_topic_field' row.field.id %}" class="form-stack">
+                {% csrf_token %}
+                <div class="campos-add-grid">
+                    <div class="field">
+                        <label for="{{ row.edit_form.name.id_for_label }}">{{ row.edit_form.name.label }}</label>
+                        {{ row.edit_form.name }}
+                    </div>
+                    <div class="field">
+                        <label for="{{ row.edit_form.field_type.id_for_label }}">{{ row.edit_form.field_type.label }}</label>
+                        {{ row.edit_form.field_type }}
+                    </div>
+                    <div class="field">
+                        <label for="{{ row.edit_form.calculation_role.id_for_label }}">{{ row.edit_form.calculation_role.label }}</label>
+                        {{ row.edit_form.calculation_role }}
+                    </div>
+                    <div class="field">
+                        <label for="{{ row.edit_form.parent_id.id_for_label }}">{{ row.edit_form.parent_id.label }}</label>
+                        {{ row.edit_form.parent_id }}
+                    </div>
+                </div>
+                <button type="submit" class="button-primary">Salvar alterações</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
 
     {% for record_card in selected_records %}
     <div class="modal" id="record-modal-{{ record_card.record.id }}" aria-hidden="true">

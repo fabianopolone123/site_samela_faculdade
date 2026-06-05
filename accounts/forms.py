@@ -102,12 +102,33 @@ class TopicFieldForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         topic = kwargs.pop('topic', None)
+        current_field = kwargs.pop('current_field', None)
         super().__init__(*args, **kwargs)
         self.fields['parent_id'].choices = [('', 'Campo principal')]
+        self.current_field = current_field
         if topic is not None:
+            excluded_ids = set()
+            if current_field is not None:
+                excluded_ids.update(self._get_descendant_ids(current_field))
             self.fields['parent_id'].choices += [
                 (str(field.id), field.name) for field in topic.fields.all()
+                if field.id not in excluded_ids
             ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if self.current_field is not None:
+            parent_id = cleaned_data.get('parent_id')
+            if parent_id and str(self.current_field.id) == str(parent_id):
+                raise forms.ValidationError('Um campo não pode ser vinculado a ele mesmo.')
+        return cleaned_data
+
+    def _get_descendant_ids(self, field):
+        ids = {field.id}
+        children = list(field.children.all())
+        for child in children:
+            ids.update(self._get_descendant_ids(child))
+        return ids
 
 
 class SignupPasswordForm(forms.Form):
