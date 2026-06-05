@@ -114,9 +114,11 @@
 ## Orçamento pronto
 
 - A tela `Orçamento pronto` continua disponível
-- Ela ainda usa a estrutura anterior de seções e itens de orçamento
+- Agora ela usa os `CostTopic` e `CostRecord` do construtor dinâmico
 - O texto institucional do projeto continua exibido nessa tela
-- A integração completa entre o construtor dinâmico de tópicos e a tela `Orçamento pronto` ainda não foi finalizada
+- Cada tópico mostra apenas os cadastros realmente salvos naquele tópico
+- O total do tópico e o total geral passam a refletir os registros dinâmicos cadastrados
+- Cada cadastro aparece em formato resumido e, ao clicar, abre uma janela suspensa com os detalhes
 
 ## Ajustes visuais e textuais
 
@@ -132,6 +134,8 @@
   - cards de registros salvos
   - organização por blocos de campo principal com subcampos agrupados visualmente
 - O modal de campos do tópico já foi ampliado para suportar gestão mais direta da estrutura
+- A lista de registros em `Cadastrar custos` agora mostra só o nome principal de cada cadastro
+- Os detalhes completos de cada cadastro ficam em modal, ao clicar no item salvo
 
 ## Preparação para produção
 

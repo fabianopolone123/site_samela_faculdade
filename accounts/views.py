@@ -21,7 +21,6 @@ from .forms import (
     TopicForm,
 )
 from .models import (
-    BudgetSection,
     CostField,
     CostRecord,
     CostRecordValue,
@@ -230,45 +229,28 @@ def create_topic_record_view(request):
 
 @login_required
 def budget_ready_view(request):
-    all_topics = list(CostTopic.objects.prefetch_related('fields', 'records__values__field').all())
-    all_topics_total = sum(calculate_topic_total(t) for t in all_topics)
-
-    sections = list(
-        BudgetSection.objects.prefetch_related('cost_entries__quotes').order_by('code')
+    all_topics = list(
+        CostTopic.objects.prefetch_related('fields', 'records__values__field').all()
     )
-    section_blocks = []
-    category_totals = {
-        'a': Decimal('0'),
-        'b': Decimal('0'),
-        'c': Decimal('0'),
-        'd': Decimal('0'),
-        'e': Decimal('0'),
-    }
-    general_total = Decimal('0')
+    topic_blocks = []
+    all_topics_total = Decimal('0')
 
-    for section in sections:
-        entries = list(section.cost_entries.all())
-        section_total = sum((entry.total_considered for entry in entries), Decimal('0'))
-        section_blocks.append(
+    for topic in all_topics:
+        rows = build_topic_rows(topic)
+        records, topic_total = build_record_cards(topic, rows)
+        topic_blocks.append(
             {
-                'section': section,
-                'entries': entries,
-                'section_total': section_total,
+                'topic': topic,
+                'records': records,
+                'topic_total': topic_total,
             }
         )
-
-        if section.code in ['a', 'b', 'c', 'e']:
-            category_totals[section.code] += section_total
-        elif section.code.startswith('d'):
-            category_totals['d'] += section_total
-        general_total += section_total
+        all_topics_total += topic_total
 
     context = {
         'project_budget_title': PROJECT_BUDGET_TITLE,
         'project_budget_description': PROJECT_BUDGET_DESCRIPTION,
-        'section_blocks': section_blocks,
-        'category_totals': category_totals,
-        'general_total': general_total,
+        'topic_blocks': topic_blocks,
         'all_topics_total': all_topics_total,
     }
     return render(request, 'accounts/budget_ready.html', context)
@@ -609,9 +591,8 @@ def build_record_cards(topic, selected_rows):
     all_fields = list(topic.fields.all())
     records = []
     grand_total = Decimal('0')
-    has_totals = False
 
-    for record in topic.records.all():
+    for index, record in enumerate(topic.records.all(), start=1):
         values = sorted(
             [
                 {
@@ -625,13 +606,41 @@ def build_record_cards(topic, selected_rows):
             ],
             key=lambda item: item['order'],
         )
+        record_title = get_record_title(values, index)
         selected_total = get_selected_total_for_record(record, all_fields)
         if selected_total is not None:
             grand_total += selected_total
-            has_totals = True
-        records.append({'record': record, 'values': values, 'selected_total': selected_total})
+        records.append(
+            {
+                'record': record,
+                'record_title': record_title,
+                'values': values,
+                'selected_total': selected_total,
+            }
+        )
 
     return records, grand_total
+
+
+def get_record_title(values, index):
+    preferred_keywords = (
+        'nome do produto',
+        'nome do serviço',
+        'nome do meio de transporte',
+        'modalidade da bolsa',
+        'modalidade',
+        'origem',
+    )
+    for item in values:
+        field_name = item['field_name'].lower()
+        if any(keyword in field_name for keyword in preferred_keywords) and item['value'].strip():
+            return item['value']
+
+    for item in values:
+        if item['value'].strip():
+            return item['value']
+
+    return f'Cadastro {index}'
 
 
 def get_field_level(field):

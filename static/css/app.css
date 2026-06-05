@@ -1097,6 +1097,33 @@ body {
     padding: 18px;
 }
 
+.record-card-compact {
+    padding: 0;
+    overflow: hidden;
+}
+
+.record-open-button,
+.budget-record-trigger {
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+}
+
+.record-open-button {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+}
+
+.record-open-button:hover,
+.budget-record-trigger:hover {
+    background: rgba(0, 95, 115, 0.04);
+}
+
 .record-values {
     margin-top: 14px;
 }
@@ -1179,6 +1206,58 @@ body {
 
 .budget-total-box strong {
     font-size: 1.35rem;
+}
+
+.budget-record-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+}
+
+.budget-record-summary {
+    border-radius: 22px;
+    border: 1px solid rgba(0, 95, 115, 0.1);
+    background: rgba(255, 255, 255, 0.84);
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.budget-record-summary:hover {
+    transform: translateY(-2px);
+    border-color: rgba(10, 147, 150, 0.26);
+    box-shadow: 0 18px 30px rgba(0, 95, 115, 0.08);
+}
+
+.budget-record-trigger {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+}
+
+.budget-record-trigger strong {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1rem;
+}
+
+.budget-record-trigger small {
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.budget-record-total {
+    display: inline-flex;
+    width: fit-content;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(0, 95, 115, 0.1), rgba(238, 155, 0, 0.14));
+    color: var(--accent);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+}
+
+.budget-record-values {
+    gap: 12px;
 }
 
 .budget-table {

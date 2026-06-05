@@ -162,3 +162,49 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, 'Monte os tópicos e registre os custos do orçamento')
         self.assertContains(response, 'Bolsas')
         self.assertContains(response, 'Modalidade')
+
+    def test_budget_ready_reflects_dynamic_topics_and_records(self):
+        topic = CostTopic.objects.create(
+            name='Serviços de Terceiros contratados no país e no exterior',
+            description='Resumo dinâmico do tópico.',
+        )
+        service_name = CostField.objects.create(
+            topic=topic,
+            name='Nome do serviço',
+            field_type='texto',
+        )
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orçar',
+            field_type='numero',
+        )
+        quote_1 = CostField.objects.create(
+            topic=topic,
+            name='Orçamento 1',
+            field_type='texto',
+        )
+        quote_price = CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='Preço',
+            field_type='valor',
+        )
+        quote_freight = CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='Frete',
+            field_type='valor',
+        )
+
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=service_name, value='Transcrição de entrevistas')
+        CostRecordValue.objects.create(record=record, field=selector, value='1')
+        CostRecordValue.objects.create(record=record, field=quote_price, value='120.00')
+        CostRecordValue.objects.create(record=record, field=quote_freight, value='30.00')
+
+        response = self.client.get(reverse('budget_ready'))
+
+        self.assertContains(response, 'Serviços de Terceiros contratados no país e no exterior')
+        self.assertContains(response, 'Transcrição de entrevistas')
+        self.assertContains(response, 'Resumo dinâmico do tópico.')
+        self.assertContains(response, 'R$ 150,00', html=False)

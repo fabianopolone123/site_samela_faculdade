@@ -103,31 +103,29 @@
 
                     <section class="builder-panel">
                         <div class="builder-panel-header">
-                            <h3>Custos já registrados</h3>
-                            <span>{{ selected_records|length }} registro(s)</span>
+                            <h3>Cadastros já registrados</h3>
+                            <span>{{ selected_records|length }} cadastro(s)</span>
                         </div>
                         {% if selected_records %}
                             <div class="record-list">
                                 {% for record_card in selected_records %}
-                                    <article class="record-card">
-                                        <div class="record-card-header">
-                                            <strong>Registro {{ forloop.counter }}</strong>
-                                            <small>{{ record_card.record.created_at|date:"d/m/Y H:i" }}</small>
-                                        </div>
-                                        <div class="record-values">
-                                            {% for value in record_card.values %}
-                                                <div class="record-value level-{{ value.level }}">
-                                                    <span>{{ value.field_name }}</span>
-                                                    <strong>{{ value.value }}</strong>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                        {% if record_card.selected_total is not None %}
-                                        <div class="record-selected-total">
-                                            <span>Total do orçamento selecionado</span>
-                                            <strong>R$&nbsp;{{ record_card.selected_total|floatformat:2 }}</strong>
-                                        </div>
-                                        {% endif %}
+                                    <article class="record-card record-card-compact">
+                                        <button
+                                            type="button"
+                                            class="record-open-button"
+                                            data-open-modal="record-modal-{{ record_card.record.id }}"
+                                        >
+                                            <div class="record-card-header">
+                                                <strong>{{ record_card.record_title }}</strong>
+                                                <small>{{ record_card.record.created_at|date:"d/m/Y H:i" }}</small>
+                                            </div>
+                                            {% if record_card.selected_total is not None %}
+                                            <div class="record-selected-total">
+                                                <span>Total do orçamento selecionado</span>
+                                                <strong>R$&nbsp;{{ record_card.selected_total|floatformat:2 }}</strong>
+                                            </div>
+                                            {% endif %}
+                                        </button>
                                     </article>
                                 {% endfor %}
                             </div>
@@ -148,7 +146,6 @@
         </section>
     </main>
 
-    <!-- Modal: Novo tópico -->
     <div class="modal" id="topic-modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal="topic-modal"></div>
         <div class="modal-content" role="dialog" aria-modal="true">
@@ -171,7 +168,6 @@
     </div>
 
     {% if selected_topic %}
-    <!-- Modal: Observação do tópico -->
     <div class="modal" id="descricao-modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal="descricao-modal"></div>
         <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
@@ -193,7 +189,6 @@
         </div>
     </div>
 
-    <!-- Modal: Campos do tópico -->
     <div class="modal" id="campos-modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal="campos-modal"></div>
         <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
@@ -291,7 +286,6 @@
         </div>
     </div>
 
-    <!-- Modal: Novo custo -->
     <div class="modal" id="custo-modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal="custo-modal"></div>
         <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
@@ -386,6 +380,35 @@
             {% endif %}
         </div>
     </div>
+
+    {% for record_card in selected_records %}
+    <div class="modal" id="record-modal-{{ record_card.record.id }}" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="record-modal-{{ record_card.record.id }}"></div>
+        <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">{{ selected_topic.name }}</span>
+                    <h2>{{ record_card.record_title }}</h2>
+                </div>
+                <button type="button" class="icon-button" data-close-modal="record-modal-{{ record_card.record.id }}">×</button>
+            </div>
+            <div class="record-values budget-record-values">
+                {% for value in record_card.values %}
+                    <div class="record-value level-{{ value.level }}">
+                        <span>{{ value.field_name }}</span>
+                        <strong>{{ value.value }}</strong>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if record_card.selected_total is not None %}
+            <div class="record-selected-total">
+                <span>Total do orçamento selecionado</span>
+                <strong>R$&nbsp;{{ record_card.selected_total|floatformat:2 }}</strong>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
     {% endif %}
 
     <script>
@@ -411,7 +434,6 @@
             button.addEventListener('click', () => closeModal(button.dataset.closeModal));
         });
 
-        // Dropdown de tópicos
         const trigger = document.getElementById('topics-trigger');
         const dropdown = document.getElementById('topics-dropdown');
         if (trigger && dropdown) {
@@ -426,25 +448,12 @@
             });
         }
 
-        // Preservar posição de scroll ao trocar de tópico
-        document.querySelectorAll('.topic-card').forEach(link => {
-            link.addEventListener('click', () => {
-                sessionStorage.setItem('topicScrollY', window.scrollY);
-            });
-        });
-        const savedScroll = sessionStorage.getItem('topicScrollY');
-        if (savedScroll !== null) {
-            window.scrollTo(0, parseInt(savedScroll));
-            sessionStorage.removeItem('topicScrollY');
-        }
-
         const urlParams = new URLSearchParams(window.location.search);
         const autoOpen = urlParams.get('open');
         if (autoOpen === 'campos') openModal('campos-modal');
         else if (autoOpen === 'custo') openModal('custo-modal');
 
-        // Cálculo ao vivo: Preço + Frete = Total por orçamento
-        document.querySelectorAll('[data-calc-preco]').forEach(precoInput => {
+        document.querySelectorAll('[data-calc-preco]').forEach((precoInput) => {
             const key = precoInput.dataset.calcPreco;
             const freteInput = document.querySelector(`[data-calc-frete="${key}"]`);
             const totalEl = document.querySelector(`[data-calc-total="${key}"] strong`);
