@@ -343,16 +343,28 @@
                                 <div class="field dynamic-entry-field root-entry-field">
                                     <label for="field_{{ group.root.field.id }}">
                                         {{ group.root.field.name }}
-                                        <small>{{ group.root.type_label }}</small>
+                                        <small>{{ group.root.type_label }}{% if group.root_role != 'nenhuma' %} · {{ group.root_role_label }}{% endif %}</small>
                                     </label>
                                     {% if group.root.field.field_type == 'texto' %}
                                         <input type="text" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
                                     {% elif group.root.field.field_type == 'numero' %}
-                                        <input type="number" step="1" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                        {% if group.root_role == 'multiplicador' %}
+                                            <input type="number" step="1" min="0" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" data-calc-quantidade="topic-{{ selected_topic.id }}">
+                                        {% else %}
+                                            <input type="number" step="1" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                        {% endif %}
                                     {% elif group.root.field.field_type == 'link' %}
                                         <input type="url" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
                                     {% elif group.root.field.field_type == 'valor' %}
-                                        <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                        {% if group.root_role == 'preco_unitario' %}
+                                            <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" data-calc-preco="topic-{{ selected_topic.id }}">
+                                        {% elif group.root_role == 'frete' %}
+                                            <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" data-calc-frete="topic-{{ selected_topic.id }}">
+                                        {% elif group.root_role == 'total_calculado' %}
+                                            <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" data-calc-total-field="topic-{{ selected_topic.id }}" readonly>
+                                        {% else %}
+                                            <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                        {% endif %}
                                     {% endif %}
                                 </div>
                                 {% endif %}
@@ -404,6 +416,12 @@
                             </article>
                         {% endfor %}
                     </div>
+                    {% if has_standalone_calculation %}
+                    <div class="orc-calc-total orc-calc-total--standalone" data-calc-total="topic-{{ selected_topic.id }}">
+                        <span>Total calculado do cadastro</span>
+                        <strong>R$ 0,00</strong>
+                    </div>
+                    {% endif %}
                     <button type="submit" class="button-primary">Salvar novo custo</button>
                 </form>
             {% else %}
@@ -548,35 +566,47 @@
             return parseFloat(cleaned) || 0;
         }
 
-        document.querySelectorAll('[data-calc-preco]').forEach((precoInput) => {
-            const key = precoInput.dataset.calcPreco;
-            const quantidadeInput = document.querySelector(`[data-calc-quantidade="${key}"]`);
-            const freteInput = document.querySelector(`[data-calc-frete="${key}"]`);
+        const calcScopeKeys = new Set();
+        document.querySelectorAll('[data-calc-preco], [data-calc-quantidade], [data-calc-frete], [data-calc-total-field]').forEach((input) => {
+            const key = input.dataset.calcPreco || input.dataset.calcQuantidade || input.dataset.calcFrete || input.dataset.calcTotalField;
+            if (key) calcScopeKeys.add(key);
+        });
+
+        function updateCalculatedScope(key) {
+            const priceInputs = Array.from(document.querySelectorAll(`[data-calc-preco="${key}"]`));
+            const quantityInputs = Array.from(document.querySelectorAll(`[data-calc-quantidade="${key}"]`));
+            const freightInputs = Array.from(document.querySelectorAll(`[data-calc-frete="${key}"]`));
             const totalEl = document.querySelector(`[data-calc-total="${key}"] strong`);
-            const totalFieldInput = document.querySelector(`[data-calc-total-field="${key}"]`);
+            const totalFieldInputs = Array.from(document.querySelectorAll(`[data-calc-total-field="${key}"]`));
 
-            function updateTotal() {
-                const p = parsePtBrNumber(precoInput.value);
-                const q = parsePtBrNumber(quantidadeInput ? quantidadeInput.value : 1) || 1;
-                const f = parsePtBrNumber(freteInput ? freteInput.value : 0);
-                const total = (p * q) + f;
-                if (totalEl) {
-                    totalEl.textContent = 'R$ ' + total.toLocaleString('pt-BR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                }
-                if (totalFieldInput) {
-                    totalFieldInput.value = total.toLocaleString('pt-BR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
-                }
+            const totalPrice = priceInputs.reduce((sum, input) => sum + parsePtBrNumber(input.value), 0);
+            const multiplier = quantityInputs.reduce((acc, input) => {
+                const raw = String(input.value || '').trim();
+                const parsed = parsePtBrNumber(input.value);
+                return acc * (raw ? parsed || 1 : 1);
+            }, 1);
+            const totalFreight = freightInputs.reduce((sum, input) => sum + parsePtBrNumber(input.value), 0);
+            const total = (totalPrice * multiplier) + totalFreight;
+            const formatted = total.toLocaleString('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+
+            if (totalEl) {
+                totalEl.textContent = 'R$ ' + formatted;
             }
+            totalFieldInputs.forEach((input) => {
+                input.value = formatted;
+            });
+        }
 
-            precoInput.addEventListener('input', updateTotal);
-            if (quantidadeInput) quantidadeInput.addEventListener('input', updateTotal);
-            if (freteInput) freteInput.addEventListener('input', updateTotal);
+        calcScopeKeys.forEach((key) => {
+            document.querySelectorAll(
+                `[data-calc-preco="${key}"], [data-calc-quantidade="${key}"], [data-calc-frete="${key}"]`
+            ).forEach((input) => {
+                input.addEventListener('input', () => updateCalculatedScope(key));
+            });
+            updateCalculatedScope(key);
         });
     </script>
 </body>

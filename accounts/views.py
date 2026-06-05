@@ -191,6 +191,15 @@ def budget_product_create_view(request):
     for row in selected_rows:
         row['edit_form'] = field_edit_forms.get(row['field'].id)
     selected_groups = build_topic_groups(selected_topic) if selected_topic else []
+    has_standalone_calculation = any(
+        not group['children'] and group['root_role'] in (
+            CostField.ROLE_UNIT_PRICE,
+            CostField.ROLE_MULTIPLIER,
+            CostField.ROLE_FREIGHT,
+            CostField.ROLE_CALCULATED_TOTAL,
+        )
+        for group in selected_groups
+    )
     selected_records, topic_grand_total = (
         build_record_cards(selected_topic, selected_rows) if selected_topic else ([], Decimal('0'))
     )
@@ -207,6 +216,7 @@ def budget_product_create_view(request):
         ),
         'selected_rows': selected_rows,
         'selected_groups': selected_groups,
+        'has_standalone_calculation': has_standalone_calculation,
         'selected_records': selected_records,
         'topic_grand_total': topic_grand_total,
         'all_topics_total': all_topics_total,
@@ -393,8 +403,6 @@ def create_topic_record_view(request):
     calculated_totals = {}
     for field in fields:
         if get_effective_calculation_role(field) != CostField.ROLE_CALCULATED_TOTAL:
-            continue
-        if field.parent_id is None:
             continue
         calculated_totals[field.id] = format_decimal_br(
             get_group_calculation_parts(fields, raw_values, field.parent_id)['total']
@@ -748,12 +756,22 @@ def build_topic_groups(topic):
 
     for row in rows:
         if row['level'] == 0:
+            root_role = get_effective_calculation_role(row['field'])
             current_group = {
                 'root': row,
+                'root_role': root_role,
+                'root_role_label': get_calculation_role_label(root_role),
                 'children': [],
                 'has_price_calc': False,
             }
             groups.append(current_group)
+            if root_role in (
+                CostField.ROLE_UNIT_PRICE,
+                CostField.ROLE_MULTIPLIER,
+                CostField.ROLE_FREIGHT,
+                CostField.ROLE_CALCULATED_TOTAL,
+            ):
+                current_group['has_price_calc'] = True
         elif current_group is not None:
             field_role = get_effective_calculation_role(row['field'])
             if field_role in (
@@ -795,6 +813,9 @@ def get_selected_total_for_record(record, topic_fields):
         None,
     )
     if not selector:
+        calculation_parts = get_group_calculation_parts(topic_fields, values_map, None)
+        if calculation_parts['has_parts']:
+            return calculation_parts['total']
         return None
 
     selected_str = values_map.get(selector.id, '').strip()
@@ -936,6 +957,8 @@ def get_group_calculation_parts(topic_fields, values_map, parent_id):
     price_value = Decimal('0')
     multiplier_value = Decimal('1')
     freight_value = Decimal('0')
+    has_multiplier = False
+    has_parts = False
 
     for field in topic_fields:
         if field.parent_id != parent_id:
@@ -950,16 +973,26 @@ def get_group_calculation_parts(topic_fields, values_map, parent_id):
         role = get_effective_calculation_role(field)
         if role == CostField.ROLE_UNIT_PRICE:
             price_value = amount
+            has_parts = True
         elif role == CostField.ROLE_MULTIPLIER:
-            multiplier_value = amount
+            multiplier_value *= amount
+            has_multiplier = True
+            has_parts = True
         elif role == CostField.ROLE_FREIGHT:
-            freight_value = amount
+            freight_value += amount
+            has_parts = True
+        elif role == CostField.ROLE_CALCULATED_TOTAL:
+            has_parts = True
+
+    if not has_multiplier:
+        multiplier_value = Decimal('1')
 
     return {
         'price': price_value,
         'multiplier': multiplier_value,
         'freight': freight_value,
         'total': (price_value * multiplier_value) + freight_value,
+        'has_parts': has_parts,
     }
 
 

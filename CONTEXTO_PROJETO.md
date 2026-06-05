@@ -251,3 +251,6 @@
 - Campos marcados como `Total calculado` são preenchidos automaticamente no cadastro e aparecem nos detalhes do custo salvo
 - A lista de campos ganhou botão de editar ao lado do excluir, tanto para campo principal quanto para subcampo
 - A edição do campo abre janela suspensa e permite alterar nome, tipo, função do campo e vínculo com campo pai
+- O cálculo configurável passou a aceitar múltiplos campos com função `Multiplicador / Quantidade`
+- Isso permite cenários como `valor por estudante × duração em meses × quantidade de estudantes`
+- Campos de topo sem subcampos também entram no cálculo automático quando têm função de preço, multiplicador, frete ou total calculado
