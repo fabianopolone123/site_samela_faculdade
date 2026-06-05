@@ -145,6 +145,17 @@ def create_topic_view(request):
 
 
 @login_required
+def delete_topic_view(request, topic_id):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    topic = get_object_or_404(CostTopic, id=topic_id)
+    topic.delete()
+    messages.success(request, 'Tópico excluído com sucesso.')
+    return redirect('budget_product_create')
+
+
+@login_required
 def create_topic_field_view(request):
     if request.method != 'POST':
         return redirect('budget_product_create')

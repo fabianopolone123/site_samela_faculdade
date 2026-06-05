@@ -266,3 +266,15 @@ class DynamicTopicBudgetTests(TestCase):
             f"{reverse('budget_product_create')}?topic={topic.id}",
         )
         self.assertFalse(CostRecord.objects.filter(id=record.id).exists())
+
+    def test_can_delete_topic_with_records(self):
+        topic = CostTopic.objects.create(name='Transporte')
+        field = CostField.objects.create(topic=topic, name='Destino', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=field, value='São Paulo')
+
+        response = self.client.post(reverse('delete_topic', args=[topic.id]))
+
+        self.assertRedirects(response, reverse('budget_product_create'))
+        self.assertFalse(CostTopic.objects.filter(id=topic.id).exists())
+        self.assertFalse(CostRecord.objects.filter(id=record.id).exists())

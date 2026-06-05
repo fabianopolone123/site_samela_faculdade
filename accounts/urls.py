@@ -8,6 +8,7 @@ urlpatterns = [
     path('painel/', views.dashboard_view, name='dashboard'),
     path('cadastrar-campos/', views.budget_product_create_view, name='budget_product_create'),
     path('cadastrar-campos/topicos/', views.create_topic_view, name='create_topic'),
+    path('cadastrar-campos/topicos/<int:topic_id>/excluir/', views.delete_topic_view, name='delete_topic'),
     path('cadastrar-campos/campos/', views.create_topic_field_view, name='create_topic_field'),
     path('cadastrar-campos/novo-custo/', views.create_topic_record_view, name='create_topic_record'),
     path('cadastrar-campos/custos/<int:record_id>/excluir/', views.delete_topic_record_view, name='delete_topic_record'),

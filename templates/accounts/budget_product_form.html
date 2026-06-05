@@ -74,6 +74,16 @@
                             >
                                 Novo custo
                             </button>
+                            <form method="post" action="{% url 'delete_topic' selected_topic.id %}" class="inline-action-form">
+                                {% csrf_token %}
+                                <button
+                                    type="submit"
+                                    class="button-danger"
+                                    onclick="return confirm('Excluir este tópico e todos os custos vinculados?')"
+                                >
+                                    Excluir tópico
+                                </button>
+                            </form>
                         </div>
                     </div>
 

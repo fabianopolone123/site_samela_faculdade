@@ -1891,6 +1891,11 @@ tr.is-selected {
     flex-shrink: 0;
 }
 
+.inline-action-form {
+    display: inline-flex;
+    margin: 0;
+}
+
 /* Botão de perigo (excluir) */
 .icon-button--danger {
     background: rgba(155, 34, 38, 0.07);
