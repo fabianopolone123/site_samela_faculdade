@@ -224,3 +224,9 @@
 
 - O projeto foi preparado para deploy isolado em VPS com Gunicorn e Nginx na rota `/OrcamentoNeevy/`
 - Os tópicos e campos padrão de `Cadastrar custos` passaram a nascer automaticamente por seed via migração
+
+### 2026-06-05
+
+- `Orçamento pronto` passou a refletir os tópicos e registros do construtor dinâmico
+- Os registros salvos em `Cadastrar custos` passaram a aparecer de forma resumida, com detalhes em janela suspensa
+- Foi criada a migration `accounts/migrations/0008_alter_budgetcostentry_selected_quote_number_and_more.py` para sincronizar campos legados do orçamento antigo e eliminar o aviso de migração pendente no deploy
