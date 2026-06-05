@@ -4,7 +4,7 @@
 
 - Nome do repositório: `site_samela_faculdade`
 - Base técnica: `Django + Python + SQLite`
-- Objetivo atual: portal acadêmico com autenticação controlada e módulo de orçamento em construção
+- Objetivo atual: portal acadêmico com autenticação controlada e módulo de orçamento em evolução
 
 ## Escopo implementado
 
@@ -35,23 +35,17 @@
 ## Módulo Cadastrar Custos
 
 - A rota `http://127.0.0.1:8000/cadastrar-campos/` foi refeita para um modelo dinâmico
-- O fluxo atual funciona assim:
-  - botão `Cadastrar tópico`
-  - modal para informar o nome do tópico
-  - o tópico salvo aparece na lista lateral
-  - ao abrir um tópico, existe a opção `Criar campos`
-  - cada campo pode ter:
-    - nome
-    - tipo
-    - vínculo opcional com campo pai para virar subcampo
-  - tipos disponíveis:
-    - `Texto`
-    - `Número`
-    - `Link`
-    - `Valor`
-  - os subcampos usam os mesmos tipos dos campos principais
-  - a seção `Novo custo` renderiza automaticamente os campos e subcampos do tópico selecionado
-  - a seção `Custos já registrados` mostra os registros salvos no tópico atual
+- O fluxo atual suporta:
+  - cadastro de tópicos
+  - cadastro de campos
+  - cadastro de subcampos
+  - formulário de `Novo custo` gerado a partir da estrutura do tópico
+  - lista dos registros já salvos no tópico
+- Tipos de campo disponíveis:
+  - `Texto`
+  - `Número`
+  - `Link`
+  - `Valor`
 
 ## Modelos dinâmicos do novo fluxo
 
@@ -64,12 +58,56 @@
 - `CostRecordValue`
   - guarda o valor preenchido para cada campo do registro
 
+## Estruturas e tópicos já montados
+
+- `Material permanente adquirido no país e importado`
+- `Material de consumo adquirido no país e importado`
+- `Serviços de Terceiros contratados no país e no exterior`
+- `Despesas de Transporte e Diárias`
+- `Bolsas como Item Orçamentário`
+- `Bolsas — Iniciação Científica`
+- `Bolsas — Mestrado`
+- `Bolsas — Doutorado Direto`
+- `Bolsas — Doutorado`
+- `Bolsas — Pós-Doutorado`
+- `Bolsas — Jornalismo Científico (JC)`
+- `Bolsas — Treinamento Técnico e Participação em Curso`
+- `Bolsas — Ensino Público - Aperfeiçoamento Pedagógico (EP)`
+- `Bolsas — EP-1 Aperfeiçoamento Pedagógico`
+- `Bolsas — EP-2 Aperfeiçoamento Pedagógico`
+- `Bolsas — EP-3 Aperfeiçoamento Pedagógico`
+- `Bolsas — EP-4 Aperfeiçoamento Pedagógico`
+- `Bolsas — EP-5 Aperfeiçoamento Pedagógico`
+- `Bolsas — EP-6 Aperfeiçoamento Pedagógico`
+
+## Regras e comportamento do orçamento dinâmico
+
+- Para materiais permanentes e materiais de consumo:
+  - Nome do produto
+  - Orçamento 1, 2 e 3
+  - campos de preço, link, quantidade e frete
+  - campo para selecionar qual orçamento entra na soma
+- Para serviços de terceiros:
+  - Nome do serviço
+  - Orçamento 1, 2 e 3
+  - preço, link e frete
+- Para transporte e diárias:
+  - estrutura própria por tópico
+- Para bolsas:
+  - valor por estudante
+  - quantidade
+  - duração em meses
+  - campos específicos conforme a modalidade
+- No formulário de `Novo custo`, campos raiz que funcionam como agrupadores podem aparecer só como cabeçalho do bloco, sem input redundante
+- Existe cálculo de total por registro com base no orçamento selecionado
+- Existe exibição de total geral acima da lista de registros do tópico quando aplicável
+
 ## Orçamento pronto
 
 - A tela `Orçamento pronto` continua disponível
 - Ela ainda usa a estrutura anterior de seções e itens de orçamento
 - O texto institucional do projeto continua exibido nessa tela
-- A integração completa entre o construtor dinâmico de tópicos e a tela `Orçamento pronto` ainda não foi iniciada
+- A integração completa entre o construtor dinâmico de tópicos e a tela `Orçamento pronto` ainda não foi finalizada
 
 ## Ajustes visuais e textuais
 
@@ -83,7 +121,33 @@
   - cards de estrutura do tópico
   - formulário dinâmico para novo custo
   - cards de registros salvos
-  - seção `Novo custo` organizada por blocos de campo principal, com subcampos agrupados visualmente no mesmo bloco
+  - organização por blocos de campo principal com subcampos agrupados visualmente
+- O modal de campos do tópico já foi ampliado para suportar gestão mais direta da estrutura
+
+## Preparação para produção
+
+- O projeto foi adaptado para configuração por variáveis de ambiente
+- Foi adicionada preparação para subir em subpasta:
+  - `https://fabianopolone.com.br/OrcamentoNeevy/`
+- O `settings.py` agora suporta:
+  - `DJANGO_SECRET_KEY`
+  - `DJANGO_DEBUG`
+  - `DJANGO_ALLOWED_HOSTS`
+  - `DJANGO_CSRF_TRUSTED_ORIGINS`
+  - `DJANGO_FORCE_SCRIPT_NAME`
+  - `DJANGO_STATIC_ROOT`
+  - `DJANGO_STATIC_URL`
+- O projeto passou a incluir `gunicorn` no `requirements.txt`
+- Foram criados arquivos de deploy isolado:
+  - `deploy/.env.example`
+  - `deploy/gunicorn.service`
+  - `deploy/nginx-location.conf`
+- A estratégia de deploy preparada é isolada:
+  - diretório próprio
+  - virtualenv próprio
+  - serviço `systemd` próprio
+  - porta interna exclusiva
+  - bloco `location` específico no Nginx
 
 ## Mensagens e comportamento
 
@@ -106,6 +170,9 @@
 - `templates/accounts/budget_product_form.html`
 - `templates/accounts/budget_ready.html`
 - `static/css/app.css`
+- `deploy/.env.example`
+- `deploy/gunicorn.service`
+- `deploy/nginx-location.conf`
 
 ## Git e fluxo de trabalho
 
@@ -131,47 +198,15 @@
 - Contas seeded criadas para `adm / 123` e `fabiano / 123`
 - Painel pós-login simplificado para exibir apenas os botões principais
 - O fluxo antigo de categorias em `Cadastrar custos` foi substituído por um construtor dinâmico de tópicos, campos e subcampos
-- A tela `Cadastrar custos` agora permite montar a estrutura e registrar novos custos com base no tópico selecionado
-- A área de `Novo custo` foi reorganizada para ficar mais clara, separando cada campo principal em um bloco próprio e mantendo os subcampos logo abaixo
+- A tela `Cadastrar custos` passou a permitir montar a estrutura e registrar novos custos com base no tópico selecionado
 
 ### 2026-06-03
 
-- Tópico `Material permanente adquirido no país e importado` criado via Django shell com campos: Nome do produto, Orçamento 1/2/3 (Preço, Link, Quantidade), Selecionar para orçar
-- Interface de `Cadastrar custos` reestruturada: ao selecionar um tópico, a área principal exibe apenas dois botões de ação e a lista de registros
-- Botão `Campos do tópico` abre modal com a estrutura de campos cadastrados (com botão de exclusão por campo/subcampo) e formulário de adição inline
-- Botão `Novo custo` abre modal com o formulário dinâmico de preenchimento
-- Após adicionar ou excluir campo, o modal `Campos do tópico` reabre automaticamente via parâmetro `?open=campos` na URL
-- Adicionada view `delete_topic_field_view` e rota `cadastrar-campos/campos/<id>/excluir/` para exclusão de campos
-- Botão `Novo custo` fica desabilitado enquanto não houver campos cadastrados no tópico
-- Novos estilos CSS: `.modal-content--wide`, `.topic-action-header`, `.campos-modal-body`, `.campos-add-grid`, `.icon-button--danger`, `.action-badge`, entre outros
-- No formulário "Novo custo", campos raiz que possuem subcampos são renderizados apenas como cabeçalho de grupo, sem input de texto — evita campo redundante nos agrupadores como "Orçamento 1", "Orçamento 2", "Orçamento 3"
-- Campo "Frete" (tipo valor) adicionado como subcampo de Orçamento 1, 2 e 3 no tópico "Material permanente"
-- No modal "Novo custo", o campo Preço e o campo Frete de cada orçamento calculam ao vivo o Total (Preço + Frete) via JavaScript
-- Lógica de cálculo de total por registro: a view identifica o campo "Selecionar para orçar", localiza o grupo "Orçamento N" correspondente e soma Preço + Frete
-- Card de total geral exibido acima da lista de registros, mostrando a soma dos orçamentos selecionados em todos os registros
-- Cada registro na lista exibe o total do orçamento selecionado
-- `get_selected_total_for_record()` adicionado ao views.py para cálculo por registro
-- `build_record_cards()` atualizado para retornar tupla `(records, grand_total)`
-- `build_topic_groups()` atualizado para incluir `field_role` (preco/frete) e `has_price_calc` por grupo
-- Tópico `Material de consumo adquirido no país e importado` criado com estrutura idêntica ao de Material permanente: Nome do produto, Orçamento 1/2/3 (Preço, Link, Quantidade, Frete), Selecionar para orçar
-- Tópico `Serviços de Terceiros contratados no país e no exterior` criado: Nome do serviço, Orçamento 1/2/3 (Preço, Link, Frete — sem Quantidade), Selecionar para orçar
-- Campo `description` (TextField) adicionado ao modelo `CostTopic` via migration 0006
-- Caixa de observação exibida na área principal de cada tópico; botão "✎" abre modal para editar
-- Tópicos sem descrição exibem link "+ Adicionar observação ao tópico"
-- Descrições pre-populadas para Material permanente e Serviços de Terceiros
-- Tópico `Despesas de Transporte e Diárias` criado: Nome do meio de transporte, Origem, Destino, Orçamento 1/2/3 (Preço, Link — sem Frete/Quantidade), Selecionar para orçar
-- Tópico `Bolsas como Item Orçamentário` criado: Modalidade da bolsa, Valor orçamentário (por estudante), Quantidade de estudantes, Duração em meses — sem orçamentos comparativos pois valor é tabelado pela FAPESP
-- Tópico `Bolsas — Iniciação Científica` criado: Valor orçamentário (por estudante), Quantidade de estudantes, Duração em meses; descrição específica da modalidade IC
-- Tópico `Bolsas — Mestrado` criado: mesmos campos; descrição específica da modalidade Mestrado
-- Tópico `Bolsas — Doutorado Direto` criado: mesmos campos; mesma descrição do Mestrado
-- Tópico `Bolsas — Doutorado` criado: mesmos campos; mesma descrição do Mestrado
-- Tópico `Bolsas — Pós-Doutorado` criado: mesmos campos; descrição específica com exigência de processo seletivo internacional
-- Tópico `Bolsas — Jornalismo Científico (JC)` criado: mesmos campos; descrição padrão fapesp.br/bco
-- Tópico `Bolsas — Treinamento Técnico e Participação em Curso` criado: mesmos campos
-- Tópico `Bolsas — Ensino Público - Aperfeiçoamento Pedagógico (EP)` criado: Valor orçamentário (por candidato), Quantidade de candidatos, Duração em meses
-- Tópico `Bolsas — EP-1 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com nível superior, dedicação de 4h semanais
-- Tópico `Bolsas — EP-2 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com nível superior, dedicação de 8h semanais
-- Tópico `Bolsas — EP-3 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com Mestrado concluído, dedicação de 4h semanais
-- Tópico `Bolsas — EP-4 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com Mestrado concluído, dedicação de 8h semanais
-- Tópico `Bolsas — EP-5 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com Doutorado concluído, dedicação de 4h semanais
-- Tópico `Bolsas — EP-6 Aperfeiçoamento Pedagógico` criado: mesmos campos; para candidatos com Doutorado concluído, dedicação de 8h semanais
+- Tópicos principais de materiais, serviços, transporte, diárias e bolsas foram estruturados
+- A área de `Novo custo` foi reorganizada para ficar mais clara, separando cada campo principal em um bloco próprio e mantendo os subcampos logo abaixo
+- Campos adicionais como frete, seleção de orçamento e descrições de tópico foram incorporados ao fluxo
+- Regras de cálculo por orçamento selecionado passaram a aparecer nos registros do tópico
+
+### 2026-06-04
+
+- O projeto foi preparado para deploy isolado em VPS com Gunicorn e Nginx na rota `/OrcamentoNeevy/`

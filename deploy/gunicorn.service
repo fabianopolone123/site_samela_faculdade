@@ -1,0 +1,15 @@
+[Unit]
+Description=Gunicorn do projeto Orcamento Neevy
+After=network.target
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/site_samela_faculdade
+EnvironmentFile=/var/www/site_samela_faculdade/deploy/.env
+ExecStart=/var/www/site_samela_faculdade/.venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8101 --access-logfile - --error-logfile - site_samela.wsgi:application
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
