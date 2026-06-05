@@ -245,3 +245,7 @@
 - O login `adm` ganhou a tela `E-mails autorizados`, com cadastro e remoção de e-mails liberados para inscrição
 - O fluxo de inscrição agora aceita a união entre a lista fixa do `settings.py` e os e-mails dinâmicos cadastrados pelo `adm`
 - Cadastros e remoções de e-mails autorizados também entram na auditoria administrativa
+- Foi criada a migration `accounts/migrations/0012_costfield_calculation_role.py` com a função de cálculo configurável por campo
+- A tela `Campos do tópico` agora permite definir a função do campo, como `Preço unitário`, `Multiplicador / Quantidade`, `Frete / Adicional`, `Seletor de orçamento` e `Total calculado`
+- O formulário de `Novo custo` passou a usar essas funções para calcular automaticamente `preço × quantidade + frete`
+- Campos marcados como `Total calculado` são preenchidos automaticamente no cadastro e aparecem nos detalhes do custo salvo

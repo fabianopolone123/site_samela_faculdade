@@ -98,7 +98,7 @@ class BudgetCostEntryAdmin(admin.ModelAdmin):
 class CostFieldInline(admin.TabularInline):
     model = CostField
     extra = 0
-    fields = ('name', 'field_type', 'parent')
+    fields = ('name', 'field_type', 'calculation_role', 'parent')
 
 
 @admin.register(CostTopic)
@@ -110,8 +110,8 @@ class CostTopicAdmin(admin.ModelAdmin):
 
 @admin.register(CostField)
 class CostFieldAdmin(admin.ModelAdmin):
-    list_display = ('name', 'topic', 'field_type', 'parent', 'created_at')
-    list_filter = ('topic', 'field_type')
+    list_display = ('name', 'topic', 'field_type', 'calculation_role', 'parent', 'created_at')
+    list_filter = ('topic', 'field_type', 'calculation_role')
     search_fields = ('name',)
 
 

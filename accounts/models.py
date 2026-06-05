@@ -190,11 +190,25 @@ class CostField(models.Model):
     TYPE_NUMBER = 'numero'
     TYPE_LINK = 'link'
     TYPE_CURRENCY = 'valor'
+    ROLE_NONE = 'nenhuma'
+    ROLE_UNIT_PRICE = 'preco_unitario'
+    ROLE_MULTIPLIER = 'multiplicador'
+    ROLE_FREIGHT = 'frete'
+    ROLE_SELECTOR = 'orcamento_selecionado'
+    ROLE_CALCULATED_TOTAL = 'total_calculado'
     TYPE_CHOICES = [
         (TYPE_TEXT, 'Texto'),
         (TYPE_NUMBER, 'Número'),
         (TYPE_LINK, 'Link'),
         (TYPE_CURRENCY, 'Valor'),
+    ]
+    CALCULATION_ROLE_CHOICES = [
+        (ROLE_NONE, 'Sem função'),
+        (ROLE_UNIT_PRICE, 'Preço unitário'),
+        (ROLE_MULTIPLIER, 'Multiplicador / Quantidade'),
+        (ROLE_FREIGHT, 'Frete / Adicional'),
+        (ROLE_SELECTOR, 'Seletor de orçamento'),
+        (ROLE_CALCULATED_TOTAL, 'Total calculado'),
     ]
 
     topic = models.ForeignKey(
@@ -211,6 +225,12 @@ class CostField(models.Model):
     )
     name = models.CharField('nome', max_length=255)
     field_type = models.CharField('tipo', max_length=20, choices=TYPE_CHOICES)
+    calculation_role = models.CharField(
+        'função de cálculo',
+        max_length=30,
+        choices=CALCULATION_ROLE_CHOICES,
+        default=ROLE_NONE,
+    )
     created_at = models.DateTimeField('criado em', auto_now_add=True)
 
     class Meta:

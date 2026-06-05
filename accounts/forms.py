@@ -88,6 +88,12 @@ class TopicFieldForm(forms.Form):
         label='Tipo',
         choices=CostField.TYPE_CHOICES,
     )
+    calculation_role = forms.ChoiceField(
+        label='Função do campo',
+        choices=CostField.CALCULATION_ROLE_CHOICES,
+        required=False,
+        initial=CostField.ROLE_NONE,
+    )
     parent_id = forms.ChoiceField(
         label='Vincular como subcampo de',
         required=False,

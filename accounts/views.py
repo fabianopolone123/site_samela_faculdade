@@ -270,6 +270,7 @@ def create_topic_field_view(request):
             parent=parent,
             name=form.cleaned_data['name'],
             field_type=form.cleaned_data['field_type'],
+            calculation_role=form.cleaned_data['calculation_role'] or CostField.ROLE_NONE,
         )
         register_audit_log(
             request.user,
@@ -342,6 +343,7 @@ def create_topic_record_view(request):
 
     record = CostRecord.objects.create(topic=topic)
     saved_values = 0
+    raw_values = {}
 
     for field in fields:
         value = request.POST.get(f'field_{field.id}', '').strip()
@@ -349,6 +351,20 @@ def create_topic_record_view(request):
             parsed_value = parse_decimal_input(value)
             if parsed_value is not None:
                 value = format_decimal_br(parsed_value)
+        raw_values[field.id] = value
+
+    calculated_totals = {}
+    for field in fields:
+        if get_effective_calculation_role(field) != CostField.ROLE_CALCULATED_TOTAL:
+            continue
+        if field.parent_id is None:
+            continue
+        calculated_totals[field.id] = format_decimal_br(
+            get_group_calculation_parts(fields, raw_values, field.parent_id)['total']
+        )
+
+    for field in fields:
+        value = calculated_totals.get(field.id, raw_values.get(field.id, ''))
         if value:
             CostRecordValue.objects.create(record=record, field=field, value=value)
             saved_values += 1
@@ -683,19 +699,21 @@ def build_topic_groups(topic):
             }
             groups.append(current_group)
         elif current_group is not None:
-            name_lower = row['field'].name.lower().strip()
-            if name_lower in ('preço', 'preco', 'price'):
-                field_role = 'preco'
+            field_role = get_effective_calculation_role(row['field'])
+            if field_role in (
+                CostField.ROLE_UNIT_PRICE,
+                CostField.ROLE_MULTIPLIER,
+                CostField.ROLE_FREIGHT,
+                CostField.ROLE_CALCULATED_TOTAL,
+            ):
                 current_group['has_price_calc'] = True
-            elif name_lower == 'quantidade':
-                field_role = 'quantidade'
-                current_group['has_price_calc'] = True
-            elif name_lower == 'frete':
-                field_role = 'frete'
-                current_group['has_price_calc'] = True
-            else:
-                field_role = None
-            current_group['children'].append({**row, 'field_role': field_role})
+            current_group['children'].append(
+                {
+                    **row,
+                    'field_role': field_role,
+                    'field_role_label': get_calculation_role_label(field_role),
+                }
+            )
 
     return groups
 
@@ -714,7 +732,10 @@ def get_selected_total_for_record(record, topic_fields):
     values_map = {record_value.field_id: record_value.value for record_value in record.values.all()}
 
     selector = next(
-        (field for field in topic_fields if field.parent_id is None and 'selecionar' in field.name.lower()),
+        (
+            field for field in topic_fields
+            if get_effective_calculation_role(field) == CostField.ROLE_SELECTOR
+        ),
         None,
     )
     if not selector:
@@ -734,28 +755,9 @@ def get_selected_total_for_record(record, topic_fields):
     if not budget_parent:
         return None
 
-    price_value = Decimal('0')
-    quantity_value = Decimal('1')
-    freight_value = Decimal('0')
+    calculation_parts = get_group_calculation_parts(topic_fields, values_map, budget_parent.id)
 
-    for field in topic_fields:
-        if field.parent_id != budget_parent.id:
-            continue
-        value_str = values_map.get(field.id, '').strip()
-        if not value_str:
-            continue
-        amount = parse_decimal_input(value_str)
-        if amount is None:
-            continue
-        name_lower = field.name.lower().strip()
-        if name_lower in ('preço', 'preco'):
-            price_value = amount
-        elif name_lower == 'quantidade':
-            quantity_value = amount
-        elif name_lower == 'frete':
-            freight_value = amount
-
-    return (price_value * quantity_value) + freight_value
+    return calculation_parts['total']
 
 
 def build_record_cards(topic, selected_rows):
@@ -849,6 +851,60 @@ def normalize_email(email):
 def get_allowed_signup_emails():
     dynamic_emails = set(AllowedSignupEmail.objects.values_list('email', flat=True))
     return set(settings.ALLOWED_SIGNUP_EMAILS) | dynamic_emails
+
+
+def get_effective_calculation_role(field):
+    if field.calculation_role != CostField.ROLE_NONE:
+        return field.calculation_role
+
+    normalized = field.name.lower().strip()
+    if 'selecionar' in normalized and 'orça' in normalized:
+        return CostField.ROLE_SELECTOR
+    if normalized in ('preço', 'preco', 'price'):
+        return CostField.ROLE_UNIT_PRICE
+    if normalized == 'quantidade':
+        return CostField.ROLE_MULTIPLIER
+    if normalized == 'frete':
+        return CostField.ROLE_FREIGHT
+    if normalized in ('total', 'preço total', 'preco total', 'valor total'):
+        return CostField.ROLE_CALCULATED_TOTAL
+    return CostField.ROLE_NONE
+
+
+def get_calculation_role_label(role):
+    role_map = dict(CostField.CALCULATION_ROLE_CHOICES)
+    return role_map.get(role, role_map.get(CostField.ROLE_NONE, 'Sem função'))
+
+
+def get_group_calculation_parts(topic_fields, values_map, parent_id):
+    price_value = Decimal('0')
+    multiplier_value = Decimal('1')
+    freight_value = Decimal('0')
+
+    for field in topic_fields:
+        if field.parent_id != parent_id:
+            continue
+        value_str = str(values_map.get(field.id, '')).strip()
+        if not value_str:
+            continue
+        amount = parse_decimal_input(value_str)
+        if amount is None:
+            continue
+
+        role = get_effective_calculation_role(field)
+        if role == CostField.ROLE_UNIT_PRICE:
+            price_value = amount
+        elif role == CostField.ROLE_MULTIPLIER:
+            multiplier_value = amount
+        elif role == CostField.ROLE_FREIGHT:
+            freight_value = amount
+
+    return {
+        'price': price_value,
+        'multiplier': multiplier_value,
+        'freight': freight_value,
+        'total': (price_value * multiplier_value) + freight_value,
+    }
 
 
 def parse_decimal_input(value_str):

@@ -240,7 +240,7 @@
                                                 <article class="structure-item level-{{ row.level }}">
                                                     <div class="structure-item-copy">
                                                         <strong>{{ row.field.name }}</strong>
-                                                        <small>{{ row.type_label }}</small>
+                                                        <small>{{ row.type_label }}{% if row.field_role and row.field_role != 'nenhuma' %} · {{ row.field_role_label }}{% endif %}</small>
                                                     </div>
                                                     <div class="structure-item-actions">
                                                         <span class="structure-tag">Subcampo</span>
@@ -283,6 +283,10 @@
                             <div class="field">
                                 <label for="{{ field_form.field_type.id_for_label }}">{{ field_form.field_type.label }}</label>
                                 {{ field_form.field_type }}
+                            </div>
+                            <div class="field">
+                                <label for="{{ field_form.calculation_role.id_for_label }}">{{ field_form.calculation_role.label }}</label>
+                                {{ field_form.calculation_role }}
                             </div>
                             <div class="field">
                                 <label for="{{ field_form.parent_id.id_for_label }}">{{ field_form.parent_id.label }}</label>
@@ -349,23 +353,25 @@
                                                 <div class="field dynamic-entry-field subfield-entry level-{{ row.level }}">
                                                     <label for="field_{{ row.field.id }}">
                                                         {{ row.field.name }}
-                                                        <small>{{ row.type_label }}</small>
+                                                        <small>{{ row.type_label }}{% if row.field_role and row.field_role != 'nenhuma' %} · {{ row.field_role_label }}{% endif %}</small>
                                                     </label>
                                                     {% if row.field.field_type == 'texto' %}
                                                         <input type="text" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                     {% elif row.field.field_type == 'link' %}
                                                         <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                     {% elif row.field.field_type == 'numero' %}
-                                                        {% if row.field_role == 'quantidade' %}
+                                                        {% if row.field_role == 'multiplicador' %}
                                                             <input type="number" step="1" min="0" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" data-calc-quantidade="orc-{{ group.root.field.id }}">
                                                         {% else %}
                                                             <input type="number" step="1" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                         {% endif %}
                                                     {% elif row.field.field_type == 'valor' %}
-                                                        {% if row.field_role == 'preco' %}
+                                                        {% if row.field_role == 'preco_unitario' %}
                                                             <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" data-calc-preco="orc-{{ group.root.field.id }}">
                                                         {% elif row.field_role == 'frete' %}
                                                             <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" data-calc-frete="orc-{{ group.root.field.id }}">
+                                                        {% elif row.field_role == 'total_calculado' %}
+                                                            <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" data-calc-total-field="orc-{{ group.root.field.id }}" readonly>
                                                         {% else %}
                                                             <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                         {% endif %}
@@ -496,13 +502,21 @@
             const quantidadeInput = document.querySelector(`[data-calc-quantidade="${key}"]`);
             const freteInput = document.querySelector(`[data-calc-frete="${key}"]`);
             const totalEl = document.querySelector(`[data-calc-total="${key}"] strong`);
+            const totalFieldInput = document.querySelector(`[data-calc-total-field="${key}"]`);
 
             function updateTotal() {
                 const p = parsePtBrNumber(precoInput.value);
                 const q = parsePtBrNumber(quantidadeInput ? quantidadeInput.value : 1) || 1;
                 const f = parsePtBrNumber(freteInput ? freteInput.value : 0);
+                const total = (p * q) + f;
                 if (totalEl) {
-                    totalEl.textContent = 'R$ ' + ((p * q) + f).toLocaleString('pt-BR', {
+                    totalEl.textContent = 'R$ ' + total.toLocaleString('pt-BR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                }
+                if (totalFieldInput) {
+                    totalFieldInput.value = total.toLocaleString('pt-BR', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });

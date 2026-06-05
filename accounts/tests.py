@@ -123,6 +123,27 @@ class DynamicTopicBudgetTests(TestCase):
         child = CostField.objects.get(topic=topic, name='Link da passagem')
         self.assertEqual(child.parent, parent)
 
+    def test_can_create_field_with_calculation_role(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+
+        response = self.client.post(
+            reverse('create_topic_field'),
+            {
+                'topic_id': topic.id,
+                'name': 'Preço unitário',
+                'field_type': 'valor',
+                'calculation_role': CostField.ROLE_UNIT_PRICE,
+                'parent_id': '',
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}&open=campos",
+        )
+        field = CostField.objects.get(topic=topic, name='Preço unitário')
+        self.assertEqual(field.calculation_role, CostField.ROLE_UNIT_PRICE)
+
     def test_can_create_dynamic_cost_record(self):
         topic = CostTopic.objects.create(name='Material permanente')
         product = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
@@ -238,17 +259,94 @@ class DynamicTopicBudgetTests(TestCase):
 
     def test_budget_totals_use_ptbr_thousands_separator(self):
         topic = CostTopic.objects.create(name='Material permanente')
-        selector = CostField.objects.create(topic=topic, name='Selecionar para orçar', field_type='numero')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orçar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
         quote_1 = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
-        quote_price = CostField.objects.create(topic=topic, parent=quote_1, name='Preço', field_type='valor')
+        quote_price = CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quote_quantity = CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
 
         record = CostRecord.objects.create(topic=topic)
         CostRecordValue.objects.create(record=record, field=selector, value='1')
-        CostRecordValue.objects.create(record=record, field=quote_price, value='70306270,00')
+        CostRecordValue.objects.create(record=record, field=quote_price, value='70.306,27')
+        CostRecordValue.objects.create(record=record, field=quote_quantity, value='1000')
 
         response = self.client.get(reverse('budget_product_create'), {'topic': topic.id})
 
         self.assertContains(response, 'R$&nbsp;70.306.270,00', html=True)
+
+    def test_calculated_total_field_is_saved_from_price_and_multiplier(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orçar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
+        quote_1 = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        quote_price = CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quote_quantity = CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        quote_freight = CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='Frete',
+            field_type='valor',
+            calculation_role=CostField.ROLE_FREIGHT,
+        )
+        quote_total = CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='Preço total',
+            field_type='valor',
+            calculation_role=CostField.ROLE_CALCULATED_TOTAL,
+        )
+
+        response = self.client.post(
+            reverse('create_topic_record'),
+            {
+                'topic_id': topic.id,
+                f'field_{selector.id}': '1',
+                f'field_{quote_price.id}': '10,00',
+                f'field_{quote_quantity.id}': '5',
+                f'field_{quote_freight.id}': '2,00',
+                f'field_{quote_total.id}': '',
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}",
+        )
+        record = CostRecord.objects.get(topic=topic)
+        total_value = CostRecordValue.objects.get(record=record, field=quote_total)
+        self.assertEqual(total_value.value, '52,00')
 
     def test_can_delete_dynamic_cost_record(self):
         topic = CostTopic.objects.create(name='Material permanente')
