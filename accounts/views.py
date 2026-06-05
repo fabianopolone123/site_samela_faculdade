@@ -228,6 +228,22 @@ def create_topic_record_view(request):
 
 
 @login_required
+def delete_topic_record_view(request, record_id):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    record = get_object_or_404(CostRecord, id=record_id)
+    topic_id = record.topic_id
+    next_url = request.POST.get('next', '').strip()
+    record.delete()
+    messages.success(request, 'Custo excluído com sucesso.')
+
+    if next_url.startswith('/'):
+        return redirect(next_url)
+    return redirect(f"{reverse('budget_product_create')}?topic={topic_id}")
+
+
+@login_required
 def budget_ready_view(request):
     all_topics = list(
         CostTopic.objects.prefetch_related('fields', 'records__values__field').all()

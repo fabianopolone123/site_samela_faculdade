@@ -120,6 +120,7 @@
 - O total do tópico e o total geral passam a refletir os registros dinâmicos cadastrados
 - Cada cadastro aparece em formato resumido e, ao clicar, abre uma janela suspensa com os detalhes
 - Quando um detalhe contém campo do tipo link, a janela suspensa exibe botão para abrir o endereço no navegador
+- Cada cadastro pode ser excluído na própria janela de detalhes
 
 ## Ajustes visuais e textuais
 

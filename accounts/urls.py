@@ -10,6 +10,7 @@ urlpatterns = [
     path('cadastrar-campos/topicos/', views.create_topic_view, name='create_topic'),
     path('cadastrar-campos/campos/', views.create_topic_field_view, name='create_topic_field'),
     path('cadastrar-campos/novo-custo/', views.create_topic_record_view, name='create_topic_record'),
+    path('cadastrar-campos/custos/<int:record_id>/excluir/', views.delete_topic_record_view, name='delete_topic_record'),
     path('cadastrar-campos/campos/<int:field_id>/excluir/', views.delete_topic_field_view, name='delete_topic_field'),
     path('cadastrar-campos/topicos/<int:topic_id>/descricao/', views.update_topic_description_view, name='update_topic_description'),
     path('orcamento-pronto/', views.budget_ready_view, name='budget_ready'),

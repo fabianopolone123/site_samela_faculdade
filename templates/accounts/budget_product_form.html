@@ -392,6 +392,17 @@
                 </div>
                 <button type="button" class="icon-button" data-close-modal="record-modal-{{ record_card.record.id }}">×</button>
             </div>
+            <form method="post" action="{% url 'delete_topic_record' record_card.record.id %}" class="record-delete-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'budget_product_create' %}?topic={{ selected_topic.id }}">
+                <button
+                    type="submit"
+                    class="button-danger"
+                    onclick="return confirm('Excluir este custo?')"
+                >
+                    Excluir custo
+                </button>
+            </form>
             <div class="record-values budget-record-values">
                 {% for value in record_card.values %}
                     <div class="record-value level-{{ value.level }}">

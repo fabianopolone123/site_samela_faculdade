@@ -390,6 +390,22 @@ body {
     transition: transform 0.2s ease, background 0.2s ease;
 }
 
+.button-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid rgba(155, 34, 38, 0.16);
+    background: rgba(155, 34, 38, 0.08);
+    color: var(--danger);
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    cursor: pointer;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
 .button-primary:hover,
 .logout-link:hover,
 .button-secondary:hover {
@@ -403,6 +419,11 @@ body {
 
 .button-secondary:hover {
     background: rgba(0, 95, 115, 0.11);
+}
+
+.button-danger:hover {
+    background: rgba(155, 34, 38, 0.14);
+    transform: translateY(-1px);
 }
 
 .messages,
@@ -1162,6 +1183,10 @@ body {
 .record-link-button:hover {
     background: rgba(0, 95, 115, 0.14);
     transform: translateY(-1px);
+}
+
+.record-delete-form {
+    margin-bottom: 16px;
 }
 
 .empty-state {
