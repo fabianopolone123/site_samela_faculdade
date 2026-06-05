@@ -3,6 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .models import (
     AuditLog,
+    AllowedSignupEmail,
     BudgetCostEntry,
     BudgetCostQuote,
     BudgetProduct,
@@ -15,6 +16,12 @@ from .models import (
     SignupCode,
     User,
 )
+
+
+@admin.register(AllowedSignupEmail)
+class AllowedSignupEmailAdmin(admin.ModelAdmin):
+    list_display = ('email', 'created_at')
+    search_fields = ('email',)
 
 
 @admin.register(AuditLog)

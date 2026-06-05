@@ -36,6 +36,13 @@
                     </div>
                 </a>
                 {% if request.user.is_staff %}
+                <a href="{% url 'allowed_signup_emails' %}" class="dashboard-nav-item">
+                    <span class="dashboard-nav-icon">✉️</span>
+                    <div>
+                        <strong>E-mails autorizados</strong>
+                        <small>Gerenciar quem pode se cadastrar</small>
+                    </div>
+                </a>
                 <a href="{% url 'audit_log' %}" class="dashboard-nav-item">
                     <span class="dashboard-nav-icon">🔎</span>
                     <div>

@@ -12,6 +12,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from .forms import (
+    AllowedSignupEmailForm,
     LoginForm,
     SignupCodeForm,
     SignupEmailForm,
@@ -22,6 +23,7 @@ from .forms import (
 )
 from .models import (
     AuditLog,
+    AllowedSignupEmail,
     CostField,
     CostRecord,
     CostRecordValue,
@@ -84,6 +86,75 @@ def login_view(request):
 @login_required
 def dashboard_view(request):
     return render(request, 'accounts/dashboard.html')
+
+
+@login_required
+def allowed_signup_emails_view(request):
+    if not request.user.is_staff:
+        messages.error(request, 'A gestão de e-mails está disponível apenas para o login de administração.')
+        return redirect('dashboard')
+
+    dynamic_emails = list(AllowedSignupEmail.objects.all())
+    dynamic_values = {item.email for item in dynamic_emails}
+    fixed_emails = sorted(settings.ALLOWED_SIGNUP_EMAILS - dynamic_values)
+    context = {
+        'email_form': AllowedSignupEmailForm(),
+        'fixed_emails': fixed_emails,
+        'dynamic_emails': dynamic_emails,
+    }
+    return render(request, 'accounts/allowed_signup_emails.html', context)
+
+
+@login_required
+def create_allowed_signup_email_view(request):
+    if request.method != 'POST':
+        return redirect('allowed_signup_emails')
+    if not request.user.is_staff:
+        messages.error(request, 'A gestão de e-mails está disponível apenas para o login de administração.')
+        return redirect('dashboard')
+
+    form = AllowedSignupEmailForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, 'Informe um e-mail válido para liberar o cadastro.')
+        return redirect('allowed_signup_emails')
+
+    email = normalize_email(form.cleaned_data['email'])
+    if email in settings.ALLOWED_SIGNUP_EMAILS or AllowedSignupEmail.objects.filter(email=email).exists():
+        messages.info(request, 'Este e-mail já está autorizado para cadastro.')
+        return redirect('allowed_signup_emails')
+
+    AllowedSignupEmail.objects.create(email=email)
+    register_audit_log(
+        request.user,
+        AuditLog.ACTION_CREATE,
+        'E-mail autorizado',
+        email,
+        'Liberação de novo e-mail para o fluxo de cadastro.',
+    )
+    messages.success(request, 'E-mail autorizado cadastrado com sucesso.')
+    return redirect('allowed_signup_emails')
+
+
+@login_required
+def delete_allowed_signup_email_view(request, email_id):
+    if request.method != 'POST':
+        return redirect('allowed_signup_emails')
+    if not request.user.is_staff:
+        messages.error(request, 'A gestão de e-mails está disponível apenas para o login de administração.')
+        return redirect('dashboard')
+
+    allowed_email = get_object_or_404(AllowedSignupEmail, id=email_id)
+    email = allowed_email.email
+    allowed_email.delete()
+    register_audit_log(
+        request.user,
+        AuditLog.ACTION_DELETE,
+        'E-mail autorizado',
+        email,
+        'Remoção de e-mail da lista dinâmica de cadastro.',
+    )
+    messages.success(request, 'E-mail autorizado removido com sucesso.')
+    return redirect('allowed_signup_emails')
 
 
 @login_required
@@ -369,7 +440,7 @@ def signup_email_view(request):
 
     email = normalize_email(form.cleaned_data['email'])
 
-    if email not in settings.ALLOWED_SIGNUP_EMAILS:
+    if email not in get_allowed_signup_emails():
         form.add_error('email', 'Este e-mail não está autorizado para cadastro.')
         persist_signup_state(request, step='email')
         return render_login_with_forms(request, email_form=form)
@@ -773,6 +844,11 @@ def generate_code():
 
 def normalize_email(email):
     return email.strip().lower()
+
+
+def get_allowed_signup_emails():
+    dynamic_emails = set(AllowedSignupEmail.objects.values_list('email', flat=True))
+    return set(settings.ALLOWED_SIGNUP_EMAILS) | dynamic_emails
 
 
 def parse_decimal_input(value_str):

@@ -138,3 +138,15 @@ class SignupPasswordForm(forms.Form):
             raise forms.ValidationError('A senha precisa ter pelo menos 8 caracteres.')
 
         return cleaned_data
+
+
+class AllowedSignupEmailForm(forms.Form):
+    email = forms.EmailField(
+        label='Novo e-mail autorizado',
+        widget=forms.EmailInput(
+            attrs={
+                'placeholder': 'nome@instituicao.br',
+                'autocomplete': 'email',
+            }
+        ),
+    )

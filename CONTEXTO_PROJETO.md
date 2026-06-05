@@ -241,3 +241,7 @@
 - Foi criada a tela `templates/accounts/audit_log.html` para consulta do histórico administrativo
 - O cálculo do total do orçamento selecionado passou a considerar `preço × quantidade + frete`
 - Campos do tipo `Link` agora só exibem o botão `Abrir link` quando o valor salvo for uma URL válida
+- Foi criada a migration `accounts/migrations/0011_allowedsignupemail.py` com o modelo `AllowedSignupEmail`
+- O login `adm` ganhou a tela `E-mails autorizados`, com cadastro e remoção de e-mails liberados para inscrição
+- O fluxo de inscrição agora aceita a união entre a lista fixa do `settings.py` e os e-mails dinâmicos cadastrados pelo `adm`
+- Cadastros e remoções de e-mails autorizados também entram na auditoria administrativa

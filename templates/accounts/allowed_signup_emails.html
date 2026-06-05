@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-mails autorizados | NEEVY - UFSCar</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="dashboard-body">
+    <main class="budget-shell">
+        <section class="workspace-header">
+            <span class="eyebrow">Administração</span>
+            <h1>E-mails autorizados para cadastro</h1>
+            <p>O login <strong>adm</strong> pode liberar novos e-mails para o fluxo de inscrição sem editar o código do sistema.</p>
+            <div class="workspace-links">
+                <a href="{% url 'dashboard' %}" class="button-secondary dashboard-secondary">Voltar ao painel</a>
+            </div>
+        </section>
+
+        {% if messages %}
+            <section class="workspace-card">
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="message {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+
+        <section class="workspace-grid builder-grid">
+            <article class="workspace-card builder-sidebar">
+                <div class="builder-panel-header">
+                    <h2>Novo e-mail</h2>
+                </div>
+                <form method="post" action="{% url 'create_allowed_signup_email' %}" class="form-stack">
+                    {% csrf_token %}
+                    <div class="field">
+                        <label for="{{ email_form.email.id_for_label }}">{{ email_form.email.label }}</label>
+                        {{ email_form.email }}
+                    </div>
+                    <button type="submit" class="button-primary">Autorizar e-mail</button>
+                </form>
+            </article>
+
+            <article class="workspace-card builder-main">
+                <section class="builder-panel">
+                    <div class="builder-panel-header">
+                        <h3>E-mails padrão do sistema</h3>
+                        <span>{{ fixed_emails|length }} item(ns)</span>
+                    </div>
+                    {% if fixed_emails %}
+                        <div class="audit-log-list">
+                            {% for email in fixed_emails %}
+                                <article class="audit-log-item">
+                                    <div class="audit-log-topline">
+                                        <span class="topic-card-badge">Fixo</span>
+                                        <strong>{{ email }}</strong>
+                                    </div>
+                                    <p>Este e-mail vem da configuração padrão do sistema.</p>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <strong>Nenhum e-mail fixo configurado.</strong>
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="builder-panel">
+                    <div class="builder-panel-header">
+                        <h3>E-mails adicionados pelo adm</h3>
+                        <span>{{ dynamic_emails|length }} item(ns)</span>
+                    </div>
+                    {% if dynamic_emails %}
+                        <div class="audit-log-list">
+                            {% for item in dynamic_emails %}
+                                <article class="audit-log-item">
+                                    <div class="audit-log-topline">
+                                        <span class="topic-card-badge">Dinâmico</span>
+                                        <strong>{{ item.email }}</strong>
+                                    </div>
+                                    <div class="audit-log-meta">
+                                        <span>Cadastrado em {{ item.created_at|date:"d/m/Y H:i" }}</span>
+                                    </div>
+                                    <form method="post" action="{% url 'delete_allowed_signup_email' item.id %}" class="inline-action-form">
+                                        {% csrf_token %}
+                                        <button
+                                            type="submit"
+                                            class="button-danger"
+                                            onclick="return confirm('Remover este e-mail da lista de cadastro?')"
+                                        >
+                                            Remover e-mail
+                                        </button>
+                                    </form>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <strong>Nenhum e-mail dinâmico cadastrado ainda.</strong>
+                            <p>Use o formulário ao lado para liberar novos endereços.</p>
+                        </div>
+                    {% endif %}
+                </section>
+            </article>
+        </section>
+    </main>
+</body>
+</html>

@@ -3,7 +3,7 @@ from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
 
-from .models import AuditLog, CostField, CostRecord, CostRecordValue, CostTopic, SignupCode, User
+from .models import AllowedSignupEmail, AuditLog, CostField, CostRecord, CostRecordValue, CostTopic, SignupCode, User
 
 
 class SignupFlowTests(TestCase):
@@ -328,3 +328,47 @@ class AuditLogTests(TestCase):
         self.assertContains(response, 'Notebook')
         self.assertContains(response, 'Exclusão')
         self.assertContains(response, 'adm')
+
+
+class AllowedSignupEmailTests(TestCase):
+    def test_admin_can_view_allowed_signup_emails_page(self):
+        self.client.post(reverse('login'), {'username': 'adm', 'password': '123'})
+
+        response = self.client.get(reverse('allowed_signup_emails'))
+
+        self.assertContains(response, 'E-mails autorizados para cadastro')
+
+    def test_admin_can_add_dynamic_signup_email(self):
+        self.client.post(reverse('login'), {'username': 'adm', 'password': '123'})
+
+        response = self.client.post(
+            reverse('create_allowed_signup_email'),
+            {'email': 'novo.email@example.com'},
+        )
+
+        self.assertRedirects(response, reverse('allowed_signup_emails'))
+        self.assertTrue(AllowedSignupEmail.objects.filter(email='novo.email@example.com').exists())
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action=AuditLog.ACTION_CREATE,
+                target_type='E-mail autorizado',
+                target_name='novo.email@example.com',
+            ).exists()
+        )
+
+    def test_admin_can_remove_dynamic_signup_email(self):
+        self.client.post(reverse('login'), {'username': 'adm', 'password': '123'})
+        allowed_email = AllowedSignupEmail.objects.create(email='remover@example.com')
+
+        response = self.client.post(reverse('delete_allowed_signup_email', args=[allowed_email.id]))
+
+        self.assertRedirects(response, reverse('allowed_signup_emails'))
+        self.assertFalse(AllowedSignupEmail.objects.filter(email='remover@example.com').exists())
+
+    def test_dynamic_signup_email_is_accepted_in_signup_flow(self):
+        AllowedSignupEmail.objects.create(email='liberado@example.com')
+
+        response = self.client.post(reverse('signup_email'), {'email': 'liberado@example.com'})
+
+        self.assertRedirects(response, reverse('login'))
+        self.assertEqual(SignupCode.objects.filter(email='liberado@example.com').count(), 1)

@@ -279,6 +279,17 @@ class AuditLog(models.Model):
         return f'{self.get_action_display()} - {self.target_type}: {self.target_name}'
 
 
+class AllowedSignupEmail(models.Model):
+    email = models.EmailField('e-mail', unique=True)
+    created_at = models.DateTimeField('criado em', auto_now_add=True)
+
+    class Meta:
+        ordering = ['email']
+
+    def __str__(self):
+        return self.email
+
+
 class SignupCode(models.Model):
     email = models.EmailField('e-mail')
     code = models.CharField('código', max_length=6)
