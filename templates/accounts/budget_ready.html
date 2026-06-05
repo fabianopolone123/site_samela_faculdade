@@ -1,4 +1,4 @@
-{% load static %}
+{% load static currency_br %}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -24,7 +24,7 @@
                     <small>Soma de todos os tópicos cadastrados</small>
                 </div>
                 <div class="budget-grand-total-value">
-                    R$&nbsp;{{ all_topics_total|floatformat:2 }}
+                    R$&nbsp;{{ all_topics_total|currency_br }}
                 </div>
             </div>
         </section>
@@ -43,7 +43,7 @@
                     </div>
                     <div class="budget-total-box">
                         <span>Total do tópico</span>
-                        <strong>R$ {{ block.topic_total|floatformat:2 }}</strong>
+                        <strong>R$ {{ block.topic_total|currency_br }}</strong>
                     </div>
                 </div>
 
@@ -60,7 +60,7 @@
                                     <strong>{{ record_card.record_title }}</strong>
                                     <small>{{ record_card.record.created_at|date:"d/m/Y H:i" }}</small>
                                     {% if record_card.selected_total is not None %}
-                                        <span class="budget-record-total">R$ {{ record_card.selected_total|floatformat:2 }}</span>
+                                        <span class="budget-record-total">R$ {{ record_card.selected_total|currency_br }}</span>
                                     {% endif %}
                                 </button>
                             </article>
@@ -111,7 +111,7 @@
                     {% if record_card.selected_total is not None %}
                         <div class="record-selected-total">
                             <span>Total do orçamento selecionado</span>
-                            <strong>R$&nbsp;{{ record_card.selected_total|floatformat:2 }}</strong>
+                            <strong>R$&nbsp;{{ record_card.selected_total|currency_br }}</strong>
                         </div>
                     {% endif %}
                 </div>

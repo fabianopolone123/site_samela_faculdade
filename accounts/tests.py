@@ -236,6 +236,20 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, 'https://example.com/orcamento')
         self.assertContains(response, '120,00')
 
+    def test_budget_totals_use_ptbr_thousands_separator(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        selector = CostField.objects.create(topic=topic, name='Selecionar para orçar', field_type='numero')
+        quote_1 = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        quote_price = CostField.objects.create(topic=topic, parent=quote_1, name='Preço', field_type='valor')
+
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=selector, value='1')
+        CostRecordValue.objects.create(record=record, field=quote_price, value='70306270,00')
+
+        response = self.client.get(reverse('budget_product_create'), {'topic': topic.id})
+
+        self.assertContains(response, 'R$&nbsp;70.306.270,00', html=True)
+
     def test_can_delete_dynamic_cost_record(self):
         topic = CostTopic.objects.create(name='Material permanente')
         field = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
