@@ -121,6 +121,7 @@
 - Cada cadastro aparece em formato resumido e, ao clicar, abre uma janela suspensa com os detalhes
 - Quando um detalhe contém campo do tipo link, a janela suspensa exibe botão para abrir o endereço no navegador
 - Cada cadastro pode ser excluído na própria janela de detalhes
+- Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 
 ## Ajustes visuais e textuais
 

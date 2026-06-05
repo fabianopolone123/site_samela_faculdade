@@ -139,7 +139,7 @@ class DynamicTopicBudgetTests(TestCase):
             {
                 'topic_id': topic.id,
                 f'field_{product.id}': 'Notebook Dell',
-                f'field_{quote.id}': '4500.90',
+                f'field_{quote.id}': '4.500,90',
                 f'field_{link.id}': 'https://example.com/notebook',
             },
         )
@@ -155,6 +155,13 @@ class DynamicTopicBudgetTests(TestCase):
                 record=record,
                 field=product,
                 value='Notebook Dell',
+            ).exists()
+        )
+        self.assertTrue(
+            CostRecordValue.objects.filter(
+                record=record,
+                field=quote,
+                value='4.500,90',
             ).exists()
         )
 
@@ -227,6 +234,7 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, 'R$ 150,00', html=False)
         self.assertContains(response, 'Abrir link')
         self.assertContains(response, 'https://example.com/orcamento')
+        self.assertContains(response, '120,00')
 
     def test_can_delete_dynamic_cost_record(self):
         topic = CostTopic.objects.create(name='Material permanente')

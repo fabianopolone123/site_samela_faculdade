@@ -103,7 +103,7 @@
                                 {% if value.field_type_code == 'link' %}
                                     <a href="{{ value.value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
                                 {% else %}
-                                    <strong>{{ value.value }}</strong>
+                                    <strong>{{ value.display_value }}</strong>
                                 {% endif %}
                             </div>
                         {% endfor %}

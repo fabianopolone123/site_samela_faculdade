@@ -214,6 +214,10 @@ def create_topic_record_view(request):
 
     for field in fields:
         value = request.POST.get(f'field_{field.id}', '').strip()
+        if field.field_type == 'valor' and value:
+            parsed_value = parse_decimal_input(value)
+            if parsed_value is not None:
+                value = format_decimal_br(parsed_value)
         if value:
             CostRecordValue.objects.create(record=record, field=field, value=value)
             saved_values += 1
@@ -589,9 +593,8 @@ def get_selected_total_for_record(record, topic_fields):
         value_str = values_map.get(field.id, '').strip()
         if not value_str:
             continue
-        try:
-            amount = Decimal(value_str)
-        except (InvalidOperation, ValueError):
+        amount = parse_decimal_input(value_str)
+        if amount is None:
             continue
         name_lower = field.name.lower().strip()
         if name_lower in ('preço', 'preco'):
@@ -616,6 +619,7 @@ def build_record_cards(topic, selected_rows):
                     'field_type': value.field.get_field_type_display(),
                     'field_type_code': value.field.field_type,
                     'value': value.value,
+                    'display_value': format_value_for_display(value.field.field_type, value.value),
                     'level': get_field_level(value.field),
                     'order': field_order.get(value.field_id, 9999),
                 }
@@ -675,3 +679,30 @@ def generate_code():
 
 def normalize_email(email):
     return email.strip().lower()
+
+
+def parse_decimal_input(value_str):
+    cleaned = value_str.strip().replace('R$', '').replace(' ', '')
+    if not cleaned:
+        return None
+
+    if ',' in cleaned:
+        cleaned = cleaned.replace('.', '').replace(',', '.')
+
+    try:
+        return Decimal(cleaned)
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def format_decimal_br(value):
+    rendered = f'{value:,.2f}'
+    return rendered.replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+def format_value_for_display(field_type_code, value):
+    if field_type_code == 'valor':
+        parsed = parse_decimal_input(value)
+        if parsed is not None:
+            return format_decimal_br(parsed)
+    return value
