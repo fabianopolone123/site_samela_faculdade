@@ -58,6 +58,15 @@
 - `CostRecordValue`
   - guarda o valor preenchido para cada campo do registro
 
+## Seed padrão dos tópicos
+
+- Os tópicos e campos padrão agora são criados automaticamente por migração de dados
+- A migration `accounts/migrations/0007_seed_default_cost_topics.py`:
+  - normaliza o tópico antigo de material permanente caso exista com nome incorreto
+  - cria os tópicos padrão ausentes
+  - cria os campos e subcampos padrão de cada tópico
+- Isso evita depender de banco local copiado ou cadastro manual para o módulo `Cadastrar custos`
+
 ## Estruturas e tópicos já montados
 
 - `Material permanente adquirido no país e importado`
@@ -210,3 +219,4 @@
 ### 2026-06-04
 
 - O projeto foi preparado para deploy isolado em VPS com Gunicorn e Nginx na rota `/OrcamentoNeevy/`
+- Os tópicos e campos padrão de `Cadastrar custos` passaram a nascer automaticamente por seed via migração

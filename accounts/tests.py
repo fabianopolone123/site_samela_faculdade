@@ -51,6 +51,23 @@ class DynamicTopicBudgetTests(TestCase):
     def setUp(self):
         self.client.post(reverse('login'), {'username': 'fabiano', 'password': '123'})
 
+    def test_default_topics_and_fields_are_seeded(self):
+        self.assertTrue(
+            CostTopic.objects.filter(
+                name='Material permanente adquirido no país e importado'
+            ).exists()
+        )
+        self.assertTrue(
+            CostTopic.objects.filter(
+                name='Material de consumo adquirido no país e importado'
+            ).exists()
+        )
+        topic = CostTopic.objects.get(name='Material permanente adquirido no país e importado')
+        self.assertTrue(topic.fields.filter(name='Nome do produto', parent__isnull=True).exists())
+        budget_1 = topic.fields.get(name='Orçamento 1', parent__isnull=True)
+        self.assertTrue(topic.fields.filter(parent=budget_1, name='Preço').exists())
+        self.assertTrue(topic.fields.filter(parent=budget_1, name='Frete').exists())
+
     def test_can_create_topic(self):
         response = self.client.post(
             reverse('create_topic'),
@@ -77,7 +94,7 @@ class DynamicTopicBudgetTests(TestCase):
         )
         self.assertRedirects(
             response,
-            f"{reverse('budget_product_create')}?topic={topic.id}",
+            f"{reverse('budget_product_create')}?topic={topic.id}&open=campos",
         )
 
         parent = CostField.objects.get(topic=topic, name='Destino')
@@ -92,7 +109,7 @@ class DynamicTopicBudgetTests(TestCase):
         )
         self.assertRedirects(
             response,
-            f"{reverse('budget_product_create')}?topic={topic.id}",
+            f"{reverse('budget_product_create')}?topic={topic.id}&open=campos",
         )
 
         child = CostField.objects.get(topic=topic, name='Link da passagem')
@@ -142,6 +159,6 @@ class DynamicTopicBudgetTests(TestCase):
             {'topic': topic.id},
         )
 
-        self.assertContains(response, 'Monte os tópicos, campos e subcampos do orçamento')
+        self.assertContains(response, 'Monte os tópicos e registre os custos do orçamento')
         self.assertContains(response, 'Bolsas')
         self.assertContains(response, 'Modalidade')
