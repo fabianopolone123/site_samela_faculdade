@@ -216,6 +216,33 @@ class DynamicTopicBudgetTests(TestCase):
                 value='4.500,90',
             ).exists()
         )
+        self.assertTrue(
+            CostRecordValue.objects.filter(
+                record=record,
+                field=link,
+                value='https://example.com/notebook',
+            ).exists()
+        )
+
+    def test_create_dynamic_cost_record_strips_utm_tracking_from_links(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        link_field = CostField.objects.create(topic=topic, name='Link do orçamento', field_type='link')
+
+        response = self.client.post(
+            reverse('create_topic_record'),
+            {
+                'topic_id': topic.id,
+                f'field_{link_field.id}': 'https://example.com/produto?utm_source=chatgpt.com&utm_medium=referral&id=10',
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}",
+        )
+        record = CostRecord.objects.get(topic=topic)
+        saved_value = CostRecordValue.objects.get(record=record, field=link_field)
+        self.assertEqual(saved_value.value, 'https://example.com/produto?id=10')
 
     def test_budget_page_shows_dynamic_builder(self):
         topic = CostTopic.objects.create(name='Bolsas')
@@ -548,6 +575,26 @@ class DynamicTopicBudgetTests(TestCase):
                 target_name='Notebook atualizado',
             ).exists()
         )
+
+    def test_edit_dynamic_cost_record_strips_utm_tracking_from_links(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        link_field = CostField.objects.create(topic=topic, name='Link', field_type='link')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=link_field, value='https://example.com/original')
+
+        response = self.client.post(
+            reverse('update_topic_record', args=[record.id]),
+            {
+                f'field_{link_field.id}': 'https://example.com/novo?utm_source=chatgpt.com&sku=22',
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}",
+        )
+        updated_value = CostRecordValue.objects.get(record=record, field=link_field)
+        self.assertEqual(updated_value.value, 'https://example.com/novo?sku=22')
 
     def test_can_delete_dynamic_cost_record(self):
         topic = CostTopic.objects.create(name='Material permanente')

@@ -1,6 +1,7 @@
 import secrets
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from xml.sax.saxutils import escape
 
 from django.conf import settings
@@ -445,6 +446,8 @@ def create_topic_record_view(request):
             parsed_value = parse_decimal_input(value)
             if parsed_value is not None:
                 value = format_decimal_br(parsed_value)
+        elif field.field_type == 'link' and value:
+            value = sanitize_external_url(value)
         raw_values[field.id] = value
 
     calculated_totals = {}
@@ -493,6 +496,8 @@ def update_topic_record_view(request, record_id):
             parsed_value = parse_decimal_input(value)
             if parsed_value is not None:
                 value = format_decimal_br(parsed_value)
+        elif field.field_type == 'link' and value:
+            value = sanitize_external_url(value)
         raw_values[field.id] = value
 
     calculated_totals = {}
@@ -1502,6 +1507,32 @@ def build_pdf_text_value(value, style):
 
 def add_docx_hyperlink(paragraph, url, text):
     return None
+
+
+def sanitize_external_url(url):
+    raw_url = (url or '').strip()
+    if not raw_url:
+        return raw_url
+
+    try:
+        parts = urlsplit(raw_url)
+    except ValueError:
+        return raw_url
+
+    cleaned_query = [
+        (key, value)
+        for key, value in parse_qsl(parts.query, keep_blank_values=True)
+        if not key.lower().startswith('utm_')
+    ]
+    return urlunsplit(
+        (
+            parts.scheme,
+            parts.netloc,
+            parts.path,
+            urlencode(cleaned_query, doseq=True),
+            parts.fragment,
+        )
+    )
 
 
 def format_value_for_display(field_type_code, value):
