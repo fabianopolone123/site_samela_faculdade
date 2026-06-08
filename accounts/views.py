@@ -15,8 +15,6 @@ from django.urls import reverse
 from django.utils import timezone
 from docx import Document
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-from docx.oxml import OxmlElement
-from docx.oxml.ns import qn
 from docx.shared import Pt
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -814,8 +812,7 @@ def budget_ready_docx_view(request):
                     cells = summary_table.add_row().cells
                     cells[0].text = detail_group['title']
                     if detail_group['root_is_url']:
-                        paragraph = cells[1].paragraphs[0]
-                        add_docx_hyperlink(paragraph, detail_group['root_raw_value'], 'Abrir link')
+                        cells[1].text = detail_group['root_raw_value'] or '-'
                     else:
                         cells[1].text = detail_group['summary_value'] or '-'
 
@@ -832,6 +829,8 @@ def budget_ready_docx_view(request):
                     cells[0].text = item['field_name']
                     if item['is_url_value']:
                         paragraph = cells[1].paragraphs[0]
+                        cells[1].text = item['raw_value'] or '-'
+                        cells[1].text = item['raw_value'] or '-'
                         add_docx_hyperlink(paragraph, item['raw_value'], 'Abrir orçamento')
                     else:
                         cells[1].text = item['display_value'] or '-'
@@ -1502,34 +1501,7 @@ def build_pdf_text_value(value, style):
 
 
 def add_docx_hyperlink(paragraph, url, text):
-    part = paragraph.part
-    relation_id = part.relate_to(
-        url,
-        'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink',
-        is_external=True,
-    )
-
-    hyperlink = OxmlElement('w:hyperlink')
-    hyperlink.set(qn('r:id'), relation_id)
-
-    run = OxmlElement('w:r')
-    run_properties = OxmlElement('w:rPr')
-
-    color = OxmlElement('w:color')
-    color.set(qn('w:val'), '0B5563')
-    run_properties.append(color)
-
-    underline = OxmlElement('w:u')
-    underline.set(qn('w:val'), 'single')
-    run_properties.append(underline)
-
-    run.append(run_properties)
-    text_element = OxmlElement('w:t')
-    text_element.text = text
-    run.append(text_element)
-    hyperlink.append(run)
-    paragraph._p.append(hyperlink)
-    return hyperlink
+    return None
 
 
 def format_value_for_display(field_type_code, value):

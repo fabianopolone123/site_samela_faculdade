@@ -133,6 +133,7 @@
 - No PDF exportado, campos de link do orçamento agora saem como link clicável com rótulo curto, em vez de exibir a URL completa
 - O PDF do orçamento passou a quebrar melhor linhas longas em nomes de produtos e valores extensos dentro das tabelas
 - A tela `Orçamento pronto` agora também tem botão para exportar em Word, usando o mesmo conteúdo consolidado do orçamento
+- Na exportação em Word, campos de link do orçamento agora saem como URL completa em texto, sem botão ou rótulo de abertura
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 

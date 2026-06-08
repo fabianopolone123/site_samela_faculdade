@@ -2,6 +2,8 @@ from django.conf import settings
 from django.core import mail
 from django.test import TestCase
 from django.urls import reverse
+from docx import Document
+from io import BytesIO
 
 from .models import AllowedSignupEmail, AuditLog, CostField, CostRecord, CostRecordValue, CostTopic, SignupCode, User
 
@@ -302,8 +304,11 @@ class DynamicTopicBudgetTests(TestCase):
     def test_budget_ready_docx_exports_file(self):
         topic = CostTopic.objects.create(name='Material permanente')
         field = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        link_group = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        link_field = CostField.objects.create(topic=topic, parent=link_group, name='Link', field_type='link')
         record = CostRecord.objects.create(topic=topic)
         CostRecordValue.objects.create(record=record, field=field, value='Notebook')
+        CostRecordValue.objects.create(record=record, field=link_field, value='https://example.com/orcamento-1')
 
         response = self.client.get(reverse('budget_ready_docx'))
 
@@ -314,6 +319,16 @@ class DynamicTopicBudgetTests(TestCase):
         )
         self.assertIn('attachment; filename="orcamento-neevy.docx"', response['Content-Disposition'])
         self.assertTrue(len(response.content) > 0)
+        document = Document(BytesIO(response.content))
+        paragraph_text = '\n'.join(paragraph.text for paragraph in document.paragraphs)
+        table_text = '\n'.join(
+            cell.text
+            for table in document.tables
+            for row in table.rows
+            for cell in row.cells
+        )
+        document_text = f'{paragraph_text}\n{table_text}'
+        self.assertIn('https://example.com/orcamento-1', document_text)
 
     def test_store_field_uses_suggestion_list_with_defaults_and_saved_values(self):
         topic = CostTopic.objects.create(name='Material permanente')
