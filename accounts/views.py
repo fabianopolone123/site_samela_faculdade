@@ -35,6 +35,13 @@ from .models import (
 SIGNUP_EMAIL_SESSION_KEY = 'signup_email'
 SIGNUP_STEP_SESSION_KEY = 'signup_step'
 SIGNUP_CODE_SESSION_KEY = 'signup_code_id'
+DEFAULT_STORE_SUGGESTIONS = [
+    'Mercado Livre',
+    'Kabum',
+    'Shopee',
+    'Amazon',
+    'Magazine Luiza',
+]
 PROJECT_INFO = {
     'title': 'Orçamento - FAPESP - Fundação Bracell Fundação Itaú',
     'subtitle': 'Auxílio à Pesquisa para o Fortalecimento da Educação na Pré-Escola',
@@ -205,6 +212,7 @@ def budget_product_create_view(request):
     )
 
     all_topics_total = sum(calculate_topic_total(topic) for topic in topics)
+    store_suggestions = get_store_suggestions()
 
     context = {
         'topics': topics,
@@ -220,6 +228,7 @@ def budget_product_create_view(request):
         'selected_records': selected_records,
         'topic_grand_total': topic_grand_total,
         'all_topics_total': all_topics_total,
+        'store_suggestions': store_suggestions,
     }
     return render(request, 'accounts/budget_product_form.html', context)
 
@@ -770,6 +779,7 @@ def build_topic_rows(topic):
                 'field': field,
                 'level': level,
                 'type_label': field.get_field_type_display(),
+                'is_store_field': is_store_field(field),
             }
         )
         for child in children_map.get(field.id, []):
@@ -1060,6 +1070,23 @@ def get_field_level(field):
         level += 1
         current = current.parent
     return level
+
+
+def is_store_field(field):
+    normalized = field.name.lower().strip()
+    return normalized == 'loja' or normalized.startswith('loja ')
+
+
+def get_store_suggestions():
+    suggestions = {name for name in DEFAULT_STORE_SUGGESTIONS}
+    store_values = CostRecordValue.objects.select_related('field').all()
+    for record_value in store_values:
+        if not is_store_field(record_value.field):
+            continue
+        value = record_value.value.strip()
+        if value:
+            suggestions.add(value)
+    return sorted(suggestions, key=lambda item: item.lower())
 
 
 def generate_code():

@@ -178,6 +178,12 @@
     </div>
 
     {% if selected_topic %}
+    <datalist id="store-suggestions-list">
+        {% for store_name in store_suggestions %}
+            <option value="{{ store_name }}"></option>
+        {% endfor %}
+    </datalist>
+
     <div class="modal" id="descricao-modal" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal="descricao-modal"></div>
         <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
@@ -346,7 +352,7 @@
                                         <small>{{ group.root.type_label }}{% if group.root_role != 'nenhuma' %} · {{ group.root_role_label }}{% endif %}</small>
                                     </label>
                                     {% if group.root.field.field_type == 'texto' %}
-                                        <input type="text" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                        <input type="text" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}"{% if group.root.is_store_field %} list="store-suggestions-list"{% endif %}>
                                     {% elif group.root.field.field_type == 'numero' %}
                                         {% if group.root_role == 'multiplicador' or group.root_role == 'orcamento_selecionado' %}
                                             <input type="number" step="1" min="0" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="1" {% if group.root_role == 'multiplicador' %}data-calc-quantidade="topic-{{ selected_topic.id }}"{% endif %}{% if group.root_role == 'orcamento_selecionado' %} data-budget-selector="topic-{{ selected_topic.id }}"{% endif %}>
@@ -382,7 +388,7 @@
                                                         <small>{{ row.type_label }}{% if row.field_role and row.field_role != 'nenhuma' %} · {{ row.field_role_label }}{% endif %}</small>
                                                     </label>
                                                     {% if row.field.field_type == 'texto' %}
-                                                        <input type="text" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                        <input type="text" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}"{% if row.is_store_field %} list="store-suggestions-list"{% endif %}>
                                                     {% elif row.field.field_type == 'link' %}
                                                         <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                     {% elif row.field.field_type == 'numero' %}
@@ -604,7 +610,7 @@
                                     <small>{{ group.root.type_label }}{% if group.root_role != 'nenhuma' %} · {{ group.root_role_label }}{% endif %}</small>
                                 </label>
                                 {% if group.root.field.field_type == 'texto' %}
-                                    <input type="text" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}">
+                                    <input type="text" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}"{% if group.root.is_store_field %} list="store-suggestions-list"{% endif %}>
                                 {% elif group.root.field.field_type == 'numero' %}
                                     {% if group.root_role == 'multiplicador' %}
                                         <input type="number" step="1" min="0" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}" data-calc-quantidade="edit-topic-{{ record_card.record.id }}">
@@ -642,7 +648,7 @@
                                                     <small>{{ row.type_label }}{% if row.field_role and row.field_role != 'nenhuma' %} · {{ row.field_role_label }}{% endif %}</small>
                                                 </label>
                                                 {% if row.field.field_type == 'texto' %}
-                                                    <input type="text" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}">
+                                                    <input type="text" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}"{% if row.is_store_field %} list="store-suggestions-list"{% endif %}>
                                                 {% elif row.field.field_type == 'link' %}
                                                     <input type="url" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}">
                                                 {% elif row.field.field_type == 'numero' %}

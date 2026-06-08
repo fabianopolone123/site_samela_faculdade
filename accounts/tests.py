@@ -286,6 +286,22 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, 'https://example.com/orcamento')
         self.assertContains(response, '120,00')
 
+    def test_store_field_uses_suggestion_list_with_defaults_and_saved_values(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        store_field = CostField.objects.create(topic=topic, name='Loja', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=store_field, value='Kalunga')
+
+        response = self.client.get(reverse('budget_product_create'), {'topic': topic.id})
+
+        self.assertContains(response, 'list="store-suggestions-list"', html=False)
+        self.assertContains(response, '<option value="Amazon">', html=False)
+        self.assertContains(response, '<option value="Kabum">', html=False)
+        self.assertContains(response, '<option value="Magazine Luiza">', html=False)
+        self.assertContains(response, '<option value="Mercado Livre">', html=False)
+        self.assertContains(response, '<option value="Shopee">', html=False)
+        self.assertContains(response, '<option value="Kalunga">', html=False)
+
     def test_budget_totals_use_ptbr_thousands_separator(self):
         topic = CostTopic.objects.create(name='Material permanente')
         selector = CostField.objects.create(
