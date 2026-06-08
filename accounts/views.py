@@ -1,6 +1,7 @@
 import secrets
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
+from xml.sax.saxutils import escape
 
 from django.conf import settings
 from django.contrib import messages
@@ -612,6 +613,13 @@ def budget_ready_pdf_view(request):
         textColor=colors.HexColor('#172126'),
         alignment=2,
     )
+    link_style = ParagraphStyle(
+        'BudgetPdfLink',
+        parent=styles['BodyText'],
+        fontSize=10,
+        leading=13,
+        textColor=colors.HexColor('#0b5563'),
+    )
 
     story = [
         Paragraph('Orçamento pronto', small_style),
@@ -662,7 +670,10 @@ def budget_ready_pdf_view(request):
             summary_rows = []
             for detail_group in record_card['detail_groups']:
                 if detail_group['is_simple_field']:
-                    value = detail_group['root_raw_value'] if detail_group['root_is_url'] else detail_group['summary_value']
+                    if detail_group['root_is_url']:
+                        value = build_pdf_link_value(detail_group['root_raw_value'], link_style, 'Abrir link')
+                    else:
+                        value = detail_group['summary_value']
                     summary_rows.append([detail_group['title'], value or '-'])
 
             if summary_rows:
@@ -691,7 +702,10 @@ def budget_ready_pdf_view(request):
                 story.append(Paragraph(budget_heading, small_style))
                 budget_rows = []
                 for item in detail_group['children']:
-                    value = item['raw_value'] if item['is_url_value'] else item['display_value']
+                    if item['is_url_value']:
+                        value = build_pdf_link_value(item['raw_value'], link_style, 'Abrir orçamento')
+                    else:
+                        value = item['display_value']
                     budget_rows.append([item['field_name'], value or '-'])
                 if detail_group['group_total'] is not None:
                     budget_rows.append(['Total deste orçamento', f'R$ {format_decimal_br(detail_group["group_total"])}'])
@@ -1358,6 +1372,12 @@ def parse_decimal_input(value_str):
 def format_decimal_br(value):
     rendered = f'{value:,.2f}'
     return rendered.replace(',', 'X').replace('.', ',').replace('X', '.')
+
+
+def build_pdf_link_value(url, style, label):
+    safe_url = escape(url, {'"': '&quot;'})
+    safe_label = escape(label)
+    return Paragraph(f'<link href="{safe_url}">{safe_label}</link>', style)
 
 
 def format_value_for_display(field_type_code, value):

@@ -130,6 +130,7 @@
 - Quando o tópico usa múltiplos orçamentos com total calculado, o sistema identifica automaticamente o orçamento de menor custo e preenche o campo `Selecionar para orçar` com esse número
 - Campos chamados `Loja` no cadastro de custos agora usam lista suspensa com sugestões padrão e também reaproveitam automaticamente lojas já cadastradas, sem repetir
 - A tela `Orçamento pronto` agora tem botão para exportar PDF, gerando um arquivo com resumo do projeto, totais por tópico e detalhes dos custos cadastrados
+- No PDF exportado, campos de link do orçamento agora saem como link clicável com rótulo curto, em vez de exibir a URL completa
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 
