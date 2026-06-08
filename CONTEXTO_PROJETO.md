@@ -131,6 +131,8 @@
 - Campos chamados `Loja` no cadastro de custos agora usam lista suspensa com sugestões padrão e também reaproveitam automaticamente lojas já cadastradas, sem repetir
 - A tela `Orçamento pronto` agora tem botão para exportar PDF, gerando um arquivo com resumo do projeto, totais por tópico e detalhes dos custos cadastrados
 - No PDF exportado, campos de link do orçamento agora saem como link clicável com rótulo curto, em vez de exibir a URL completa
+- O PDF do orçamento passou a quebrar melhor linhas longas em nomes de produtos e valores extensos dentro das tabelas
+- A tela `Orçamento pronto` agora também tem botão para exportar em Word, usando o mesmo conteúdo consolidado do orçamento
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 

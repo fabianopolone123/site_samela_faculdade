@@ -13,6 +13,11 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from docx import Document
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Pt
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -604,6 +609,7 @@ def budget_ready_pdf_view(request):
         fontSize=10,
         leading=13,
         textColor=colors.HexColor('#172126'),
+        wordWrap='CJK',
     )
     value_style = ParagraphStyle(
         'BudgetPdfValue',
@@ -619,6 +625,7 @@ def budget_ready_pdf_view(request):
         fontSize=10,
         leading=13,
         textColor=colors.HexColor('#0b5563'),
+        wordWrap='CJK',
     )
 
     story = [
@@ -673,11 +680,14 @@ def budget_ready_pdf_view(request):
                     if detail_group['root_is_url']:
                         value = build_pdf_link_value(detail_group['root_raw_value'], link_style, 'Abrir link')
                     else:
-                        value = detail_group['summary_value']
-                    summary_rows.append([detail_group['title'], value or '-'])
+                        value = build_pdf_text_value(detail_group['summary_value'], body_style)
+                    summary_rows.append([
+                        build_pdf_text_value(detail_group['title'], body_style),
+                        value or build_pdf_text_value('-', body_style),
+                    ])
 
             if summary_rows:
-                table = Table(summary_rows, colWidths=[60 * mm, 110 * mm])
+                table = Table(summary_rows, colWidths=[55 * mm, 115 * mm])
                 table.setStyle(
                     TableStyle(
                         [
@@ -685,8 +695,10 @@ def budget_ready_pdf_view(request):
                             ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#d8e3e4')),
                             ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#d8e3e4')),
                             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                            ('FONTSIZE', (0, 0), (-1, -1), 9),
+                            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                            ('TOPPADDING', (0, 0), (-1, -1), 5),
+                            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
                         ]
                     )
                 )
@@ -705,19 +717,24 @@ def budget_ready_pdf_view(request):
                     if item['is_url_value']:
                         value = build_pdf_link_value(item['raw_value'], link_style, 'Abrir orçamento')
                     else:
-                        value = item['display_value']
-                    budget_rows.append([item['field_name'], value or '-'])
+                        value = build_pdf_text_value(item['display_value'], body_style)
+                    budget_rows.append([
+                        build_pdf_text_value(item['field_name'], body_style),
+                        value or build_pdf_text_value('-', body_style),
+                    ])
                 if detail_group['group_total'] is not None:
                     budget_rows.append(['Total deste orçamento', f'R$ {format_decimal_br(detail_group["group_total"])}'])
-                budget_table = Table(budget_rows, colWidths=[60 * mm, 110 * mm])
+                budget_table = Table(budget_rows, colWidths=[55 * mm, 115 * mm])
                 budget_table.setStyle(
                     TableStyle(
                         [
                             ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#d8e3e4')),
                             ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#d8e3e4')),
                             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                            ('FONTSIZE', (0, 0), (-1, -1), 9),
+                            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                            ('TOPPADDING', (0, 0), (-1, -1), 5),
+                            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
                         ]
                     )
                 )
@@ -731,6 +748,106 @@ def budget_ready_pdf_view(request):
 
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="orcamento-neevy.pdf"'
+    return response
+
+
+@login_required
+def budget_ready_docx_view(request):
+    context = build_budget_ready_context()
+    document = Document()
+
+    document.core_properties.title = 'Orçamento NEEVY'
+    normal_style = document.styles['Normal']
+    normal_style.font.name = 'Calibri'
+    normal_style.font.size = Pt(10)
+
+    title = document.add_paragraph()
+    title.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    run = title.add_run('Orçamento pronto')
+    run.bold = True
+    run.font.size = Pt(14)
+
+    subtitle = document.add_paragraph()
+    subtitle.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    run = subtitle.add_run(f'PROJETO: {context["project_budget_title"]}')
+    run.bold = True
+    run.font.size = Pt(12)
+
+    document.add_paragraph('ORÇAMENTO').alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    document.add_paragraph(context['project_budget_description'])
+    total_paragraph = document.add_paragraph()
+    total_run = total_paragraph.add_run(
+        f'Total geral do projeto: R$ {format_decimal_br(context["all_topics_total"])}'
+    )
+    total_run.bold = True
+
+    for block in context['topic_blocks']:
+        document.add_heading(block['topic'].name, level=2)
+        if block['topic'].description:
+            document.add_paragraph(block['topic'].description)
+        topic_total = document.add_paragraph()
+        topic_total.add_run(
+            f'Total do tópico: R$ {format_decimal_br(block["topic_total"])}'
+        ).bold = True
+
+        if not block['records']:
+            document.add_paragraph('Nenhum item cadastrado neste tópico.')
+            continue
+
+        for record_card in block['records']:
+            record_heading = document.add_paragraph()
+            record_heading.add_run(record_card['record_title']).bold = True
+            document.add_paragraph(
+                f'Cadastrado em {record_card["record"].created_at.strftime("%d/%m/%Y %H:%M")}'
+            )
+            if record_card['selected_total'] is not None:
+                document.add_paragraph(
+                    f'Total do orçamento selecionado: R$ {format_decimal_br(record_card["selected_total"])}'
+                )
+
+            summary_groups = [group for group in record_card['detail_groups'] if group['is_simple_field']]
+            if summary_groups:
+                document.add_paragraph('Dados principais').runs[0].bold = True
+                summary_table = document.add_table(rows=0, cols=2)
+                summary_table.style = 'Table Grid'
+                for detail_group in summary_groups:
+                    cells = summary_table.add_row().cells
+                    cells[0].text = detail_group['title']
+                    if detail_group['root_is_url']:
+                        paragraph = cells[1].paragraphs[0]
+                        add_docx_hyperlink(paragraph, detail_group['root_raw_value'], 'Abrir link')
+                    else:
+                        cells[1].text = detail_group['summary_value'] or '-'
+
+            budget_groups = [group for group in record_card['detail_groups'] if group['children']]
+            for detail_group in budget_groups:
+                budget_paragraph = document.add_paragraph()
+                budget_paragraph.add_run(detail_group['title']).bold = True
+                if detail_group['is_selected_budget']:
+                    budget_paragraph.add_run(' (selecionado)')
+                budget_table = document.add_table(rows=0, cols=2)
+                budget_table.style = 'Table Grid'
+                for item in detail_group['children']:
+                    cells = budget_table.add_row().cells
+                    cells[0].text = item['field_name']
+                    if item['is_url_value']:
+                        paragraph = cells[1].paragraphs[0]
+                        add_docx_hyperlink(paragraph, item['raw_value'], 'Abrir orçamento')
+                    else:
+                        cells[1].text = item['display_value'] or '-'
+                if detail_group['group_total'] is not None:
+                    cells = budget_table.add_row().cells
+                    cells[0].text = 'Total deste orçamento'
+                    cells[1].text = f'R$ {format_decimal_br(detail_group["group_total"])}'
+            document.add_paragraph()
+
+    buffer = BytesIO()
+    document.save(buffer)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    )
+    response['Content-Disposition'] = 'attachment; filename="orcamento-neevy.docx"'
     return response
 
 
@@ -1378,6 +1495,41 @@ def build_pdf_link_value(url, style, label):
     safe_url = escape(url, {'"': '&quot;'})
     safe_label = escape(label)
     return Paragraph(f'<link href="{safe_url}">{safe_label}</link>', style)
+
+
+def build_pdf_text_value(value, style):
+    return Paragraph(escape(str(value or '-')), style)
+
+
+def add_docx_hyperlink(paragraph, url, text):
+    part = paragraph.part
+    relation_id = part.relate_to(
+        url,
+        'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink',
+        is_external=True,
+    )
+
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), relation_id)
+
+    run = OxmlElement('w:r')
+    run_properties = OxmlElement('w:rPr')
+
+    color = OxmlElement('w:color')
+    color.set(qn('w:val'), '0B5563')
+    run_properties.append(color)
+
+    underline = OxmlElement('w:u')
+    underline.set(qn('w:val'), 'single')
+    run_properties.append(underline)
+
+    run.append(run_properties)
+    text_element = OxmlElement('w:t')
+    text_element.text = text
+    run.append(text_element)
+    hyperlink.append(run)
+    paragraph._p.append(hyperlink)
+    return hyperlink
 
 
 def format_value_for_display(field_type_code, value):
