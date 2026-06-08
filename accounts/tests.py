@@ -426,6 +426,65 @@ class DynamicTopicBudgetTests(TestCase):
         response = self.client.get(reverse('budget_product_create'), {'topic': topic.id})
         self.assertContains(response, 'R$&nbsp;18.000,00', html=True)
 
+    def test_can_edit_dynamic_cost_record_and_recalculate_total(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        product = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        price = CostField.objects.create(
+            topic=topic,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quantity = CostField.objects.create(
+            topic=topic,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        total = CostField.objects.create(
+            topic=topic,
+            name='Preço total',
+            field_type='valor',
+            calculation_role=CostField.ROLE_CALCULATED_TOTAL,
+        )
+
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=product, value='Notebook')
+        CostRecordValue.objects.create(record=record, field=price, value='10,00')
+        CostRecordValue.objects.create(record=record, field=quantity, value='2')
+        CostRecordValue.objects.create(record=record, field=total, value='20,00')
+
+        response = self.client.post(
+            reverse('update_topic_record', args=[record.id]),
+            {
+                f'field_{product.id}': 'Notebook atualizado',
+                f'field_{price.id}': '15,00',
+                f'field_{quantity.id}': '3',
+                f'field_{total.id}': '',
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}",
+        )
+        self.assertTrue(
+            CostRecordValue.objects.filter(
+                record=record,
+                field=product,
+                value='Notebook atualizado',
+            ).exists()
+        )
+        total_value = CostRecordValue.objects.get(record=record, field=total)
+        self.assertEqual(total_value.value, '45,00')
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action=AuditLog.ACTION_UPDATE,
+                target_type='Custo',
+                target_name='Notebook atualizado',
+            ).exists()
+        )
+
     def test_can_delete_dynamic_cost_record(self):
         topic = CostTopic.objects.create(name='Material permanente')
         field = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')

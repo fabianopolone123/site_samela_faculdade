@@ -431,6 +431,60 @@ def create_topic_record_view(request):
 
 
 @login_required
+def update_topic_record_view(request, record_id):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    record = get_object_or_404(CostRecord.objects.select_related('topic'), id=record_id)
+    topic = record.topic
+    fields = list(topic.fields.order_by('created_at'))
+
+    raw_values = {}
+    for field in fields:
+        value = request.POST.get(f'field_{field.id}', '').strip()
+        if field.field_type == 'valor' and value:
+            parsed_value = parse_decimal_input(value)
+            if parsed_value is not None:
+                value = format_decimal_br(parsed_value)
+        raw_values[field.id] = value
+
+    calculated_totals = {}
+    for field in fields:
+        if get_effective_calculation_role(field) != CostField.ROLE_CALCULATED_TOTAL:
+            continue
+        calculated_totals[field.id] = format_decimal_br(
+            get_group_calculation_parts(fields, raw_values, field.parent_id)['total']
+        )
+
+    values_to_save = {}
+    for field in fields:
+        value = calculated_totals.get(field.id, raw_values.get(field.id, ''))
+        if value:
+            values_to_save[field.id] = value
+
+    if not values_to_save:
+        messages.error(request, 'Preencha ao menos um campo para salvar as alterações do custo.')
+        return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=registro-{record.id}")
+
+    record.values.all().delete()
+    CostRecordValue.objects.bulk_create(
+        [
+            CostRecordValue(record=record, field_id=field_id, value=value)
+            for field_id, value in values_to_save.items()
+        ]
+    )
+    register_audit_log(
+        request.user,
+        AuditLog.ACTION_UPDATE,
+        'Custo',
+        get_record_title_from_record(record),
+        f'Edição de custo no tópico {topic.name}.',
+    )
+    messages.success(request, 'Custo atualizado com sucesso.')
+    return redirect(f"{reverse('budget_product_create')}?topic={topic.id}")
+
+
+@login_required
 def delete_topic_record_view(request, record_id):
     if request.method != 'POST':
         return redirect('budget_product_create')
@@ -840,10 +894,12 @@ def get_selected_total_for_record(record, topic_fields):
 def build_record_cards(topic, selected_rows):
     field_order = {row['field'].id: index for index, row in enumerate(selected_rows)}
     all_fields = list(topic.fields.all())
+    selected_groups = build_topic_groups(topic)
     records = []
     grand_total = Decimal('0')
 
     for index, record in enumerate(topic.records.all(), start=1):
+        values_by_field_id = {value.field_id: value.value for value in record.values.all()}
         values = sorted(
             [
                 {
@@ -869,6 +925,8 @@ def build_record_cards(topic, selected_rows):
                 'record': record,
                 'record_title': record_title,
                 'values': values,
+                'detail_groups': build_record_detail_groups(selected_groups, values_by_field_id),
+                'edit_groups': build_record_edit_groups(selected_groups, values_by_field_id),
                 'selected_total': selected_total,
             }
         )
@@ -895,6 +953,64 @@ def get_record_title(values, index):
             return item['value']
 
     return f'Cadastro {index}'
+
+
+def build_record_detail_groups(selected_groups, values_by_field_id):
+    detail_groups = []
+    for group in selected_groups:
+        root_value = values_by_field_id.get(group['root']['field'].id, '')
+        child_items = []
+        for child in group['children']:
+            field_id = child['field'].id
+            value = values_by_field_id.get(field_id, '')
+            if value:
+                child_items.append(
+                    {
+                        'field_name': child['field'].name,
+                        'field_type_code': child['field'].field_type,
+                        'display_value': format_value_for_display(child['field'].field_type, value),
+                        'raw_value': value,
+                        'is_url_value': is_probably_url(value),
+                        'field_role': child['field_role'],
+                    }
+                )
+
+        if root_value or child_items:
+            detail_groups.append(
+                {
+                    'title': group['root']['field'].name,
+                    'type_label': group['root']['type_label'],
+                    'root_value': format_value_for_display(group['root']['field'].field_type, root_value) if root_value else '',
+                    'root_raw_value': root_value,
+                    'root_is_url': is_probably_url(root_value) if root_value else False,
+                    'root_type_code': group['root']['field'].field_type,
+                    'children': child_items,
+                }
+            )
+    return detail_groups
+
+
+def build_record_edit_groups(selected_groups, values_by_field_id):
+    edit_groups = []
+    for group in selected_groups:
+        root_field = group['root']['field']
+        children = []
+        for child in group['children']:
+            children.append(
+                {
+                    **child,
+                    'current_value': values_by_field_id.get(child['field'].id, ''),
+                }
+            )
+
+        edit_groups.append(
+            {
+                **group,
+                'root_current_value': values_by_field_id.get(root_field.id, ''),
+                'children': children,
+            }
+        )
+    return edit_groups
 
 
 def get_record_title_from_record(record):

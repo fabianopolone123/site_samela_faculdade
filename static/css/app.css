@@ -1189,6 +1189,89 @@ body {
     margin-bottom: 16px;
 }
 
+.record-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.record-modal-actions .record-delete-form {
+    margin: 0;
+}
+
+.record-modal-actions .button-secondary,
+.record-modal-actions .button-danger {
+    width: auto;
+    margin-top: 0;
+}
+
+.record-detail-layout {
+    display: grid;
+    gap: 16px;
+}
+
+.record-detail-card {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 95, 115, 0.1);
+    background: linear-gradient(180deg, rgba(247, 251, 252, 0.92), rgba(255, 255, 255, 0.98));
+}
+
+.record-detail-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 95, 115, 0.08);
+}
+
+.record-detail-card-header strong {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 1rem;
+}
+
+.record-detail-card-header small {
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.record-detail-list {
+    display: grid;
+    gap: 10px;
+}
+
+.record-detail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(0, 95, 115, 0.08);
+}
+
+.record-detail-row--primary {
+    background: linear-gradient(135deg, rgba(0, 95, 115, 0.08), rgba(238, 155, 0, 0.1));
+    border-color: rgba(0, 95, 115, 0.12);
+}
+
+.record-detail-row span {
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.9rem;
+}
+
+.record-detail-row strong {
+    text-align: right;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
 .empty-state {
     display: grid;
     gap: 8px;

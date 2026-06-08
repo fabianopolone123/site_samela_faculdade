@@ -470,7 +470,7 @@
     </div>
     {% endfor %}
 
-    {% for record_card in selected_records %}
+{% for record_card in selected_records %}
     <div class="modal" id="record-modal-{{ record_card.record.id }}" aria-hidden="true">
         <div class="modal-backdrop" data-close-modal="record-modal-{{ record_card.record.id }}"></div>
         <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
@@ -481,27 +481,59 @@
                 </div>
                 <button type="button" class="icon-button" data-close-modal="record-modal-{{ record_card.record.id }}">×</button>
             </div>
-            <form method="post" action="{% url 'delete_topic_record' record_card.record.id %}" class="record-delete-form">
-                {% csrf_token %}
-                <input type="hidden" name="next" value="{% url 'budget_product_create' %}?topic={{ selected_topic.id }}">
+            <div class="record-modal-actions">
                 <button
-                    type="submit"
-                    class="button-danger"
-                    onclick="return confirm('Excluir este custo?')"
+                    type="button"
+                    class="button-secondary"
+                    data-open-modal="edit-record-modal-{{ record_card.record.id }}"
+                    data-switch-from="record-modal-{{ record_card.record.id }}"
                 >
-                    Excluir custo
+                    Editar custo
                 </button>
-            </form>
-            <div class="record-values budget-record-values">
-                {% for value in record_card.values %}
-                    <div class="record-value level-{{ value.level }}">
-                        <span>{{ value.field_name }}</span>
-                        {% if value.field_type_code == 'link' and value.is_url_value %}
-                            <a href="{{ value.value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
-                        {% else %}
-                            <strong>{{ value.display_value }}</strong>
+                <form method="post" action="{% url 'delete_topic_record' record_card.record.id %}" class="record-delete-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'budget_product_create' %}?topic={{ selected_topic.id }}">
+                    <button
+                        type="submit"
+                        class="button-danger"
+                        onclick="return confirm('Excluir este custo?')"
+                    >
+                        Excluir custo
+                    </button>
+                </form>
+            </div>
+            <div class="record-detail-layout">
+                {% for detail_group in record_card.detail_groups %}
+                    <article class="record-detail-card">
+                        <div class="record-detail-card-header">
+                            <strong>{{ detail_group.title }}</strong>
+                            <small>{{ detail_group.type_label }}</small>
+                        </div>
+                        {% if detail_group.root_raw_value %}
+                            <div class="record-detail-row record-detail-row--primary">
+                                <span>{{ detail_group.title }}</span>
+                                {% if detail_group.root_type_code == 'link' and detail_group.root_is_url %}
+                                    <a href="{{ detail_group.root_raw_value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
+                                {% else %}
+                                    <strong>{{ detail_group.root_value }}</strong>
+                                {% endif %}
+                            </div>
                         {% endif %}
-                    </div>
+                        {% if detail_group.children %}
+                            <div class="record-detail-list">
+                                {% for item in detail_group.children %}
+                                    <div class="record-detail-row">
+                                        <span>{{ item.field_name }}</span>
+                                        {% if item.field_type_code == 'link' and item.is_url_value %}
+                                            <a href="{{ item.raw_value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
+                                        {% else %}
+                                            <strong>{{ item.display_value }}</strong>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </article>
                 {% endfor %}
             </div>
             {% if record_card.selected_total is not None %}
@@ -510,6 +542,111 @@
                 <strong>R$&nbsp;{{ record_card.selected_total|currency_br }}</strong>
             </div>
             {% endif %}
+        </div>
+    </div>
+
+    <div class="modal" id="edit-record-modal-{{ record_card.record.id }}" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="edit-record-modal-{{ record_card.record.id }}"></div>
+        <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">Editar custo</span>
+                    <h2>{{ record_card.record_title }}</h2>
+                </div>
+                <button type="button" class="icon-button" data-close-modal="edit-record-modal-{{ record_card.record.id }}">×</button>
+            </div>
+
+            <form method="post" action="{% url 'update_topic_record' record_card.record.id %}" class="form-stack">
+                {% csrf_token %}
+                <div class="dynamic-form-grid grouped-form-grid">
+                    {% for group in record_card.edit_groups %}
+                        <article class="cost-group-card">
+                            <div class="cost-group-header">
+                                <div>
+                                    <span class="topic-card-badge">Campo principal</span>
+                                    <h4>{{ group.root.field.name }}</h4>
+                                    <p>{{ group.root.type_label }}</p>
+                                </div>
+                            </div>
+                            {% if not group.children %}
+                            <div class="field dynamic-entry-field root-entry-field">
+                                <label for="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}">
+                                    {{ group.root.field.name }}
+                                    <small>{{ group.root.type_label }}{% if group.root_role != 'nenhuma' %} · {{ group.root_role_label }}{% endif %}</small>
+                                </label>
+                                {% if group.root.field.field_type == 'texto' %}
+                                    <input type="text" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}">
+                                {% elif group.root.field.field_type == 'numero' %}
+                                    {% if group.root_role == 'multiplicador' %}
+                                        <input type="number" step="1" min="0" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}" data-calc-quantidade="edit-topic-{{ record_card.record.id }}">
+                                    {% else %}
+                                        <input type="number" step="1" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}">
+                                    {% endif %}
+                                {% elif group.root.field.field_type == 'link' %}
+                                    <input type="url" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}">
+                                {% elif group.root.field.field_type == 'valor' %}
+                                    {% if group.root_role == 'preco_unitario' %}
+                                        <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}" data-calc-preco="edit-topic-{{ record_card.record.id }}">
+                                    {% elif group.root_role == 'frete' %}
+                                        <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}" data-calc-frete="edit-topic-{{ record_card.record.id }}">
+                                    {% elif group.root_role == 'total_calculado' %}
+                                        <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}" data-calc-total-field="edit-topic-{{ record_card.record.id }}" readonly>
+                                    {% else %}
+                                        <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}">
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                            {% if group.children %}
+                                <div class="subfield-zone">
+                                    <div class="subfield-zone-header">
+                                        <strong>Subcampos</strong>
+                                        <span>{{ group.children|length }}</span>
+                                    </div>
+                                    <div class="subfield-grid">
+                                        {% for row in group.children %}
+                                            <div class="field dynamic-entry-field subfield-entry level-{{ row.level }}">
+                                                <label for="edit_field_{{ record_card.record.id }}_{{ row.field.id }}">
+                                                    {{ row.field.name }}
+                                                    <small>{{ row.type_label }}{% if row.field_role and row.field_role != 'nenhuma' %} · {{ row.field_role_label }}{% endif %}</small>
+                                                </label>
+                                                {% if row.field.field_type == 'texto' %}
+                                                    <input type="text" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}">
+                                                {% elif row.field.field_type == 'link' %}
+                                                    <input type="url" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}">
+                                                {% elif row.field.field_type == 'numero' %}
+                                                    {% if row.field_role == 'multiplicador' %}
+                                                        <input type="number" step="1" min="0" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}" data-calc-quantidade="edit-orc-{{ record_card.record.id }}-{{ group.root.field.id }}">
+                                                    {% else %}
+                                                        <input type="number" step="1" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}">
+                                                    {% endif %}
+                                                {% elif row.field.field_type == 'valor' %}
+                                                    {% if row.field_role == 'preco_unitario' %}
+                                                        <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}" data-calc-preco="edit-orc-{{ record_card.record.id }}-{{ group.root.field.id }}">
+                                                    {% elif row.field_role == 'frete' %}
+                                                        <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}" data-calc-frete="edit-orc-{{ record_card.record.id }}-{{ group.root.field.id }}">
+                                                    {% elif row.field_role == 'total_calculado' %}
+                                                        <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}" data-calc-total-field="edit-orc-{{ record_card.record.id }}-{{ group.root.field.id }}" readonly>
+                                                    {% else %}
+                                                        <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}">
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if group.has_price_calc %}
+                                    <div class="orc-calc-total" data-calc-total="edit-orc-{{ record_card.record.id }}-{{ group.root.field.id }}">
+                                        <span>Total (Preço × Quantidade + Frete)</span>
+                                        <strong>R$ 0,00</strong>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </article>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="button-primary">Salvar alterações do custo</button>
+            </form>
         </div>
     </div>
     {% endfor %}
@@ -556,6 +693,14 @@
         const autoOpen = urlParams.get('open');
         if (autoOpen === 'campos') openModal('campos-modal');
         else if (autoOpen === 'custo') openModal('custo-modal');
+        else if (autoOpen && autoOpen.startsWith('registro-')) openModal(`record-modal-${autoOpen.replace('registro-', '')}`);
+        else if (autoOpen && autoOpen.startsWith('editar-registro-')) openModal(`edit-record-modal-${autoOpen.replace('editar-registro-', '')}`);
+
+        document.querySelectorAll('[data-switch-from][data-open-modal]').forEach((button) => {
+            button.addEventListener('click', () => {
+                closeModal(button.dataset.switchFrom);
+            });
+        });
 
         function parsePtBrNumber(value) {
             const cleaned = String(value || '').replace(/\s+/g, '').replace('R$', '').trim();

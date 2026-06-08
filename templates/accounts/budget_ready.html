@@ -85,27 +85,57 @@
                         </div>
                         <button type="button" class="icon-button" data-close-modal="budget-record-{{ block.topic.id }}-{{ record_card.record.id }}">×</button>
                     </div>
-                    <form method="post" action="{% url 'delete_topic_record' record_card.record.id %}" class="record-delete-form">
-                        {% csrf_token %}
-                        <input type="hidden" name="next" value="{% url 'budget_ready' %}">
-                        <button
-                            type="submit"
-                            class="button-danger"
-                            onclick="return confirm('Excluir este custo?')"
+                    <div class="record-modal-actions">
+                        <a
+                            href="{% url 'budget_product_create' %}?topic={{ block.topic.id }}&open=editar-registro-{{ record_card.record.id }}"
+                            class="button-secondary dashboard-secondary"
                         >
-                            Excluir custo
-                        </button>
-                    </form>
-                    <div class="record-values budget-record-values">
-                        {% for value in record_card.values %}
-                            <div class="record-value level-{{ value.level }}">
-                                <span>{{ value.field_name }}</span>
-                                {% if value.field_type_code == 'link' and value.is_url_value %}
-                                    <a href="{{ value.value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
-                                {% else %}
-                                    <strong>{{ value.display_value }}</strong>
+                            Editar custo
+                        </a>
+                        <form method="post" action="{% url 'delete_topic_record' record_card.record.id %}" class="record-delete-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'budget_ready' %}">
+                            <button
+                                type="submit"
+                                class="button-danger"
+                                onclick="return confirm('Excluir este custo?')"
+                            >
+                                Excluir custo
+                            </button>
+                        </form>
+                    </div>
+                    <div class="record-detail-layout">
+                        {% for detail_group in record_card.detail_groups %}
+                            <article class="record-detail-card">
+                                <div class="record-detail-card-header">
+                                    <strong>{{ detail_group.title }}</strong>
+                                    <small>{{ detail_group.type_label }}</small>
+                                </div>
+                                {% if detail_group.root_raw_value %}
+                                    <div class="record-detail-row record-detail-row--primary">
+                                        <span>{{ detail_group.title }}</span>
+                                        {% if detail_group.root_type_code == 'link' and detail_group.root_is_url %}
+                                            <a href="{{ detail_group.root_raw_value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
+                                        {% else %}
+                                            <strong>{{ detail_group.root_value }}</strong>
+                                        {% endif %}
+                                    </div>
                                 {% endif %}
-                            </div>
+                                {% if detail_group.children %}
+                                    <div class="record-detail-list">
+                                        {% for item in detail_group.children %}
+                                            <div class="record-detail-row">
+                                                <span>{{ item.field_name }}</span>
+                                                {% if item.field_type_code == 'link' and item.is_url_value %}
+                                                    <a href="{{ item.raw_value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
+                                                {% else %}
+                                                    <strong>{{ item.display_value }}</strong>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </article>
                         {% endfor %}
                     </div>
                     {% if record_card.selected_total is not None %}
