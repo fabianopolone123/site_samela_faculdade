@@ -126,6 +126,7 @@
 - O resumo do modal foi dividido entre `Dados principais` e `Orçamentos`, com destaque visual para o orçamento selecionado e total individual por orçamento
 - O botão `Abrir link` nos detalhes dos custos foi reduzido para ficar visualmente mais discreto
 - Os cards de orçamento nos detalhes do custo deixaram de exibir o tipo técnico do campo, como `Texto`
+- No modal de `Novo custo`, campos numéricos de seleção de orçamento e multiplicação agora já abrem com `1` preenchido por padrão
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 

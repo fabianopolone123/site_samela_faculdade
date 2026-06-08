@@ -318,6 +318,8 @@ class DynamicTopicBudgetTests(TestCase):
         response = self.client.get(reverse('budget_product_create'), {'topic': topic.id})
 
         self.assertContains(response, 'R$&nbsp;70.306.270,00', html=True)
+        self.assertContains(response, f'name="field_{selector.id}" value="1"', html=False)
+        self.assertContains(response, f'name="field_{quote_quantity.id}" value="1"', html=False)
 
     def test_calculated_total_field_is_saved_from_price_and_multiplier(self):
         topic = CostTopic.objects.create(name='Material permanente')

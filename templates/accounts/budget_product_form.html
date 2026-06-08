@@ -348,8 +348,8 @@
                                     {% if group.root.field.field_type == 'texto' %}
                                         <input type="text" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
                                     {% elif group.root.field.field_type == 'numero' %}
-                                        {% if group.root_role == 'multiplicador' %}
-                                            <input type="number" step="1" min="0" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" data-calc-quantidade="topic-{{ selected_topic.id }}">
+                                        {% if group.root_role == 'multiplicador' or group.root_role == 'orcamento_selecionado' %}
+                                            <input type="number" step="1" min="0" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="1" {% if group.root_role == 'multiplicador' %}data-calc-quantidade="topic-{{ selected_topic.id }}"{% endif %}>
                                         {% else %}
                                             <input type="number" step="1" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
                                         {% endif %}
@@ -386,8 +386,8 @@
                                                     {% elif row.field.field_type == 'link' %}
                                                         <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                     {% elif row.field.field_type == 'numero' %}
-                                                        {% if row.field_role == 'multiplicador' %}
-                                                            <input type="number" step="1" min="0" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" data-calc-quantidade="orc-{{ group.root.field.id }}">
+                                                        {% if row.field_role == 'multiplicador' or row.field_role == 'orcamento_selecionado' %}
+                                                            <input type="number" step="1" min="0" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" value="1" {% if row.field_role == 'multiplicador' %}data-calc-quantidade="orc-{{ group.root.field.id }}"{% endif %}>
                                                         {% else %}
                                                             <input type="number" step="1" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                         {% endif %}
