@@ -124,6 +124,7 @@
 - Cada cadastro agora também pode ser editado na própria janela de detalhes, com botão ao lado de excluir
 - A janela de detalhes dos custos passou a organizar melhor o resumo por blocos, destacando produto, campos principais e orçamentos relacionados
 - O resumo do modal foi dividido entre `Dados principais` e `Orçamentos`, com destaque visual para o orçamento selecionado e total individual por orçamento
+- O botão `Abrir link` nos detalhes dos custos foi reduzido para ficar visualmente mais discreto
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 

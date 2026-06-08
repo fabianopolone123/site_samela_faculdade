@@ -1168,13 +1168,13 @@ body {
     width: fit-content;
     align-items: center;
     justify-content: center;
-    padding: 10px 14px;
-    border-radius: 12px;
+    padding: 8px 12px;
+    border-radius: 10px;
     background: rgba(0, 95, 115, 0.08);
     border: 1px solid rgba(0, 95, 115, 0.14);
     color: var(--accent);
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 700;
     text-decoration: none;
     transition: background 0.2s ease, transform 0.2s ease;
