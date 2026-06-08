@@ -127,6 +127,7 @@
 - O botão `Abrir link` nos detalhes dos custos foi reduzido para ficar visualmente mais discreto
 - Os cards de orçamento nos detalhes do custo deixaram de exibir o tipo técnico do campo, como `Texto`
 - No modal de `Novo custo`, campos numéricos de seleção de orçamento e multiplicação agora já abrem com `1` preenchido por padrão
+- Quando o tópico usa múltiplos orçamentos com total calculado, o sistema identifica automaticamente o orçamento de menor custo e preenche o campo `Selecionar para orçar` com esse número
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 

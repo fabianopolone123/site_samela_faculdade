@@ -817,6 +817,7 @@ def build_topic_groups(topic):
                 'root_role_label': get_calculation_role_label(root_role),
                 'children': [],
                 'has_price_calc': False,
+                'budget_number': extract_budget_number(row['field'].name),
             }
             groups.append(current_group)
             if root_role in (

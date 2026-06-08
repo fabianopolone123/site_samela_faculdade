@@ -349,7 +349,7 @@
                                         <input type="text" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
                                     {% elif group.root.field.field_type == 'numero' %}
                                         {% if group.root_role == 'multiplicador' or group.root_role == 'orcamento_selecionado' %}
-                                            <input type="number" step="1" min="0" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="1" {% if group.root_role == 'multiplicador' %}data-calc-quantidade="topic-{{ selected_topic.id }}"{% endif %}>
+                                            <input type="number" step="1" min="0" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="1" {% if group.root_role == 'multiplicador' %}data-calc-quantidade="topic-{{ selected_topic.id }}"{% endif %}{% if group.root_role == 'orcamento_selecionado' %} data-budget-selector="topic-{{ selected_topic.id }}"{% endif %}>
                                         {% else %}
                                             <input type="number" step="1" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
                                         {% endif %}
@@ -387,7 +387,7 @@
                                                         <input type="url" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                     {% elif row.field.field_type == 'numero' %}
                                                         {% if row.field_role == 'multiplicador' or row.field_role == 'orcamento_selecionado' %}
-                                                            <input type="number" step="1" min="0" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" value="1" {% if row.field_role == 'multiplicador' %}data-calc-quantidade="orc-{{ group.root.field.id }}"{% endif %}>
+                                                            <input type="number" step="1" min="0" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}" value="1" {% if row.field_role == 'multiplicador' %}data-calc-quantidade="orc-{{ group.root.field.id }}"{% endif %}{% if row.field_role == 'orcamento_selecionado' %} data-budget-selector="topic-{{ selected_topic.id }}"{% endif %}>
                                                         {% else %}
                                                             <input type="number" step="1" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                         {% endif %}
@@ -406,7 +406,7 @@
                                             {% endfor %}
                                         </div>
                                         {% if group.has_price_calc %}
-                                        <div class="orc-calc-total" data-calc-total="orc-{{ group.root.field.id }}">
+                                        <div class="orc-calc-total" data-calc-total="orc-{{ group.root.field.id }}"{% if group.budget_number %} data-budget-total-group="topic-{{ selected_topic.id }}" data-budget-number="{{ group.budget_number }}" data-total-value="0"{% endif %}>
                                             <span>Total (Preço × Quantidade + Frete)</span>
                                             <strong>R$ 0,00</strong>
                                         </div>
@@ -608,6 +608,8 @@
                                 {% elif group.root.field.field_type == 'numero' %}
                                     {% if group.root_role == 'multiplicador' %}
                                         <input type="number" step="1" min="0" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}" data-calc-quantidade="edit-topic-{{ record_card.record.id }}">
+                                    {% elif group.root_role == 'orcamento_selecionado' %}
+                                        <input type="number" step="1" min="0" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}" data-budget-selector="edit-topic-{{ record_card.record.id }}">
                                     {% else %}
                                         <input type="number" step="1" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}">
                                     {% endif %}
@@ -646,6 +648,8 @@
                                                 {% elif row.field.field_type == 'numero' %}
                                                     {% if row.field_role == 'multiplicador' %}
                                                         <input type="number" step="1" min="0" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}" data-calc-quantidade="edit-orc-{{ record_card.record.id }}-{{ group.root.field.id }}">
+                                                    {% elif row.field_role == 'orcamento_selecionado' %}
+                                                        <input type="number" step="1" min="0" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}" data-budget-selector="edit-topic-{{ record_card.record.id }}">
                                                     {% else %}
                                                         <input type="number" step="1" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}">
                                                     {% endif %}
@@ -664,7 +668,7 @@
                                         {% endfor %}
                                     </div>
                                     {% if group.has_price_calc %}
-                                    <div class="orc-calc-total" data-calc-total="edit-orc-{{ record_card.record.id }}-{{ group.root.field.id }}">
+                                    <div class="orc-calc-total" data-calc-total="edit-orc-{{ record_card.record.id }}-{{ group.root.field.id }}"{% if group.budget_number %} data-budget-total-group="edit-topic-{{ record_card.record.id }}" data-budget-number="{{ group.budget_number }}" data-total-value="0"{% endif %}>
                                         <span>Total (Preço × Quantidade + Frete)</span>
                                         <strong>R$ 0,00</strong>
                                     </div>
@@ -740,6 +744,30 @@
             return parseFloat(cleaned) || 0;
         }
 
+        function updateBudgetSelector(groupKey) {
+            if (!groupKey) return;
+            const selectorInputs = Array.from(document.querySelectorAll(`[data-budget-selector="${groupKey}"]`));
+            const budgetTotals = Array.from(document.querySelectorAll(`[data-budget-total-group="${groupKey}"]`));
+            if (!selectorInputs.length || !budgetTotals.length) return;
+
+            let bestBudget = null;
+            let bestValue = null;
+            budgetTotals.forEach((item) => {
+                const budgetNumber = item.dataset.budgetNumber;
+                const totalValue = parseFloat(item.dataset.totalValue || '0');
+                if (!budgetNumber || Number.isNaN(totalValue)) return;
+                if (bestValue === null || totalValue < bestValue) {
+                    bestValue = totalValue;
+                    bestBudget = budgetNumber;
+                }
+            });
+
+            if (!bestBudget) return;
+            selectorInputs.forEach((input) => {
+                input.value = bestBudget;
+            });
+        }
+
         const calcScopeKeys = new Set();
         document.querySelectorAll('[data-calc-preco], [data-calc-quantidade], [data-calc-frete], [data-calc-total-field]').forEach((input) => {
             const key = input.dataset.calcPreco || input.dataset.calcQuantidade || input.dataset.calcFrete || input.dataset.calcTotalField;
@@ -750,6 +778,7 @@
             const priceInputs = Array.from(document.querySelectorAll(`[data-calc-preco="${key}"]`));
             const quantityInputs = Array.from(document.querySelectorAll(`[data-calc-quantidade="${key}"]`));
             const freightInputs = Array.from(document.querySelectorAll(`[data-calc-frete="${key}"]`));
+            const totalWrapper = document.querySelector(`[data-calc-total="${key}"]`);
             const totalEl = document.querySelector(`[data-calc-total="${key}"] strong`);
             const totalFieldInputs = Array.from(document.querySelectorAll(`[data-calc-total-field="${key}"]`));
 
@@ -769,6 +798,10 @@
             if (totalEl) {
                 totalEl.textContent = 'R$ ' + formatted;
             }
+            if (totalWrapper) {
+                totalWrapper.dataset.totalValue = total.toFixed(2);
+                updateBudgetSelector(totalWrapper.dataset.budgetTotalGroup);
+            }
             totalFieldInputs.forEach((input) => {
                 input.value = formatted;
             });
@@ -781,6 +814,10 @@
                 input.addEventListener('input', () => updateCalculatedScope(key));
             });
             updateCalculatedScope(key);
+        });
+
+        document.querySelectorAll('[data-budget-total-group]').forEach((item) => {
+            updateBudgetSelector(item.dataset.budgetTotalGroup);
         });
     </script>
 </body>
