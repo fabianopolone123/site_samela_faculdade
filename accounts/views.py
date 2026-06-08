@@ -925,7 +925,7 @@ def build_record_cards(topic, selected_rows):
                 'record': record,
                 'record_title': record_title,
                 'values': values,
-                'detail_groups': build_record_detail_groups(selected_groups, values_by_field_id),
+                'detail_groups': build_record_detail_groups(selected_groups, values_by_field_id, all_fields),
                 'edit_groups': build_record_edit_groups(selected_groups, values_by_field_id),
                 'selected_total': selected_total,
             }
@@ -955,10 +955,18 @@ def get_record_title(values, index):
     return f'Cadastro {index}'
 
 
-def build_record_detail_groups(selected_groups, values_by_field_id):
+def build_record_detail_groups(selected_groups, values_by_field_id, topic_fields):
+    selected_budget_value = ''
+    for group in selected_groups:
+        root_field = group['root']['field']
+        if group['root_role'] == CostField.ROLE_SELECTOR:
+            selected_budget_value = str(values_by_field_id.get(root_field.id, '')).strip()
+            break
+
     detail_groups = []
     for group in selected_groups:
-        root_value = values_by_field_id.get(group['root']['field'].id, '')
+        root_field = group['root']['field']
+        root_value = values_by_field_id.get(root_field.id, '')
         child_items = []
         for child in group['children']:
             field_id = child['field'].id
@@ -976,15 +984,23 @@ def build_record_detail_groups(selected_groups, values_by_field_id):
                 )
 
         if root_value or child_items:
+            budget_number = extract_budget_number(root_field.name)
+            calculation_parts = get_group_calculation_parts(topic_fields, values_by_field_id, root_field.id)
             detail_groups.append(
                 {
-                    'title': group['root']['field'].name,
+                    'title': root_field.name,
                     'type_label': group['root']['type_label'],
-                    'root_value': format_value_for_display(group['root']['field'].field_type, root_value) if root_value else '',
+                    'root_value': format_value_for_display(root_field.field_type, root_value) if root_value else '',
                     'root_raw_value': root_value,
                     'root_is_url': is_probably_url(root_value) if root_value else False,
-                    'root_type_code': group['root']['field'].field_type,
+                    'root_type_code': root_field.field_type,
                     'children': child_items,
+                    'is_budget_group': bool(group['children']) and budget_number is not None,
+                    'is_selected_budget': bool(budget_number) and selected_budget_value == budget_number,
+                    'budget_number': budget_number,
+                    'group_total': calculation_parts['total'] if calculation_parts['has_parts'] else None,
+                    'is_simple_field': not group['children'],
+                    'summary_value': format_value_for_display(root_field.field_type, root_value) if root_value else '',
                 }
             )
     return detail_groups
@@ -1022,6 +1038,18 @@ def get_record_title_from_record(record):
         for value in record.values.select_related('field').all()
     ]
     return get_record_title(values, record.id or 0)
+
+
+def extract_budget_number(field_name):
+    normalized = field_name.lower().strip()
+    if not normalized.startswith('orçamento ') and not normalized.startswith('orcamento '):
+        return None
+
+    parts = field_name.strip().split()
+    if not parts:
+        return None
+    candidate = parts[-1].strip()
+    return candidate if candidate.isdigit() else None
 
 
 def get_field_level(field):

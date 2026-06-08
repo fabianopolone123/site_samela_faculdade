@@ -88,7 +88,7 @@
                     <div class="record-modal-actions">
                         <a
                             href="{% url 'budget_product_create' %}?topic={{ block.topic.id }}&open=editar-registro-{{ record_card.record.id }}"
-                            class="button-secondary dashboard-secondary"
+                            class="button-secondary button-secondary-compact dashboard-secondary"
                         >
                             Editar custo
                         </a>
@@ -105,38 +105,68 @@
                         </form>
                     </div>
                     <div class="record-detail-layout">
-                        {% for detail_group in record_card.detail_groups %}
-                            <article class="record-detail-card">
-                                <div class="record-detail-card-header">
-                                    <strong>{{ detail_group.title }}</strong>
-                                    <small>{{ detail_group.type_label }}</small>
-                                </div>
-                                {% if detail_group.root_raw_value %}
-                                    <div class="record-detail-row record-detail-row--primary">
-                                        <span>{{ detail_group.title }}</span>
-                                        {% if detail_group.root_type_code == 'link' and detail_group.root_is_url %}
-                                            <a href="{{ detail_group.root_raw_value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
-                                        {% else %}
-                                            <strong>{{ detail_group.root_value }}</strong>
-                                        {% endif %}
-                                    </div>
-                                {% endif %}
-                                {% if detail_group.children %}
-                                    <div class="record-detail-list">
-                                        {% for item in detail_group.children %}
-                                            <div class="record-detail-row">
-                                                <span>{{ item.field_name }}</span>
-                                                {% if item.field_type_code == 'link' and item.is_url_value %}
-                                                    <a href="{{ item.raw_value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
-                                                {% else %}
-                                                    <strong>{{ item.display_value }}</strong>
+                        <section class="record-detail-section">
+                            <div class="record-detail-section-header">
+                                <span class="eyebrow">Resumo do cadastro</span>
+                                <h3>Dados principais</h3>
+                            </div>
+                            <div class="record-summary-grid">
+                                {% for detail_group in record_card.detail_groups %}
+                                    {% if detail_group.is_simple_field %}
+                                        <article class="record-summary-card">
+                                            <span>{{ detail_group.title }}</span>
+                                            {% if detail_group.root_type_code == 'link' and detail_group.root_is_url %}
+                                                <a href="{{ detail_group.root_raw_value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
+                                            {% else %}
+                                                <strong>{{ detail_group.summary_value }}</strong>
+                                            {% endif %}
+                                        </article>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </section>
+
+                        <section class="record-detail-section">
+                            <div class="record-detail-section-header">
+                                <span class="eyebrow">Orçamentos</span>
+                                <h3>Comparativo registrado</h3>
+                            </div>
+                            <div class="record-budget-grid">
+                                {% for detail_group in record_card.detail_groups %}
+                                    {% if detail_group.children %}
+                                        <article class="record-detail-card{% if detail_group.is_selected_budget %} is-selected-budget{% endif %}">
+                                            <div class="record-detail-card-header">
+                                                <div class="record-detail-title-block">
+                                                    <strong>{{ detail_group.title }}</strong>
+                                                    <small>{{ detail_group.type_label }}</small>
+                                                </div>
+                                                {% if detail_group.is_selected_budget %}
+                                                    <span class="record-selected-badge">Selecionado</span>
                                                 {% endif %}
                                             </div>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </article>
-                        {% endfor %}
+                                            <div class="record-detail-list">
+                                                {% for item in detail_group.children %}
+                                                    <div class="record-detail-row">
+                                                        <span>{{ item.field_name }}</span>
+                                                        {% if item.field_type_code == 'link' and item.is_url_value %}
+                                                            <a href="{{ item.raw_value }}" target="_blank" rel="noreferrer" class="record-link-button">Abrir link</a>
+                                                        {% else %}
+                                                            <strong>{{ item.display_value }}</strong>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                            {% if detail_group.group_total is not None %}
+                                                <div class="record-group-total">
+                                                    <span>Total deste orçamento</span>
+                                                    <strong>R$ {{ detail_group.group_total|currency_br }}</strong>
+                                                </div>
+                                            {% endif %}
+                                        </article>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </section>
                     </div>
                     {% if record_card.selected_total is not None %}
                         <div class="record-selected-total">
