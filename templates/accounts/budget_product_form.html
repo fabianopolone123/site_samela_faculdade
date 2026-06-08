@@ -532,15 +532,14 @@
                     <div class="record-budget-grid">
                         {% for detail_group in record_card.detail_groups %}
                             {% if detail_group.children %}
-                                <article class="record-detail-card{% if detail_group.is_selected_budget %} is-selected-budget{% endif %}">
-                                    <div class="record-detail-card-header">
-                                        <div class="record-detail-title-block">
-                                            <strong>{{ detail_group.title }}</strong>
-                                            <small>{{ detail_group.type_label }}</small>
-                                        </div>
-                                        {% if detail_group.is_selected_budget %}
-                                            <span class="record-selected-badge">Selecionado</span>
-                                        {% endif %}
+                                        <article class="record-detail-card{% if detail_group.is_selected_budget %} is-selected-budget{% endif %}">
+                                            <div class="record-detail-card-header">
+                                                <div class="record-detail-title-block">
+                                                    <strong>{{ detail_group.title }}</strong>
+                                                </div>
+                                                {% if detail_group.is_selected_budget %}
+                                                    <span class="record-selected-badge">Selecionado</span>
+                                                {% endif %}
                                     </div>
                                     <div class="record-detail-list">
                                         {% for item in detail_group.children %}
