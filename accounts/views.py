@@ -1,5 +1,6 @@
 import secrets
 from decimal import Decimal, InvalidOperation
+from io import BytesIO
 
 from django.conf import settings
 from django.contrib import messages
@@ -7,9 +8,15 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView
 from django.core.mail import EmailMessage
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from .forms import (
     AllowedSignupEmailForm,
@@ -172,6 +179,33 @@ def audit_log_view(request):
 
     audit_logs = AuditLog.objects.select_related('user').all()[:300]
     return render(request, 'accounts/audit_log.html', {'audit_logs': audit_logs})
+
+
+def build_budget_ready_context():
+    all_topics = list(
+        CostTopic.objects.prefetch_related('fields', 'records__values__field').all()
+    )
+    topic_blocks = []
+    all_topics_total = Decimal('0')
+
+    for topic in all_topics:
+        rows = build_topic_rows(topic)
+        records, topic_total = build_record_cards(topic, rows)
+        topic_blocks.append(
+            {
+                'topic': topic,
+                'records': records,
+                'topic_total': topic_total,
+            }
+        )
+        all_topics_total += topic_total
+
+    return {
+        'project_budget_title': PROJECT_BUDGET_TITLE,
+        'project_budget_description': PROJECT_BUDGET_DESCRIPTION,
+        'topic_blocks': topic_blocks,
+        'all_topics_total': all_topics_total,
+    }
 
 
 @login_required
@@ -520,31 +554,170 @@ def delete_topic_record_view(request, record_id):
 
 @login_required
 def budget_ready_view(request):
-    all_topics = list(
-        CostTopic.objects.prefetch_related('fields', 'records__values__field').all()
-    )
-    topic_blocks = []
-    all_topics_total = Decimal('0')
-
-    for topic in all_topics:
-        rows = build_topic_rows(topic)
-        records, topic_total = build_record_cards(topic, rows)
-        topic_blocks.append(
-            {
-                'topic': topic,
-                'records': records,
-                'topic_total': topic_total,
-            }
-        )
-        all_topics_total += topic_total
-
-    context = {
-        'project_budget_title': PROJECT_BUDGET_TITLE,
-        'project_budget_description': PROJECT_BUDGET_DESCRIPTION,
-        'topic_blocks': topic_blocks,
-        'all_topics_total': all_topics_total,
-    }
+    context = build_budget_ready_context()
     return render(request, 'accounts/budget_ready.html', context)
+
+
+@login_required
+def budget_ready_pdf_view(request):
+    context = build_budget_ready_context()
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=16 * mm,
+        leftMargin=16 * mm,
+        topMargin=16 * mm,
+        bottomMargin=16 * mm,
+        title='Orçamento NEEVY',
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'BudgetPdfTitle',
+        parent=styles['Title'],
+        fontSize=16,
+        leading=20,
+        textColor=colors.HexColor('#0b5563'),
+        spaceAfter=8,
+    )
+    section_title_style = ParagraphStyle(
+        'BudgetPdfSectionTitle',
+        parent=styles['Heading2'],
+        fontSize=12,
+        leading=15,
+        textColor=colors.HexColor('#172126'),
+        spaceBefore=8,
+        spaceAfter=4,
+    )
+    small_style = ParagraphStyle(
+        'BudgetPdfSmall',
+        parent=styles['BodyText'],
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#62727f'),
+    )
+    body_style = ParagraphStyle(
+        'BudgetPdfBody',
+        parent=styles['BodyText'],
+        fontSize=10,
+        leading=13,
+        textColor=colors.HexColor('#172126'),
+    )
+    value_style = ParagraphStyle(
+        'BudgetPdfValue',
+        parent=styles['BodyText'],
+        fontSize=10,
+        leading=13,
+        textColor=colors.HexColor('#172126'),
+        alignment=2,
+    )
+
+    story = [
+        Paragraph('Orçamento pronto', small_style),
+        Paragraph(f'PROJETO: {context["project_budget_title"]}', title_style),
+        Paragraph('ORÇAMENTO', section_title_style),
+        Paragraph(context['project_budget_description'], body_style),
+        Spacer(1, 8),
+        Paragraph(
+            f'Total geral do projeto: R$ {format_decimal_br(context["all_topics_total"])}',
+            section_title_style,
+        ),
+        Spacer(1, 8),
+    ]
+
+    for block in context['topic_blocks']:
+        story.append(Paragraph(block['topic'].name, section_title_style))
+        if block['topic'].description:
+            story.append(Paragraph(block['topic'].description, small_style))
+        story.append(
+            Paragraph(
+                f'Total do tópico: R$ {format_decimal_br(block["topic_total"])}',
+                body_style,
+            )
+        )
+        story.append(Spacer(1, 6))
+
+        if not block['records']:
+            story.append(Paragraph('Nenhum item cadastrado neste tópico.', small_style))
+            story.append(Spacer(1, 8))
+            continue
+
+        for record_card in block['records']:
+            story.append(Paragraph(record_card['record_title'], body_style))
+            story.append(
+                Paragraph(
+                    f'Cadastrado em {record_card["record"].created_at.strftime("%d/%m/%Y %H:%M")}',
+                    small_style,
+                )
+            )
+            if record_card['selected_total'] is not None:
+                story.append(
+                    Paragraph(
+                        f'Total do orçamento selecionado: R$ {format_decimal_br(record_card["selected_total"])}',
+                        small_style,
+                    )
+                )
+
+            summary_rows = []
+            for detail_group in record_card['detail_groups']:
+                if detail_group['is_simple_field']:
+                    value = detail_group['root_raw_value'] if detail_group['root_is_url'] else detail_group['summary_value']
+                    summary_rows.append([detail_group['title'], value or '-'])
+
+            if summary_rows:
+                table = Table(summary_rows, colWidths=[60 * mm, 110 * mm])
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
+                            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#d8e3e4')),
+                            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#d8e3e4')),
+                            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                            ('FONTSIZE', (0, 0), (-1, -1), 9),
+                        ]
+                    )
+                )
+                story.append(table)
+                story.append(Spacer(1, 6))
+
+            for detail_group in record_card['detail_groups']:
+                if not detail_group['children']:
+                    continue
+                budget_heading = detail_group['title']
+                if detail_group['is_selected_budget']:
+                    budget_heading += ' (selecionado)'
+                story.append(Paragraph(budget_heading, small_style))
+                budget_rows = []
+                for item in detail_group['children']:
+                    value = item['raw_value'] if item['is_url_value'] else item['display_value']
+                    budget_rows.append([item['field_name'], value or '-'])
+                if detail_group['group_total'] is not None:
+                    budget_rows.append(['Total deste orçamento', f'R$ {format_decimal_br(detail_group["group_total"])}'])
+                budget_table = Table(budget_rows, colWidths=[60 * mm, 110 * mm])
+                budget_table.setStyle(
+                    TableStyle(
+                        [
+                            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#d8e3e4')),
+                            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#d8e3e4')),
+                            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+                            ('FONTSIZE', (0, 0), (-1, -1), 9),
+                        ]
+                    )
+                )
+                story.append(budget_table)
+                story.append(Spacer(1, 6))
+            story.append(Spacer(1, 8))
+
+    doc.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="orcamento-neevy.pdf"'
+    return response
 
 
 def logout_view(request):

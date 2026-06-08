@@ -21,6 +21,7 @@ urlpatterns = [
     path('cadastrar-campos/campos/<int:field_id>/editar/', views.update_topic_field_view, name='update_topic_field'),
     path('cadastrar-campos/topicos/<int:topic_id>/descricao/', views.update_topic_description_view, name='update_topic_description'),
     path('orcamento-pronto/', views.budget_ready_view, name='budget_ready'),
+    path('orcamento-pronto/pdf/', views.budget_ready_pdf_view, name='budget_ready_pdf'),
     path('cadastro/email/', views.signup_email_view, name='signup_email'),
     path('cadastro/codigo/', views.signup_code_view, name='signup_code'),
     path('cadastro/senha/', views.signup_password_view, name='signup_password'),

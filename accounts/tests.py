@@ -286,6 +286,19 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, 'https://example.com/orcamento')
         self.assertContains(response, '120,00')
 
+    def test_budget_ready_pdf_exports_file(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        field = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=field, value='Notebook')
+
+        response = self.client.get(reverse('budget_ready_pdf'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn('attachment; filename="orcamento-neevy.pdf"', response['Content-Disposition'])
+        self.assertTrue(len(response.content) > 0)
+
     def test_store_field_uses_suggestion_list_with_defaults_and_saved_values(self):
         topic = CostTopic.objects.create(name='Material permanente')
         store_field = CostField.objects.create(topic=topic, name='Loja', field_type='texto')
