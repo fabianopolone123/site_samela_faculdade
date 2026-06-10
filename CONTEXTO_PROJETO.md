@@ -122,6 +122,7 @@
 - Quando um detalhe contém campo do tipo link, a janela suspensa exibe botão para abrir o endereço no navegador
 - Cada cadastro pode ser excluído na própria janela de detalhes
 - Cada cadastro agora também pode ser editado na própria janela de detalhes, com botão ao lado de excluir
+- Cada cadastro agora também pode ser transferido de um tópico para outro, desde que o tópico de destino tenha campos equivalentes para receber os dados
 - A janela de detalhes dos custos passou a organizar melhor o resumo por blocos, destacando produto, campos principais e orçamentos relacionados
 - O resumo do modal foi dividido entre `Dados principais` e `Orçamentos`, com destaque visual para o orçamento selecionado e total individual por orçamento
 - O botão `Abrir link` nos detalhes dos custos foi reduzido para ficar visualmente mais discreto
@@ -159,6 +160,7 @@
 - A lista de registros em `Cadastrar custos` agora mostra só o nome principal de cada cadastro
 - Os detalhes completos de cada cadastro ficam em modal, ao clicar no item salvo
 - O modal de cada custo registrado ganhou ações no topo para editar ou excluir e passou a usar cards de resumo mais organizados
+- O modal de cada custo registrado também passou a ter a ação `Transferir custo`, com seleção do tópico de destino e validação de compatibilidade entre campos
 
 ## Preparação para produção
 

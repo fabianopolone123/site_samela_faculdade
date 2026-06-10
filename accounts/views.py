@@ -1,4 +1,5 @@
 import secrets
+import unicodedata
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
@@ -534,6 +535,62 @@ def update_topic_record_view(request, record_id):
     )
     messages.success(request, 'Custo atualizado com sucesso.')
     return redirect(f"{reverse('budget_product_create')}?topic={topic.id}")
+
+
+@login_required
+def transfer_topic_record_view(request, record_id):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    record = get_object_or_404(
+        CostRecord.objects.select_related('topic').prefetch_related('values__field'),
+        id=record_id,
+    )
+    source_topic = record.topic
+    target_topic_id = request.POST.get('target_topic_id', '').strip()
+    target_topic = get_object_or_404(CostTopic, id=target_topic_id)
+
+    if target_topic.id == source_topic.id:
+        messages.error(request, 'Selecione um tópico diferente para transferir o custo.')
+        return redirect(
+            f"{reverse('budget_product_create')}?topic={source_topic.id}&open=transferir-registro-{record.id}"
+        )
+
+    values_to_save, matched_fields, unmatched_fields = build_transferred_record_values(record, target_topic)
+    if not matched_fields or not values_to_save:
+        messages.error(
+            request,
+            'Não foi possível transferir este custo porque o tópico de destino não possui campos compatíveis.',
+        )
+        return redirect(
+            f"{reverse('budget_product_create')}?topic={source_topic.id}&open=transferir-registro-{record.id}"
+        )
+
+    record.values.all().delete()
+    record.topic = target_topic
+    record.save(update_fields=['topic'])
+    CostRecordValue.objects.bulk_create(
+        [
+            CostRecordValue(record=record, field_id=field_id, value=value)
+            for field_id, value in values_to_save.items()
+        ]
+    )
+
+    register_audit_log(
+        request.user,
+        AuditLog.ACTION_UPDATE,
+        'Custo',
+        get_record_title_from_record(record),
+        f'Transferência de custo do tópico {source_topic.name} para {target_topic.name}.',
+    )
+    if unmatched_fields:
+        messages.warning(
+            request,
+            'Custo transferido com sucesso, mas alguns campos sem equivalente no tópico de destino não foram levados.',
+        )
+    else:
+        messages.success(request, 'Custo transferido com sucesso.')
+    return redirect(f"{reverse('budget_product_create')}?topic={target_topic.id}&open=registro-{record.id}")
 
 
 @login_required
@@ -1554,6 +1611,78 @@ def generate_code():
 
 def normalize_email(email):
     return email.strip().lower()
+
+
+def normalize_matching_text(value):
+    normalized = unicodedata.normalize('NFKD', str(value or ''))
+    without_accents = ''.join(
+        character for character in normalized
+        if not unicodedata.combining(character)
+    )
+    return ' '.join(without_accents.casefold().split())
+
+
+def get_field_path_signature(field):
+    path = []
+    current = field
+    while current is not None:
+        path.append(normalize_matching_text(current.name))
+        current = current.parent
+    return tuple(reversed(path))
+
+
+def get_field_transfer_signature(field):
+    return (
+        get_field_path_signature(field),
+        field.field_type,
+        get_effective_calculation_role(field),
+    )
+
+
+def build_transferred_record_values(record, target_topic):
+    source_values = list(record.values.select_related('field').all())
+    target_fields = list(target_topic.fields.select_related('parent').order_by('created_at'))
+    target_signature_map = {
+        get_field_transfer_signature(field): field
+        for field in target_fields
+    }
+
+    raw_values = {}
+    matched_fields = []
+    unmatched_fields = []
+
+    for record_value in source_values:
+        target_field = target_signature_map.get(get_field_transfer_signature(record_value.field))
+        if target_field is None:
+            unmatched_fields.append(record_value.field.name)
+            continue
+
+        value = record_value.value.strip()
+        if target_field.field_type == CostField.TYPE_LINK and value:
+            value = sanitize_external_url(value)
+        elif target_field.field_type == CostField.TYPE_CURRENCY and value:
+            parsed_value = parse_decimal_input(value)
+            if parsed_value is not None:
+                value = format_decimal_br(parsed_value)
+
+        raw_values[target_field.id] = value
+        matched_fields.append(target_field.id)
+
+    calculated_totals = {}
+    for field in target_fields:
+        if get_effective_calculation_role(field) != CostField.ROLE_CALCULATED_TOTAL:
+            continue
+        calculation_parts = get_group_calculation_parts(target_fields, raw_values, field.parent_id)
+        if calculation_parts['has_parts']:
+            calculated_totals[field.id] = format_decimal_br(calculation_parts['total'])
+
+    values_to_save = {}
+    for field in target_fields:
+        value = calculated_totals.get(field.id, raw_values.get(field.id, ''))
+        if str(value).strip():
+            values_to_save[field.id] = value
+
+    return values_to_save, matched_fields, unmatched_fields
 
 
 def get_allowed_signup_emails():

@@ -496,6 +496,14 @@
                 >
                     Editar custo
                 </button>
+                <button
+                    type="button"
+                    class="button-secondary button-secondary-compact"
+                    data-open-modal="transfer-record-modal-{{ record_card.record.id }}"
+                    data-switch-from="record-modal-{{ record_card.record.id }}"
+                >
+                    Transferir custo
+                </button>
                 <form method="post" action="{% url 'delete_topic_record' record_card.record.id %}" class="record-delete-form">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{% url 'budget_product_create' %}?topic={{ selected_topic.id }}">
@@ -577,6 +585,41 @@
                 <strong>R$&nbsp;{{ record_card.selected_total|currency_br }}</strong>
             </div>
             {% endif %}
+        </div>
+    </div>
+
+    <div class="modal" id="transfer-record-modal-{{ record_card.record.id }}" aria-hidden="true">
+        <div class="modal-backdrop" data-close-modal="transfer-record-modal-{{ record_card.record.id }}"></div>
+        <div class="modal-content" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <div>
+                    <span class="eyebrow">Transferir custo</span>
+                    <h2>{{ record_card.record_title }}</h2>
+                </div>
+                <button type="button" class="icon-button" data-close-modal="transfer-record-modal-{{ record_card.record.id }}">×</button>
+            </div>
+            <form method="post" action="{% url 'transfer_topic_record' record_card.record.id %}" class="form-stack">
+                {% csrf_token %}
+                <div class="field">
+                    <label for="transfer_target_topic_{{ record_card.record.id }}">Mover para o tópico</label>
+                    <select id="transfer_target_topic_{{ record_card.record.id }}" name="target_topic_id" required>
+                        <option value="">Selecione um tópico</option>
+                        {% for topic in topics %}
+                            {% if topic.id != selected_topic.id %}
+                                <option value="{{ topic.id }}">{{ topic.name }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <p class="field-help">A transferência leva apenas os campos equivalentes encontrados no tópico de destino.</p>
+                <button
+                    type="submit"
+                    class="button-primary"
+                    onclick="return confirm('Transferir este custo para o tópico selecionado?')"
+                >
+                    Confirmar transferência
+                </button>
+            </form>
         </div>
     </div>
 
@@ -734,6 +777,7 @@
         else if (autoOpen === 'custo') openModal('custo-modal');
         else if (autoOpen && autoOpen.startsWith('registro-')) openModal(`record-modal-${autoOpen.replace('registro-', '')}`);
         else if (autoOpen && autoOpen.startsWith('editar-registro-')) openModal(`edit-record-modal-${autoOpen.replace('editar-registro-', '')}`);
+        else if (autoOpen && autoOpen.startsWith('transferir-registro-')) openModal(`transfer-record-modal-${autoOpen.replace('transferir-registro-', '')}`);
 
         document.querySelectorAll('[data-switch-from][data-open-modal]').forEach((button) => {
             button.addEventListener('click', () => {

@@ -95,6 +95,12 @@
                         >
                             Editar custo
                         </a>
+                        <a
+                            href="{% url 'budget_product_create' %}?topic={{ block.topic.id }}&open=transferir-registro-{{ record_card.record.id }}"
+                            class="button-secondary button-secondary-compact dashboard-secondary"
+                        >
+                            Transferir custo
+                        </a>
                         <form method="post" action="{% url 'delete_topic_record' record_card.record.id %}" class="record-delete-form">
                             {% csrf_token %}
                             <input type="hidden" name="next" value="{% url 'budget_ready' %}">

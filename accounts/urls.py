@@ -16,6 +16,7 @@ urlpatterns = [
     path('cadastrar-campos/campos/', views.create_topic_field_view, name='create_topic_field'),
     path('cadastrar-campos/novo-custo/', views.create_topic_record_view, name='create_topic_record'),
     path('cadastrar-campos/custos/<int:record_id>/editar/', views.update_topic_record_view, name='update_topic_record'),
+    path('cadastrar-campos/custos/<int:record_id>/transferir/', views.transfer_topic_record_view, name='transfer_topic_record'),
     path('cadastrar-campos/custos/<int:record_id>/excluir/', views.delete_topic_record_view, name='delete_topic_record'),
     path('cadastrar-campos/campos/<int:field_id>/excluir/', views.delete_topic_field_view, name='delete_topic_field'),
     path('cadastrar-campos/campos/<int:field_id>/editar/', views.update_topic_field_view, name='update_topic_field'),

@@ -636,6 +636,139 @@ class DynamicTopicBudgetTests(TestCase):
         updated_value = CostRecordValue.objects.get(record=record, field=link_field)
         self.assertEqual(updated_value.value, 'https://example.com/novo?sku=22')
 
+    def test_can_transfer_dynamic_cost_record_between_compatible_topics(self):
+        source_topic = CostTopic.objects.create(name='Material permanente')
+        source_product = CostField.objects.create(topic=source_topic, name='Nome do produto', field_type='texto')
+        source_budget = CostField.objects.create(topic=source_topic, name='Orçamento 1', field_type='texto')
+        source_price = CostField.objects.create(
+            topic=source_topic,
+            parent=source_budget,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        source_quantity = CostField.objects.create(
+            topic=source_topic,
+            parent=source_budget,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        source_total = CostField.objects.create(
+            topic=source_topic,
+            parent=source_budget,
+            name='Preço total',
+            field_type='valor',
+            calculation_role=CostField.ROLE_CALCULATED_TOTAL,
+        )
+
+        target_topic = CostTopic.objects.create(name='Material de consumo')
+        target_product = CostField.objects.create(topic=target_topic, name='Nome do produto', field_type='texto')
+        target_budget = CostField.objects.create(topic=target_topic, name='Orçamento 1', field_type='texto')
+        target_price = CostField.objects.create(
+            topic=target_topic,
+            parent=target_budget,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        target_quantity = CostField.objects.create(
+            topic=target_topic,
+            parent=target_budget,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        target_total = CostField.objects.create(
+            topic=target_topic,
+            parent=target_budget,
+            name='Preço total',
+            field_type='valor',
+            calculation_role=CostField.ROLE_CALCULATED_TOTAL,
+        )
+
+        record = CostRecord.objects.create(topic=source_topic)
+        CostRecordValue.objects.create(record=record, field=source_product, value='Notebook Dell')
+        CostRecordValue.objects.create(record=record, field=source_price, value='10,00')
+        CostRecordValue.objects.create(record=record, field=source_quantity, value='2')
+        CostRecordValue.objects.create(record=record, field=source_total, value='20,00')
+
+        response = self.client.post(
+            reverse('transfer_topic_record', args=[record.id]),
+            {'target_topic_id': str(target_topic.id)},
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={target_topic.id}&open=registro-{record.id}",
+        )
+        record.refresh_from_db()
+        self.assertEqual(record.topic, target_topic)
+        self.assertTrue(
+            CostRecordValue.objects.filter(
+                record=record,
+                field=target_product,
+                value='Notebook Dell',
+            ).exists()
+        )
+        self.assertTrue(
+            CostRecordValue.objects.filter(
+                record=record,
+                field=target_price,
+                value='10,00',
+            ).exists()
+        )
+        self.assertTrue(
+            CostRecordValue.objects.filter(
+                record=record,
+                field=target_quantity,
+                value='2',
+            ).exists()
+        )
+        self.assertTrue(
+            CostRecordValue.objects.filter(
+                record=record,
+                field=target_total,
+                value='20,00',
+            ).exists()
+        )
+        self.assertEqual(record.values.filter(field__topic=source_topic).count(), 0)
+        self.assertTrue(
+            AuditLog.objects.filter(
+                action=AuditLog.ACTION_UPDATE,
+                target_type='Custo',
+                description__contains='Transferência de custo do tópico Material permanente para Material de consumo.',
+            ).exists()
+        )
+
+    def test_transfer_dynamic_cost_record_is_blocked_without_compatible_fields(self):
+        source_topic = CostTopic.objects.create(name='Material permanente')
+        source_product = CostField.objects.create(topic=source_topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=source_topic)
+        CostRecordValue.objects.create(record=record, field=source_product, value='Notebook Dell')
+
+        target_topic = CostTopic.objects.create(name='Transporte')
+        CostField.objects.create(topic=target_topic, name='Destino', field_type='texto')
+
+        response = self.client.post(
+            reverse('transfer_topic_record', args=[record.id]),
+            {'target_topic_id': str(target_topic.id)},
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={source_topic.id}&open=transferir-registro-{record.id}",
+        )
+        record.refresh_from_db()
+        self.assertEqual(record.topic, source_topic)
+        self.assertTrue(
+            CostRecordValue.objects.filter(
+                record=record,
+                field=source_product,
+                value='Notebook Dell',
+            ).exists()
+        )
+
     def test_can_delete_dynamic_cost_record(self):
         topic = CostTopic.objects.create(name='Material permanente')
         field = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
