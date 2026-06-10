@@ -138,6 +138,7 @@
 - A tela `Orçamento pronto` agora também tem um PDF resumido de `orçamentos selecionados`, trazendo somente o cadastro, orçamento escolhido, valor unitário, quantidade e valor total
 - O PDF resumido de orçamentos selecionados foi ajustado para não exibir a coluna separada de `Orçamento`
 - O PDF resumido de orçamentos selecionados agora também abre com o mesmo cabeçalho institucional completo dos outros exportáveis
+- O PDF resumido de orçamentos selecionados teve removido o título extra do topo, ficando só com o cabeçalho institucional
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 
