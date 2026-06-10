@@ -822,7 +822,6 @@ def budget_ready_selected_pdf_view(request):
             story.append(Paragraph(topic_name, section_title_style))
             table_rows = [[
                 build_pdf_text_value('Produto', body_style),
-                build_pdf_text_value('Orçamento', body_style),
                 build_pdf_text_value('Valor unitário', body_style),
                 build_pdf_text_value('Quantidade', body_style),
                 build_pdf_text_value('Valor total', body_style),
@@ -830,7 +829,6 @@ def budget_ready_selected_pdf_view(request):
             for row in rows:
                 table_rows.append([
                     build_pdf_text_value(row['record_title'], body_style),
-                    build_pdf_text_value(row['budget_name'], body_style),
                     build_pdf_text_value(row['unit_price'], body_style),
                     build_pdf_text_value(row['quantity'], body_style),
                     build_pdf_text_value(row['total'], body_style),
@@ -838,7 +836,7 @@ def budget_ready_selected_pdf_view(request):
 
             table = Table(
                 table_rows,
-                colWidths=[58 * mm, 28 * mm, 30 * mm, 22 * mm, 30 * mm],
+                colWidths=[72 * mm, 34 * mm, 24 * mm, 35 * mm],
                 repeatRows=1,
             )
             table.setStyle(
