@@ -25,6 +25,7 @@ urlpatterns = [
     path('orcamento-pronto/pdf/', views.budget_ready_pdf_view, name='budget_ready_pdf'),
     path('orcamento-pronto/pdf-selecionados/', views.budget_ready_selected_pdf_view, name='budget_ready_selected_pdf'),
     path('orcamento-pronto/word/', views.budget_ready_docx_view, name='budget_ready_docx'),
+    path('orcamento-pronto/word-selecionados/', views.budget_ready_selected_docx_view, name='budget_ready_selected_docx'),
     path('cadastro/email/', views.signup_email_view, name='signup_email'),
     path('cadastro/codigo/', views.signup_code_view, name='signup_code'),
     path('cadastro/senha/', views.signup_password_view, name='signup_password'),

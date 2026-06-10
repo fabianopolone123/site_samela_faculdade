@@ -137,6 +137,7 @@
 - Na exportação em Word, campos de link do orçamento agora saem como URL completa em texto, sem botão ou rótulo de abertura
 - Links salvos nos custos agora passam por limpeza automática de parâmetros de rastreio `utm_*`, e a migration `0013` corrige também os links antigos já armazenados no banco
 - A tela `Orçamento pronto` agora também tem um PDF resumido de `orçamentos selecionados`, trazendo somente o cadastro, orçamento escolhido, valor unitário, quantidade e valor total
+- A tela `Orçamento pronto` agora também tem uma exportação em Word dos `orçamentos selecionados`, seguindo o mesmo resumo por tópico do PDF reduzido
 - O PDF resumido de orçamentos selecionados foi ajustado para não exibir a coluna separada de `Orçamento`
 - O PDF resumido de orçamentos selecionados agora também abre com o mesmo cabeçalho institucional completo dos outros exportáveis
 - O PDF resumido de orçamentos selecionados teve removido o título extra do topo, ficando só com o cabeçalho institucional

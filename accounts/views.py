@@ -1024,6 +1024,63 @@ def budget_ready_docx_view(request):
     return response
 
 
+@login_required
+def budget_ready_selected_docx_view(request):
+    context = build_budget_ready_context()
+    selected_rows = build_selected_budget_export_rows(context['topic_blocks'])
+    document = Document()
+
+    document.core_properties.title = 'Orçamentos selecionados NEEVY'
+    normal_style = document.styles['Normal']
+    normal_style.font.name = 'Calibri'
+    normal_style.font.size = Pt(10)
+
+    subtitle = document.add_paragraph()
+    subtitle.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    run = subtitle.add_run(f'PROJETO: {context["project_budget_title"]}')
+    run.bold = True
+    run.font.size = Pt(12)
+
+    document.add_paragraph('ORÇAMENTO').alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    document.add_paragraph(context['project_budget_description'])
+    total_paragraph = document.add_paragraph()
+    total_run = total_paragraph.add_run(
+        f'Total geral dos orçamentos selecionados: R$ {format_decimal_br(context["all_topics_total"])}'
+    )
+    total_run.bold = True
+
+    if not selected_rows:
+        document.add_paragraph('Nenhum orçamento selecionado foi encontrado para exportação.')
+    else:
+        for topic_name, rows in selected_rows.items():
+            document.add_heading(topic_name, level=2)
+            table = document.add_table(rows=1, cols=4)
+            table.style = 'Table Grid'
+            header_cells = table.rows[0].cells
+            header_cells[0].text = 'Produto'
+            header_cells[1].text = 'Valor unitário'
+            header_cells[2].text = 'Quantidade'
+            header_cells[3].text = 'Valor total'
+
+            for row in rows:
+                cells = table.add_row().cells
+                cells[0].text = row['record_title']
+                cells[1].text = row['unit_price']
+                cells[2].text = row['quantity']
+                cells[3].text = row['total']
+
+            document.add_paragraph()
+
+    buffer = BytesIO()
+    document.save(buffer)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    )
+    response['Content-Disposition'] = 'attachment; filename="orcamentos-selecionados-neevy.docx"'
+    return response
+
+
 def logout_view(request):
     logout(request)
     messages.success(request, 'Sessão encerrada com sucesso.')
@@ -1367,7 +1424,7 @@ def get_selected_total_for_record(record, topic_fields):
     budget_parent = next(
         (
             field for field in topic_fields
-            if field.parent_id is None and field.name.strip() == f'Orçamento {selected_str}'
+            if field.parent_id is None and extract_budget_number(field.name) == selected_str
         ),
         None,
     )
@@ -1568,11 +1625,11 @@ def get_record_title_from_record(record):
 
 
 def extract_budget_number(field_name):
-    normalized = field_name.lower().strip()
-    if not normalized.startswith('orçamento ') and not normalized.startswith('orcamento '):
+    normalized = normalize_matching_text(field_name)
+    if not normalized.startswith('orcamento '):
         return None
 
-    parts = field_name.strip().split()
+    parts = normalized.split()
     if not parts:
         return None
     candidate = parts[-1].strip()

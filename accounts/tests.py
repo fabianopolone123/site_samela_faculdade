@@ -397,6 +397,61 @@ class DynamicTopicBudgetTests(TestCase):
         document_text = f'{paragraph_text}\n{table_text}'
         self.assertIn('https://example.com/orcamento-1', document_text)
 
+    def test_budget_ready_selected_docx_exports_file(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para or\u00e7ar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
+        budget = CostField.objects.create(topic=topic, name='Or\u00e7amento 1', field_type='texto')
+        price = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Pre\u00e7o',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quantity = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        product = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=product, value='Notebook')
+        CostRecordValue.objects.create(record=record, field=selector, value='1')
+        CostRecordValue.objects.create(record=record, field=price, value='12,50')
+        CostRecordValue.objects.create(record=record, field=quantity, value='2')
+
+        response = self.client.get(reverse('budget_ready_selected_docx'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+        self.assertIn(
+            'attachment; filename="orcamentos-selecionados-neevy.docx"',
+            response['Content-Disposition'],
+        )
+        self.assertTrue(len(response.content) > 0)
+        document = Document(BytesIO(response.content))
+        paragraph_text = '\n'.join(paragraph.text for paragraph in document.paragraphs)
+        table_text = '\n'.join(
+            cell.text
+            for table in document.tables
+            for row in table.rows
+            for cell in row.cells
+        )
+        document_text = f'{paragraph_text}\n{table_text}'
+        self.assertIn('Notebook', document_text)
+        self.assertIn('12,50', document_text)
+        self.assertIn('25,00', document_text)
+
     def test_store_field_uses_suggestion_list_with_defaults_and_saved_values(self):
         topic = CostTopic.objects.create(name='Material permanente')
         store_field = CostField.objects.create(topic=topic, name='Loja', field_type='texto')
