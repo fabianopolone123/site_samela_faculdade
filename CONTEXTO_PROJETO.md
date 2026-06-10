@@ -137,6 +137,7 @@
 - Links salvos nos custos agora passam por limpeza automática de parâmetros de rastreio `utm_*`, e a migration `0013` corrige também os links antigos já armazenados no banco
 - A tela `Orçamento pronto` agora também tem um PDF resumido de `orçamentos selecionados`, trazendo somente o cadastro, orçamento escolhido, valor unitário, quantidade e valor total
 - O PDF resumido de orçamentos selecionados foi ajustado para não exibir a coluna separada de `Orçamento`
+- O PDF resumido de orçamentos selecionados agora também abre com o mesmo cabeçalho institucional completo dos outros exportáveis
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 

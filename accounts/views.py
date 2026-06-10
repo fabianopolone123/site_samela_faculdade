@@ -807,7 +807,10 @@ def budget_ready_selected_pdf_view(request):
     story = [
         Paragraph('Orçamentos selecionados', small_style),
         Paragraph('Baixar orçamentos selecionados', title_style),
-        Paragraph(f'PROJETO: {context["project_budget_title"]}', section_title_style),
+        Paragraph(f'PROJETO: {context["project_budget_title"]}', title_style),
+        Paragraph('ORÇAMENTO', section_title_style),
+        Paragraph(context['project_budget_description'], body_style),
+        Spacer(1, 8),
         Paragraph(
             f'Total geral dos orçamentos selecionados: R$ {format_decimal_br(context["all_topics_total"])}',
             section_title_style,
