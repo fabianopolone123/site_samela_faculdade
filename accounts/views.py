@@ -755,6 +755,119 @@ def budget_ready_pdf_view(request):
 
 
 @login_required
+def budget_ready_selected_pdf_view(request):
+    context = build_budget_ready_context()
+    selected_rows = build_selected_budget_export_rows(context['topic_blocks'])
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=16 * mm,
+        leftMargin=16 * mm,
+        topMargin=16 * mm,
+        bottomMargin=16 * mm,
+        title='Orçamentos selecionados NEEVY',
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'BudgetSelectedPdfTitle',
+        parent=styles['Title'],
+        fontSize=16,
+        leading=20,
+        textColor=colors.HexColor('#0b5563'),
+        spaceAfter=8,
+    )
+    section_title_style = ParagraphStyle(
+        'BudgetSelectedPdfSectionTitle',
+        parent=styles['Heading2'],
+        fontSize=12,
+        leading=15,
+        textColor=colors.HexColor('#172126'),
+        spaceBefore=8,
+        spaceAfter=4,
+    )
+    small_style = ParagraphStyle(
+        'BudgetSelectedPdfSmall',
+        parent=styles['BodyText'],
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#62727f'),
+    )
+    body_style = ParagraphStyle(
+        'BudgetSelectedPdfBody',
+        parent=styles['BodyText'],
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#172126'),
+        wordWrap='CJK',
+    )
+
+    story = [
+        Paragraph('Orçamentos selecionados', small_style),
+        Paragraph('Baixar orçamentos selecionados', title_style),
+        Paragraph(f'PROJETO: {context["project_budget_title"]}', section_title_style),
+        Paragraph(
+            f'Total geral dos orçamentos selecionados: R$ {format_decimal_br(context["all_topics_total"])}',
+            section_title_style,
+        ),
+        Spacer(1, 8),
+    ]
+
+    if not selected_rows:
+        story.append(Paragraph('Nenhum orçamento selecionado foi encontrado para exportação.', body_style))
+    else:
+        for topic_name, rows in selected_rows.items():
+            story.append(Paragraph(topic_name, section_title_style))
+            table_rows = [[
+                build_pdf_text_value('Produto', body_style),
+                build_pdf_text_value('Orçamento', body_style),
+                build_pdf_text_value('Valor unitário', body_style),
+                build_pdf_text_value('Quantidade', body_style),
+                build_pdf_text_value('Valor total', body_style),
+            ]]
+            for row in rows:
+                table_rows.append([
+                    build_pdf_text_value(row['record_title'], body_style),
+                    build_pdf_text_value(row['budget_name'], body_style),
+                    build_pdf_text_value(row['unit_price'], body_style),
+                    build_pdf_text_value(row['quantity'], body_style),
+                    build_pdf_text_value(row['total'], body_style),
+                ])
+
+            table = Table(
+                table_rows,
+                colWidths=[58 * mm, 28 * mm, 30 * mm, 22 * mm, 30 * mm],
+                repeatRows=1,
+            )
+            table.setStyle(
+                TableStyle(
+                    [
+                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#d7f0ef')),
+                        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#d8e3e4')),
+                        ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.HexColor('#d8e3e4')),
+                        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+                        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+                        ('TOPPADDING', (0, 0), (-1, -1), 5),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+                    ]
+                )
+            )
+            story.append(table)
+            story.append(Spacer(1, 8))
+
+    doc.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="orcamentos-selecionados-neevy.pdf"'
+    return response
+
+
+@login_required
 def budget_ready_docx_view(request):
     context = build_budget_ready_context()
     document = Document()
@@ -1346,6 +1459,45 @@ def build_record_edit_groups(selected_groups, values_by_field_id):
             }
         )
     return edit_groups
+
+
+def build_selected_budget_export_rows(topic_blocks):
+    grouped_rows = {}
+    for block in topic_blocks:
+        export_rows = []
+        for record_card in block['records']:
+            selected_group = next(
+                (
+                    group for group in record_card['detail_groups']
+                    if group['children'] and group['is_selected_budget']
+                ),
+                None,
+            )
+            if not selected_group:
+                continue
+
+            unit_price = '-'
+            quantity = '-'
+            for item in selected_group['children']:
+                role = item.get('field_role')
+                if role == CostField.ROLE_UNIT_PRICE and unit_price == '-':
+                    unit_price = item['display_value']
+                elif role == CostField.ROLE_MULTIPLIER and quantity == '-':
+                    quantity = item['display_value']
+
+            export_rows.append(
+                {
+                    'record_title': record_card['record_title'],
+                    'budget_name': selected_group['title'],
+                    'unit_price': unit_price,
+                    'quantity': quantity,
+                    'total': format_decimal_br(selected_group['group_total']) if selected_group['group_total'] is not None else '-',
+                }
+            )
+
+        if export_rows:
+            grouped_rows[block['topic'].name] = export_rows
+    return grouped_rows
 
 
 def get_record_title_from_record(record):

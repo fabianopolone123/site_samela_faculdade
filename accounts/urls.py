@@ -22,6 +22,7 @@ urlpatterns = [
     path('cadastrar-campos/topicos/<int:topic_id>/descricao/', views.update_topic_description_view, name='update_topic_description'),
     path('orcamento-pronto/', views.budget_ready_view, name='budget_ready'),
     path('orcamento-pronto/pdf/', views.budget_ready_pdf_view, name='budget_ready_pdf'),
+    path('orcamento-pronto/pdf-selecionados/', views.budget_ready_selected_pdf_view, name='budget_ready_selected_pdf'),
     path('orcamento-pronto/word/', views.budget_ready_docx_view, name='budget_ready_docx'),
     path('cadastro/email/', views.signup_email_view, name='signup_email'),
     path('cadastro/codigo/', views.signup_code_view, name='signup_code'),

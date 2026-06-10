@@ -328,6 +328,46 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertIn('attachment; filename="orcamento-neevy.pdf"', response['Content-Disposition'])
         self.assertTrue(len(response.content) > 0)
 
+    def test_budget_ready_selected_pdf_exports_file(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orçar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
+        budget = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        price = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quantity = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        product = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=product, value='Notebook')
+        CostRecordValue.objects.create(record=record, field=selector, value='1')
+        CostRecordValue.objects.create(record=record, field=price, value='12,50')
+        CostRecordValue.objects.create(record=record, field=quantity, value='2')
+
+        response = self.client.get(reverse('budget_ready_selected_pdf'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn(
+            'attachment; filename="orcamentos-selecionados-neevy.pdf"',
+            response['Content-Disposition'],
+        )
+        self.assertTrue(len(response.content) > 0)
+
     def test_budget_ready_docx_exports_file(self):
         topic = CostTopic.objects.create(name='Material permanente')
         field = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
