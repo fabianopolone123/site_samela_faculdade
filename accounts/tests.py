@@ -259,6 +259,22 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertNotContains(response, 'tÃ³picos', html=False)
         self.assertNotContains(response, 'orÃ§amento', html=False)
 
+    def test_budget_page_shows_search_and_alphabetic_order_controls_for_topic_records(self):
+        topic = CostTopic.objects.create(name='Bolsas')
+        field = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=field, value='Alpha')
+
+        response = self.client.get(
+            reverse('budget_product_create'),
+            {'topic': topic.id},
+        )
+
+        self.assertContains(response, 'data-record-search="selected-topic-records"', html=False)
+        self.assertContains(response, 'Comece a digitar o nome do cadastro')
+        self.assertContains(response, 'A-Z')
+        self.assertContains(response, 'data-record-list="selected-topic-records"', html=False)
+
     def test_budget_ready_reflects_dynamic_topics_and_records(self):
         topic = CostTopic.objects.create(
             name='Serviços de Terceiros contratados no país e no exterior',
@@ -314,6 +330,18 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, 'Abrir link')
         self.assertContains(response, 'https://example.com/orcamento')
         self.assertContains(response, '120,00')
+
+    def test_budget_ready_shows_search_and_alphabetic_order_controls_for_each_topic(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        field = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=field, value='Alpha')
+
+        response = self.client.get(reverse('budget_ready'))
+
+        self.assertContains(response, f'data-record-search="budget-topic-{topic.id}"', html=False)
+        self.assertContains(response, 'A-Z')
+        self.assertContains(response, f'data-record-list="budget-topic-{topic.id}"', html=False)
 
     def test_budget_ready_pdf_exports_file(self):
         topic = CostTopic.objects.create(name='Material permanente')

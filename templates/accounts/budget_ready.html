@@ -52,9 +52,33 @@
                 </div>
 
                 {% if block.records %}
-                    <div class="budget-record-grid">
+                    <div class="record-toolbar">
+                        <div class="field">
+                            <label for="topic-search-{{ block.topic.id }}">Pesquisar neste tópico</label>
+                            <input
+                                type="search"
+                                id="topic-search-{{ block.topic.id }}"
+                                placeholder="Comece a digitar o nome do cadastro"
+                                data-record-search="budget-topic-{{ block.topic.id }}"
+                            >
+                        </div>
+                        <div class="field">
+                            <label for="topic-sort-{{ block.topic.id }}">Ordenar</label>
+                            <select id="topic-sort-{{ block.topic.id }}" data-record-sort="budget-topic-{{ block.topic.id }}">
+                                <option value="recent">Mais recentes</option>
+                                <option value="az">Ordem alfabética A-Z</option>
+                                <option value="za">Ordem alfabética Z-A</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="budget-record-grid" data-record-list="budget-topic-{{ block.topic.id }}">
                         {% for record_card in block.records %}
-                            <article class="budget-record-summary">
+                            <article
+                                class="budget-record-summary"
+                                data-record-item
+                                data-record-title="{{ record_card.record_title|lower }}"
+                                data-record-index="{{ forloop.counter0 }}"
+                            >
                                 <button
                                     type="button"
                                     class="budget-record-trigger"
@@ -70,6 +94,7 @@
                             </article>
                         {% endfor %}
                     </div>
+                    <p class="record-empty-note" data-record-empty="budget-topic-{{ block.topic.id }}" hidden>Nenhum cadastro encontrado para esta busca.</p>
                 {% else %}
                     <p>Nenhum item cadastrado neste tópico.</p>
                 {% endif %}
@@ -209,6 +234,53 @@
 
         document.querySelectorAll('[data-close-modal]').forEach((button) => {
             button.addEventListener('click', () => closeModal(button.dataset.closeModal));
+        });
+
+        function normalizeRecordText(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase();
+        }
+
+        document.querySelectorAll('[data-record-list]').forEach((list) => {
+            const key = list.dataset.recordList;
+            const searchInput = document.querySelector(`[data-record-search="${key}"]`);
+            const sortSelect = document.querySelector(`[data-record-sort="${key}"]`);
+            const emptyNote = document.querySelector(`[data-record-empty="${key}"]`);
+            const items = Array.from(list.querySelectorAll('[data-record-item]'));
+
+            function applyRecordFilters() {
+                const query = normalizeRecordText(searchInput ? searchInput.value : '');
+                const sortMode = sortSelect ? sortSelect.value : 'recent';
+                const sortedItems = [...items].sort((left, right) => {
+                    const leftTitle = left.dataset.recordTitle || '';
+                    const rightTitle = right.dataset.recordTitle || '';
+                    if (sortMode === 'az') {
+                        return leftTitle.localeCompare(rightTitle, 'pt-BR');
+                    }
+                    if (sortMode === 'za') {
+                        return rightTitle.localeCompare(leftTitle, 'pt-BR');
+                    }
+                    return Number(left.dataset.recordIndex || 0) - Number(right.dataset.recordIndex || 0);
+                });
+
+                let visibleCount = 0;
+                sortedItems.forEach((item) => {
+                    const matches = !query || normalizeRecordText(item.dataset.recordTitle).includes(query);
+                    item.hidden = !matches;
+                    list.appendChild(item);
+                    if (matches) visibleCount += 1;
+                });
+
+                if (emptyNote) {
+                    emptyNote.hidden = visibleCount !== 0;
+                }
+            }
+
+            if (searchInput) searchInput.addEventListener('input', applyRecordFilters);
+            if (sortSelect) sortSelect.addEventListener('change', applyRecordFilters);
+            applyRecordFilters();
         });
     </script>
 </body>

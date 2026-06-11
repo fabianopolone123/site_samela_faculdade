@@ -900,6 +900,20 @@ body {
     gap: 14px;
 }
 
+.record-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(220px, 0.7fr);
+    gap: 16px;
+    margin-bottom: 18px;
+    align-items: end;
+}
+
+.record-empty-note {
+    margin: 10px 0 0;
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
 .topic-card,
 .structure-item,
 .record-card,
@@ -1546,7 +1560,8 @@ tr.is-selected {
 
     .field-grid.two-columns,
     .quote-grid,
-    .workspace-grid-wide {
+    .workspace-grid-wide,
+    .record-toolbar {
         grid-template-columns: 1fr;
     }
 

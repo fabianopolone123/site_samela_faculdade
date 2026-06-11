@@ -143,6 +143,7 @@
 - O PDF resumido de orçamentos selecionados teve removido o título extra do topo, ficando só com o cabeçalho institucional
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
+- As listas de cadastros agora têm pesquisa instantânea por nome e ordenação alfabética A-Z/Z-A dentro de cada tópico, tanto em `Cadastrar custos` quanto em `Orçamento pronto`
 
 ## Ajustes visuais e textuais
 
