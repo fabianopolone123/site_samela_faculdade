@@ -144,6 +144,7 @@
 - Cada tópico pode ser excluído com confirmação, removendo junto os custos vinculados
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 - As listas de cadastros agora têm pesquisa instantânea por nome e ordenação alfabética A-Z/Z-A dentro de cada tópico, tanto em `Cadastrar custos` quanto em `Orçamento pronto`
+- No cadastro e na edição de custos com múltiplos orçamentos, a escolha automática do menor orçamento agora ignora totais zerados
 
 ## Ajustes visuais e textuais
 

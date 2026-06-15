@@ -830,7 +830,7 @@
             budgetTotals.forEach((item) => {
                 const budgetNumber = item.dataset.budgetNumber;
                 const totalValue = parseFloat(item.dataset.totalValue || '0');
-                if (!budgetNumber || Number.isNaN(totalValue)) return;
+                if (!budgetNumber || Number.isNaN(totalValue) || totalValue <= 0) return;
                 if (bestValue === null || totalValue < bestValue) {
                     bestValue = totalValue;
                     bestBudget = budgetNumber;

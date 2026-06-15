@@ -533,6 +533,37 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, f'data-budget-selector="topic-{topic.id}"', html=False)
         self.assertContains(response, f'data-budget-total-group="topic-{topic.id}"', html=False)
 
+    def test_budget_selector_ignores_zero_value_budgets_when_choosing_the_smallest(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orÃ§ar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
+        quote_1 = CostField.objects.create(topic=topic, name='OrÃ§amento 1', field_type='texto')
+        CostField.objects.create(
+            topic=topic,
+            parent=quote_1,
+            name='PreÃ§o',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quote_2 = CostField.objects.create(topic=topic, name='OrÃ§amento 2', field_type='texto')
+        CostField.objects.create(
+            topic=topic,
+            parent=quote_2,
+            name='PreÃ§o',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+
+        response = self.client.get(reverse('budget_product_create'), {'topic': topic.id})
+
+        self.assertContains(response, f'data-budget-selector="topic-{topic.id}"', html=False)
+        self.assertContains(response, 'totalValue <= 0', html=False)
+        self.assertContains(response, f'name="field_{selector.id}" value="1"', html=False)
+
     def test_calculated_total_field_is_saved_from_price_and_multiplier(self):
         topic = CostTopic.objects.create(name='Material permanente')
         selector = CostField.objects.create(
