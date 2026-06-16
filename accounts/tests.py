@@ -786,6 +786,23 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertTrue(old_field_1.is_active)
         self.assertTrue(old_field_2.is_active)
 
+    def test_field_migration_form_groups_fields_by_main_block(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        budget_root = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        CostField.objects.create(topic=topic, parent=budget_root, name='Preço', field_type='valor')
+        CostField.objects.create(topic=topic, parent=budget_root, name='Quantidade', field_type='numero')
+        standalone = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=standalone, value='Notebook')
+
+        response = self.client.get(reverse('budget_product_create'), {'topic': topic.id})
+
+        self.assertContains(response, '<optgroup label="Orçamento 1">', html=False)
+        self.assertContains(response, '>Campo principal<', html=False)
+        self.assertContains(response, '>Preço<', html=False)
+        self.assertContains(response, '>Quantidade<', html=False)
+        self.assertContains(response, '<optgroup label="Nome do produto">', html=False)
+
     def test_can_apply_field_migration_to_all_records_and_archive_old_fields(self):
         topic = CostTopic.objects.create(name='Material permanente')
         old_field_1 = CostField.objects.create(topic=topic, name='Campo legado X1', field_type='texto')

@@ -147,6 +147,7 @@
 - No cadastro e na edição de custos com múltiplos orçamentos, a escolha automática do menor orçamento agora ignora totais zerados
 - Os campos do tópico agora podem ser migrados com segurança: é possível juntar vários campos antigos em um campo novo, testar em um único custo e depois aplicar em todos os custos antigos
 - Após a migração em lote, os campos antigos podem ser arquivados sem apagar os dados do banco, e o `Orçamento pronto` passa a refletir apenas os campos ativos
+- Na tela de migração, os campos antigos e o campo novo de destino agora aparecem organizados por bloco principal, facilitando identificar a qual orçamento ou grupo cada campo pertence
 
 ## Ajustes visuais e textuais
 

@@ -213,8 +213,35 @@ class FieldMigrationForm(forms.Form):
                 field for field in topic.fields.all()
                 if field.is_active
             ]
-            field_choices = [
-                (str(field.id), field.name) for field in active_fields
-            ]
-            self.fields['source_field_ids'].choices = field_choices
-            self.fields['target_field_id'].choices = [('', 'Selecione o campo novo')] + field_choices
+            grouped_choices = self._build_grouped_field_choices(active_fields)
+            self.fields['source_field_ids'].choices = grouped_choices
+            self.fields['target_field_id'].choices = [('', 'Selecione o campo novo')] + grouped_choices
+
+    def _build_grouped_field_choices(self, fields):
+        children_map = {}
+        for field in fields:
+            children_map.setdefault(field.parent_id, []).append(field)
+
+        def build_option_label(field):
+            if field.parent_id is None:
+                return 'Campo principal'
+            path = []
+            current = field
+            while current is not None and current.parent_id is not None:
+                path.append(current.name)
+                current = current.parent
+            return ' / '.join(reversed(path))
+
+        grouped_choices = []
+
+        def append_descendants(options, parent):
+            for child in children_map.get(parent.id, []):
+                options.append((str(child.id), build_option_label(child)))
+                append_descendants(options, child)
+
+        for root in children_map.get(None, []):
+            options = [(str(root.id), build_option_label(root))]
+            append_descendants(options, root)
+            grouped_choices.append((root.name, options))
+
+        return grouped_choices
