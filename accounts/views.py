@@ -1913,6 +1913,8 @@ def classify_fapesp_topic(topic_name):
         return 'material_consumo'
     if 'servicos de terceiros' in normalized:
         return 'servicos_terceiros'
+    if 'despesas de transporte' in normalized and 'diarias' in normalized:
+        return 'transporte_diarias'
     if normalized == 'transporte' or 'despesas de transporte' in normalized:
         return 'despesas_transporte'
     if normalized == 'diarias' or 'diarias' in normalized:
@@ -1966,6 +1968,83 @@ def build_fapesp_description(record_card, selected_group):
     return '\n'.join(part for part in parts if part)
 
 
+def format_compact_decimal_br(value):
+    if value is None:
+        return '-'
+    if value == value.to_integral_value():
+        return str(int(value))
+
+    rendered = format(value.normalize(), 'f')
+    if '.' not in rendered:
+        return rendered
+
+    integer_part, decimal_part = rendered.split('.', 1)
+    decimal_part = decimal_part.rstrip('0')
+    if not decimal_part:
+        return integer_part
+    return f'{integer_part},{decimal_part}'
+
+
+def resolve_quantity_value(record_card, selected_group, unit_price_item):
+    quantity_item = get_selected_budget_item(selected_group, role=CostField.ROLE_MULTIPLIER)
+    if quantity_item and quantity_item.get('display_value'):
+        return quantity_item['display_value']
+
+    quantity_item = get_selected_budget_item(
+        selected_group,
+        keywords=('quantidade', 'qtd', 'participantes', 'pesquisadores', 'unidades', 'dias'),
+    )
+    if quantity_item and quantity_item.get('display_value'):
+        return quantity_item['display_value']
+
+    quantity_group = get_simple_detail_group(
+        record_card,
+        'quantidade',
+        'qtd',
+        'participantes',
+        'pesquisadores',
+        'unidades',
+        'dias',
+    )
+    if quantity_group and quantity_group.get('summary_value'):
+        return quantity_group['summary_value']
+
+    total_decimal = record_card.get('selected_total')
+    unit_decimal = parse_decimal_input(unit_price_item.get('raw_value', '')) if unit_price_item else None
+    if total_decimal is not None and unit_decimal is not None and unit_decimal > 0:
+        inferred_quantity = total_decimal / unit_decimal
+        if inferred_quantity > 0:
+            return format_compact_decimal_br(inferred_quantity)
+
+    return '1'
+
+
+def classify_fapesp_record_kind(topic_kind, record_card):
+    if topic_kind != 'transporte_diarias':
+        return topic_kind
+
+    normalized_title = normalize_matching_text(record_card['record_title'])
+    if any(
+        keyword in normalized_title
+        for keyword in ('voo', 'passagem', 'onibus', 'taxi', 'uber', 'combustivel', 'pedagio', 'deslocamento')
+    ):
+        return 'despesas_transporte'
+
+    if get_simple_detail_group(record_card, 'pernoite', 'cidade', 'estado', 'local', 'moeda'):
+        return 'diarias'
+
+    if get_simple_detail_group(record_card, 'diarias', 'evento', 'eventos'):
+        return 'diarias'
+
+    if any(
+        keyword in normalized_title
+        for keyword in ('evento', 'seminario', 'reuniao', 'participacao', 'congresso', 'simposio', 'encontro')
+    ):
+        return 'diarias'
+
+    return 'despesas_transporte'
+
+
 def build_fapesp_export_pages(topic_blocks):
     export_pages = []
     for block in topic_blocks:
@@ -1978,8 +2057,8 @@ def build_fapesp_export_pages(topic_blocks):
             if not selected_group:
                 continue
 
-            quantity_item = get_selected_budget_item(selected_group, role=CostField.ROLE_MULTIPLIER)
             unit_price_item = get_selected_budget_item(selected_group, role=CostField.ROLE_UNIT_PRICE)
+            record_kind = classify_fapesp_record_kind(topic_kind, record_card)
             total_value = (
                 format_decimal_br(record_card['selected_total'])
                 if record_card['selected_total'] is not None
@@ -1989,11 +2068,11 @@ def build_fapesp_export_pages(topic_blocks):
                     else '-'
                 )
             )
-            quantity_value = quantity_item['display_value'] if quantity_item else '-'
+            quantity_value = resolve_quantity_value(record_card, selected_group, unit_price_item)
             unit_price_value = unit_price_item['display_value'] if unit_price_item else '-'
             description_value = build_fapesp_description(record_card, selected_group)
 
-            if topic_kind == 'material_permanente':
+            if record_kind == 'material_permanente':
                 rows = [
                     ('Origem *', 'Brasil'),
                     ('Quantidade *', quantity_value),
@@ -2018,7 +2097,7 @@ def build_fapesp_export_pages(topic_blocks):
                 )
                 continue
 
-            if topic_kind == 'material_consumo':
+            if record_kind == 'material_consumo':
                 rows = [
                     ('Origem *', 'Brasil'),
                     ('Descrição *', description_value),
@@ -2034,7 +2113,7 @@ def build_fapesp_export_pages(topic_blocks):
                 )
                 continue
 
-            if topic_kind == 'servicos_terceiros':
+            if record_kind == 'servicos_terceiros':
                 rows = [
                     ('Origem *', 'Brasil'),
                     ('Quantidade *', quantity_value),
@@ -2052,7 +2131,7 @@ def build_fapesp_export_pages(topic_blocks):
                 )
                 continue
 
-            if topic_kind == 'despesas_transporte':
+            if record_kind == 'despesas_transporte':
                 rows = [
                     ('Origem *', 'Brasil'),
                     ('Quantidade *', quantity_value),
@@ -2071,7 +2150,7 @@ def build_fapesp_export_pages(topic_blocks):
                 continue
 
             pernoite_group = get_simple_detail_group(record_card, 'pernoite')
-            pernoite_value = pernoite_group['summary_value'] if pernoite_group else ''
+            pernoite_value = pernoite_group['summary_value'] if pernoite_group else 'Sim'
             rows = [
                 ('Quantidade *', quantity_value),
                 ('Descrição *', description_value),

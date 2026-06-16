@@ -495,6 +495,84 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertIn('Notebook Lenovo', description_row)
         self.assertIn('https://example.com/notebook', description_row)
 
+    def test_build_fapesp_export_pages_infers_service_quantity_as_one(self):
+        topic = CostTopic.objects.create(name='Serviços de Terceiros contratados no país e no exterior')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orçar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
+        budget = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        price = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        service = CostField.objects.create(topic=topic, name='Nome do serviço', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=service, value='Assistência técnica')
+        CostRecordValue.objects.create(record=record, field=selector, value='1')
+        CostRecordValue.objects.create(record=record, field=price, value='2250,00')
+
+        context = build_budget_ready_context()
+        pages = build_fapesp_export_pages(context['topic_blocks'])
+        page = next(item for item in pages if item['record_title'] == 'Assistência técnica')
+
+        self.assertEqual(page['form_title'], 'Serviços de Terceiros')
+        self.assertIn(('Quantidade *', '1'), page['rows'])
+        self.assertIn(('Valor Unitário *', '2.250,00'), page['rows'])
+        self.assertIn(('Valor Total *', '2.250,00'), page['rows'])
+
+    def test_build_fapesp_export_pages_splits_event_from_transport(self):
+        topic = CostTopic.objects.create(name='Despesas de Transporte e Diárias')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orçar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
+        budget = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        price = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quantity = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Quantidade de pesquisadores',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        event_name = CostField.objects.create(topic=topic, name='Nome do meio de transporte/Diárias/Eventos', field_type='texto')
+        flight_name = CostField.objects.create(topic=topic, name='Origem - Destino', field_type='texto')
+
+        event_record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=event_record, field=event_name, value='Evento internacional')
+        CostRecordValue.objects.create(record=event_record, field=selector, value='1')
+        CostRecordValue.objects.create(record=event_record, field=price, value='46500,00')
+        CostRecordValue.objects.create(record=event_record, field=quantity, value='1')
+
+        flight_record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=flight_record, field=flight_name, value='Voo de Fortaleza para Campinas')
+        CostRecordValue.objects.create(record=flight_record, field=selector, value='1')
+        CostRecordValue.objects.create(record=flight_record, field=price, value='1359,62')
+        CostRecordValue.objects.create(record=flight_record, field=quantity, value='2')
+
+        context = build_budget_ready_context()
+        pages = build_fapesp_export_pages(context['topic_blocks'])
+        event_page = next(item for item in pages if item['record_title'] == 'Evento internacional')
+        flight_page = next(item for item in pages if item['record_title'] == 'Voo de Fortaleza para Campinas')
+
+        self.assertEqual(event_page['form_title'], 'Diárias')
+        self.assertIn(('Pernoite *', 'Sim'), event_page['rows'])
+        self.assertEqual(flight_page['form_title'], 'Despesas de Transporte')
+
     def test_budget_ready_fapesp_pdf_exports_file(self):
         topic = CostTopic.objects.create(name='Material permanente')
         selector = CostField.objects.create(

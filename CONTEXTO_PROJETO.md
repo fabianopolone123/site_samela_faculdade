@@ -307,3 +307,7 @@
 - Foi criada a rota `orcamento-pronto/pdf-modelo-fapesp/` com um PDF específico no formato dos formulários mostrados pelo usuário
 - Essa exportação monta páginas separadas por cadastro usando o orçamento marcado para orçar, com mapeamento para `Material Permanente`, `Material de Consumo`, `Serviços de Terceiros`, `Despesas de Transporte` e `Diárias`
 - O modelo usa nome do cadastro + link do orçamento selecionado na descrição, fixa `Brasil` como origem quando aplicável, fixa `Fabricado no Brasil = Sim` para material permanente e deixa `Justificativa` em branco
+- A classificação do modelo FAPESP foi refinada para separar registros do tópico misto `Despesas de Transporte e Diárias`, enviando voos e deslocamentos para `Despesas de Transporte` e eventos/reuniões para `Diárias`
+- Quando o cadastro exportado não tem quantidade explícita, o modelo agora tenta localizar campos equivalentes e, se necessário, infere a quantidade pela relação entre valor total e valor unitário
+- Registros de `Serviços de Terceiros` sem campo de quantidade passaram a sair com quantidade válida no modelo, em vez de `-`
+- Registros classificados como `Diárias` passam a assumir `Pernoite = Sim` quando esse campo não existir no cadastro
