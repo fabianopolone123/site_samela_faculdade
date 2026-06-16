@@ -566,6 +566,8 @@ def create_topic_record_view(request):
             parsed_value = parse_decimal_input(value)
             if parsed_value is not None:
                 value = format_decimal_br(parsed_value)
+        elif field.field_type == CostField.TYPE_BOOLEAN:
+            value = normalize_boolean_input(value)
         elif field.field_type == 'link' and value:
             value = sanitize_external_url(value)
         raw_values[field.id] = value
@@ -616,6 +618,8 @@ def update_topic_record_view(request, record_id):
             parsed_value = parse_decimal_input(value)
             if parsed_value is not None:
                 value = format_decimal_br(parsed_value)
+        elif field.field_type == CostField.TYPE_BOOLEAN:
+            value = normalize_boolean_input(value)
         elif field.field_type == 'link' and value:
             value = sanitize_external_url(value)
         raw_values[field.id] = value
@@ -2076,7 +2080,22 @@ def format_value_for_display(field_type_code, value):
         parsed = parse_decimal_input(value)
         if parsed is not None:
             return format_decimal_br(parsed)
+    if field_type_code == CostField.TYPE_BOOLEAN:
+        normalized = normalize_boolean_input(value)
+        if normalized == 'sim':
+            return 'Sim'
+        if normalized == 'nao':
+            return 'Não'
     return value
+
+
+def normalize_boolean_input(value):
+    normalized = str(value or '').strip().lower()
+    if normalized in {'sim', 'true', '1', 'yes', 'on'}:
+        return 'sim'
+    if normalized in {'nao', 'não', 'false', '0', 'no', 'off'}:
+        return 'nao'
+    return ''
 
 
 def is_probably_url(value):

@@ -294,3 +294,12 @@
 - A seleção agora funciona por botões visuais, mantendo os campos reais ocultos no formulário e exibindo no centro um resumo do que foi escolhido para migrar
 - A área de migração ficou responsiva para celular, empilhando as colunas e preservando a lógica de teste em um custo ou aplicação em todos
 - A modal `Campos do tópico` passou a nascer aberta também pelo backend quando a URL vier com `?open=campos`, evitando que ela feche ao cadastrar um novo campo caso o JavaScript não reabra a janela a tempo
+
+### 2026-06-16
+
+- Foi adicionada a nova opção de tipo `Sim/Não` no cadastro e na edição de campos dinâmicos
+- O Django ganhou a migration `accounts/migrations/0015_alter_costfield_field_type.py` para incluir oficialmente o novo tipo no modelo `CostField`
+- Na tela `Cadastrar custos`, campos desse tipo agora aparecem como lista suspensa com `Selecione`, `Sim` e `Não`
+- Na edição de custos já salvos, o seletor booleano respeita os valores existentes e também tolera registros antigos com `não`
+- O salvamento de custos passou a normalizar esse tipo para `sim` e `nao` no banco
+- A visualização dos registros e do orçamento pronto exibe esse tipo com escrita amigável em português: `Sim` e `Não`

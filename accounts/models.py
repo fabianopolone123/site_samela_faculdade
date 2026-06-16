@@ -190,6 +190,7 @@ class CostField(models.Model):
     TYPE_NUMBER = 'numero'
     TYPE_LINK = 'link'
     TYPE_CURRENCY = 'valor'
+    TYPE_BOOLEAN = 'booleano'
     ROLE_NONE = 'nenhuma'
     ROLE_UNIT_PRICE = 'preco_unitario'
     ROLE_MULTIPLIER = 'multiplicador'
@@ -201,6 +202,7 @@ class CostField(models.Model):
         (TYPE_NUMBER, 'Número'),
         (TYPE_LINK, 'Link'),
         (TYPE_CURRENCY, 'Valor'),
+        (TYPE_BOOLEAN, 'Sim/Não'),
     ]
     CALCULATION_ROLE_CHOICES = [
         (ROLE_NONE, 'Sem função'),

@@ -537,6 +537,12 @@
                                         {% else %}
                                             <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
                                         {% endif %}
+                                    {% elif group.root.field.field_type == 'booleano' %}
+                                        <select id="field_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                            <option value="">Selecione</option>
+                                            <option value="sim">Sim</option>
+                                            <option value="nao">Não</option>
+                                        </select>
                                     {% endif %}
                                 </div>
                                 {% endif %}
@@ -573,6 +579,12 @@
                                                         {% else %}
                                                             <input type="text" inputmode="decimal" placeholder="0,00" id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
                                                         {% endif %}
+                                                    {% elif row.field.field_type == 'booleano' %}
+                                                        <select id="field_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                            <option value="">Selecione</option>
+                                                            <option value="sim">Sim</option>
+                                                            <option value="nao">Não</option>
+                                                        </select>
                                                     {% endif %}
                                                 </div>
                                             {% endfor %}
@@ -840,6 +852,12 @@
                                     {% else %}
                                         <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}" value="{{ group.root_current_value }}">
                                     {% endif %}
+                                {% elif group.root.field.field_type == 'booleano' %}
+                                    <select id="edit_field_{{ record_card.record.id }}_{{ group.root.field.id }}" name="field_{{ group.root.field.id }}">
+                                        <option value="" {% if not group.root_current_value %}selected{% endif %}>Selecione</option>
+                                        <option value="sim" {% if group.root_current_value == 'sim' %}selected{% endif %}>Sim</option>
+                                        <option value="nao" {% if group.root_current_value == 'nao' or group.root_current_value == 'não' %}selected{% endif %}>Não</option>
+                                    </select>
                                 {% endif %}
                             </div>
                             {% endif %}
@@ -878,6 +896,12 @@
                                                     {% else %}
                                                         <input type="text" inputmode="decimal" placeholder="0,00" id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}" value="{{ row.current_value }}">
                                                     {% endif %}
+                                                {% elif row.field.field_type == 'booleano' %}
+                                                    <select id="edit_field_{{ record_card.record.id }}_{{ row.field.id }}" name="field_{{ row.field.id }}">
+                                                        <option value="" {% if not row.current_value %}selected{% endif %}>Selecione</option>
+                                                        <option value="sim" {% if row.current_value == 'sim' %}selected{% endif %}>Sim</option>
+                                                        <option value="nao" {% if row.current_value == 'nao' or row.current_value == 'não' %}selected{% endif %}>Não</option>
+                                                    </select>
                                                 {% endif %}
                                             </div>
                                         {% endfor %}

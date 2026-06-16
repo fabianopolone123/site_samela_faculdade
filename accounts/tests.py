@@ -5,7 +5,7 @@ from django.urls import reverse
 from docx import Document
 from io import BytesIO
 
-from .forms import FieldMigrationForm
+from .forms import FieldMigrationForm, TopicFieldForm
 from .models import AllowedSignupEmail, AuditLog, CostField, CostRecord, CostRecordValue, CostTopic, SignupCode, User
 
 
@@ -147,6 +147,14 @@ class DynamicTopicBudgetTests(TestCase):
         field = CostField.objects.get(topic=topic, name='Preço unitário')
         self.assertEqual(field.calculation_role, CostField.ROLE_UNIT_PRICE)
 
+    def test_field_form_includes_boolean_type(self):
+        form = TopicFieldForm()
+
+        self.assertIn(
+            (CostField.TYPE_BOOLEAN, 'Sim/Não'),
+            list(form.fields['field_type'].choices),
+        )
+
     def test_campos_modal_starts_open_when_querystring_requests_it(self):
         topic = CostTopic.objects.create(name='Material permanente')
 
@@ -157,6 +165,30 @@ class DynamicTopicBudgetTests(TestCase):
 
         self.assertContains(response, 'class="modal is-open" id="campos-modal"', html=False)
         self.assertContains(response, 'aria-hidden="false"', html=False)
+
+    def test_can_create_and_display_boolean_field_value(self):
+        topic = CostTopic.objects.create(name='Critérios')
+        field = CostField.objects.create(
+            topic=topic,
+            name='Aprovado',
+            field_type=CostField.TYPE_BOOLEAN,
+        )
+
+        response = self.client.post(
+            reverse('create_topic_record'),
+            {
+                'topic_id': topic.id,
+                f'field_{field.id}': 'nao',
+            },
+        )
+
+        self.assertRedirects(response, f"{reverse('budget_product_create')}?topic={topic.id}")
+        saved_value = CostRecordValue.objects.get(field=field).value
+        self.assertEqual(saved_value, 'nao')
+
+        response = self.client.get(reverse('budget_product_create'), {'topic': topic.id})
+        self.assertContains(response, 'Aprovado')
+        self.assertContains(response, 'Não')
 
     def test_can_update_field_with_calculation_role(self):
         topic = CostTopic.objects.create(name='Material permanente')
