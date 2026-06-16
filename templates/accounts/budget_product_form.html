@@ -230,7 +230,7 @@
         </div>
     </div>
 
-    <div class="modal" id="campos-modal" aria-hidden="true">
+    <div class="modal{% if auto_open == 'campos' %} is-open{% endif %}" id="campos-modal" aria-hidden="{% if auto_open == 'campos' %}false{% else %}true{% endif %}">
         <div class="modal-backdrop" data-close-modal="campos-modal"></div>
         <div class="modal-content modal-content--wide" role="dialog" aria-modal="true">
             <div class="modal-header">

@@ -260,8 +260,10 @@ def budget_product_create_view(request):
     ] if selected_topic else []
     archived_rows = build_topic_rows(selected_topic, include_inactive=True, active_only=False)
     archived_rows = [row for row in archived_rows if not row['field'].is_active]
+    auto_open = request.GET.get('open', '').strip()
 
     context = {
+        'auto_open': auto_open,
         'topics': topics,
         'selected_topic': selected_topic,
         'topic_form': TopicForm(),

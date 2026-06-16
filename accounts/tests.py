@@ -147,6 +147,17 @@ class DynamicTopicBudgetTests(TestCase):
         field = CostField.objects.get(topic=topic, name='Preço unitário')
         self.assertEqual(field.calculation_role, CostField.ROLE_UNIT_PRICE)
 
+    def test_campos_modal_starts_open_when_querystring_requests_it(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+
+        response = self.client.get(
+            reverse('budget_product_create'),
+            {'topic': topic.id, 'open': 'campos'},
+        )
+
+        self.assertContains(response, 'class="modal is-open" id="campos-modal"', html=False)
+        self.assertContains(response, 'aria-hidden="false"', html=False)
+
     def test_can_update_field_with_calculation_role(self):
         topic = CostTopic.objects.create(name='Material permanente')
         parent = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')

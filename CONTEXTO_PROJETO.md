@@ -293,3 +293,4 @@
 - A tela `Campos do tópico` ganhou uma nova interface de migração em duas colunas, com `Campos antigos` à esquerda e `Campos novos` à direita
 - A seleção agora funciona por botões visuais, mantendo os campos reais ocultos no formulário e exibindo no centro um resumo do que foi escolhido para migrar
 - A área de migração ficou responsiva para celular, empilhando as colunas e preservando a lógica de teste em um custo ou aplicação em todos
+- A modal `Campos do tópico` passou a nascer aberta também pelo backend quando a URL vier com `?open=campos`, evitando que ela feche ao cadastrar um novo campo caso o JavaScript não reabra a janela a tempo
