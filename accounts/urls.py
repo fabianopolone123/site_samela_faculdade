@@ -28,6 +28,7 @@ urlpatterns = [
     path('orcamento-pronto/pdf-modelo-fapesp/', views.budget_ready_fapesp_pdf_view, name='budget_ready_fapesp_pdf'),
     path('orcamento-pronto/pdf-selecionados/', views.budget_ready_selected_pdf_view, name='budget_ready_selected_pdf'),
     path('orcamento-pronto/word/', views.budget_ready_docx_view, name='budget_ready_docx'),
+    path('orcamento-pronto/word-modelo-fapesp/', views.budget_ready_fapesp_docx_view, name='budget_ready_fapesp_docx'),
     path('orcamento-pronto/word-selecionados/', views.budget_ready_selected_docx_view, name='budget_ready_selected_docx'),
     path('cadastro/email/', views.signup_email_view, name='signup_email'),
     path('cadastro/codigo/', views.signup_code_view, name='signup_code'),

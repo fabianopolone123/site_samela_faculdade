@@ -305,6 +305,8 @@
 - A visualização dos registros e do orçamento pronto exibe esse tipo com escrita amigável em português: `Sim` e `Não`
 - A tela `Orçamento pronto` ganhou o botão `Exportar modelo FAPESP`
 - Foi criada a rota `orcamento-pronto/pdf-modelo-fapesp/` com um PDF específico no formato dos formulários mostrados pelo usuário
+- A tela `Orçamento pronto` também ganhou o botão `Modelo FAPESP Word`
+- Foi criada a rota `orcamento-pronto/word-modelo-fapesp/` para gerar o mesmo conteúdo do modelo FAPESP em arquivo `.docx`
 - Essa exportação monta páginas separadas por cadastro usando o orçamento marcado para orçar, com mapeamento para `Material Permanente`, `Material de Consumo`, `Serviços de Terceiros`, `Despesas de Transporte` e `Diárias`
 - O modelo usa nome do cadastro + link do orçamento selecionado na descrição, fixa `Brasil` como origem quando aplicável, fixa `Fabricado no Brasil = Sim` para material permanente e deixa `Justificativa` em branco
 - A classificação do modelo FAPESP foi refinada para separar registros do tópico misto `Despesas de Transporte e Diárias`, enviando voos e deslocamentos para `Despesas de Transporte` e eventos/reuniões para `Diárias`

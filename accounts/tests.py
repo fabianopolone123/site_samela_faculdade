@@ -613,6 +613,61 @@ class DynamicTopicBudgetTests(TestCase):
         )
         self.assertTrue(len(response.content) > 0)
 
+    def test_budget_ready_fapesp_docx_exports_file(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orçar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
+        budget = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        price = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quantity = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        product = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=product, value='Notebook')
+        CostRecordValue.objects.create(record=record, field=selector, value='1')
+        CostRecordValue.objects.create(record=record, field=price, value='12,50')
+        CostRecordValue.objects.create(record=record, field=quantity, value='2')
+
+        response = self.client.get(reverse('budget_ready_fapesp_docx'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Type'],
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        )
+        self.assertIn(
+            'attachment; filename="modelo-fapesp-neevy.docx"',
+            response['Content-Disposition'],
+        )
+        self.assertTrue(len(response.content) > 0)
+        document = Document(BytesIO(response.content))
+        paragraph_text = '\n'.join(paragraph.text for paragraph in document.paragraphs)
+        table_text = '\n'.join(
+            cell.text
+            for table in document.tables
+            for row in table.rows
+            for cell in row.cells
+        )
+        document_text = f'{paragraph_text}\n{table_text}'
+        self.assertIn('Material Permanente', document_text)
+        self.assertIn('Notebook', document_text)
+        self.assertIn('Valor Unitário *', document_text)
+
     def test_budget_ready_docx_exports_file(self):
         topic = CostTopic.objects.create(name='Material permanente')
         field = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')

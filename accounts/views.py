@@ -1203,6 +1203,71 @@ def budget_ready_fapesp_pdf_view(request):
 
 
 @login_required
+def budget_ready_fapesp_docx_view(request):
+    context = build_budget_ready_context()
+    export_pages = build_fapesp_export_pages(context['topic_blocks'])
+    document = Document()
+
+    document.core_properties.title = 'Modelo FAPESP NEEVY'
+    normal_style = document.styles['Normal']
+    normal_style.font.name = 'Calibri'
+    normal_style.font.size = Pt(10)
+
+    subtitle = document.add_paragraph()
+    subtitle.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    run = subtitle.add_run(f'PROJETO: {context["project_budget_title"]}')
+    run.bold = True
+    run.font.size = Pt(12)
+
+    heading = document.add_paragraph('ORÇAMENTO')
+    heading.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+    heading.runs[0].bold = True
+    document.add_paragraph(context['project_budget_description'])
+
+    if not export_pages:
+        document.add_paragraph('Nenhum orçamento selecionado foi encontrado para montar o modelo FAPESP.')
+    else:
+        for index, page in enumerate(export_pages):
+            if index > 0:
+                document.add_page_break()
+
+            title_paragraph = document.add_paragraph()
+            title_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            title_run = title_paragraph.add_run(page['form_title'])
+            title_run.bold = True
+            title_run.font.size = Pt(13)
+
+            document.add_paragraph('Para verificar o Valor Total antes de Confirmar, clique no ícone Calcular.')
+
+            record_paragraph = document.add_paragraph()
+            record_paragraph.add_run(f'Cadastro: {page["record_title"]}').bold = True
+
+            table = document.add_table(rows=0, cols=2)
+            table.style = 'Table Grid'
+            for label, value in page['rows']:
+                cells = table.add_row().cells
+                cells[0].text = label
+                cells[1].text = str(value or '')
+
+            if page.get('accessories_note'):
+                document.add_paragraph()
+                accessory_table = document.add_table(rows=1, cols=1)
+                accessory_table.style = 'Table Grid'
+                accessory_table.rows[0].cells[0].text = page['accessories_note']
+
+            document.add_paragraph('Os campos marcados com * são obrigatórios.')
+
+    buffer = BytesIO()
+    document.save(buffer)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    )
+    response['Content-Disposition'] = 'attachment; filename="modelo-fapesp-neevy.docx"'
+    return response
+
+
+@login_required
 def budget_ready_docx_view(request):
     context = build_budget_ready_context()
     document = Document()
