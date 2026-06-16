@@ -25,6 +25,7 @@ urlpatterns = [
     path('cadastrar-campos/topicos/<int:topic_id>/descricao/', views.update_topic_description_view, name='update_topic_description'),
     path('orcamento-pronto/', views.budget_ready_view, name='budget_ready'),
     path('orcamento-pronto/pdf/', views.budget_ready_pdf_view, name='budget_ready_pdf'),
+    path('orcamento-pronto/pdf-modelo-fapesp/', views.budget_ready_fapesp_pdf_view, name='budget_ready_fapesp_pdf'),
     path('orcamento-pronto/pdf-selecionados/', views.budget_ready_selected_pdf_view, name='budget_ready_selected_pdf'),
     path('orcamento-pronto/word/', views.budget_ready_docx_view, name='budget_ready_docx'),
     path('orcamento-pronto/word-selecionados/', views.budget_ready_selected_docx_view, name='budget_ready_selected_docx'),

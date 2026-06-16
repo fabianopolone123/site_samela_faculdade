@@ -22,7 +22,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from .forms import (
     AllowedSignupEmailForm,
@@ -1047,6 +1047,162 @@ def budget_ready_selected_pdf_view(request):
 
 
 @login_required
+def budget_ready_fapesp_pdf_view(request):
+    context = build_budget_ready_context()
+    export_pages = build_fapesp_export_pages(context['topic_blocks'])
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=16 * mm,
+        leftMargin=16 * mm,
+        topMargin=12 * mm,
+        bottomMargin=12 * mm,
+        title='Modelo FAPESP NEEVY',
+    )
+
+    styles = getSampleStyleSheet()
+    project_style = ParagraphStyle(
+        'BudgetFapespProject',
+        parent=styles['Title'],
+        fontSize=13,
+        leading=17,
+        textColor=colors.HexColor('#172126'),
+        spaceAfter=4,
+    )
+    heading_style = ParagraphStyle(
+        'BudgetFapespHeading',
+        parent=styles['Heading2'],
+        fontSize=11,
+        leading=14,
+        textColor=colors.HexColor('#172126'),
+        spaceAfter=6,
+    )
+    note_style = ParagraphStyle(
+        'BudgetFapespNote',
+        parent=styles['BodyText'],
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#172126'),
+        spaceAfter=8,
+    )
+    body_style = ParagraphStyle(
+        'BudgetFapespBody',
+        parent=styles['BodyText'],
+        fontSize=9,
+        leading=12,
+        textColor=colors.HexColor('#172126'),
+    )
+    title_bar_style = ParagraphStyle(
+        'BudgetFapespTitleBar',
+        parent=styles['Heading2'],
+        fontSize=12,
+        leading=14,
+        alignment=1,
+        textColor=colors.white,
+    )
+    label_style = ParagraphStyle(
+        'BudgetFapespLabel',
+        parent=body_style,
+        fontSize=9,
+        leading=11,
+        textColor=colors.HexColor('#172126'),
+    )
+
+    story = [
+        Paragraph(f'PROJETO: {context["project_budget_title"]}', project_style),
+        Paragraph('ORÇAMENTO', heading_style),
+        Paragraph(context['project_budget_description'], body_style),
+        Spacer(1, 6),
+    ]
+
+    if not export_pages:
+        story.append(Paragraph('Nenhum orçamento selecionado foi encontrado para montar o modelo FAPESP.', body_style))
+    else:
+        for index, page in enumerate(export_pages):
+            if index > 0:
+                story.append(PageBreak())
+
+            title_table = Table(
+                [[Paragraph(page['form_title'], title_bar_style)]],
+                colWidths=[178 * mm],
+            )
+            title_table.setStyle(
+                TableStyle(
+                    [
+                        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#d86d2c')),
+                        ('BOX', (0, 0), (-1, -1), 0.6, colors.HexColor('#8c4a1d')),
+                        ('TOPPADDING', (0, 0), (-1, -1), 6),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                    ]
+                )
+            )
+            story.append(title_table)
+            story.append(Paragraph('Para verificar o Valor Total antes de Confirmar, clique no ícone Calcular.', note_style))
+            story.append(Paragraph(f'Cadastro: {page["record_title"]}', heading_style))
+
+            table_rows = []
+            for label, value in page['rows']:
+                table_rows.append(
+                    [
+                        build_pdf_multiline_text_value(label, label_style),
+                        build_pdf_multiline_text_value(value or ' ', body_style),
+                    ]
+                )
+
+            field_table = Table(
+                table_rows,
+                colWidths=[58 * mm, 120 * mm],
+                rowHeights=None,
+            )
+            field_table.setStyle(
+                TableStyle(
+                    [
+                        ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#b7b7b7')),
+                        ('INNERGRID', (0, 0), (-1, -1), 0.35, colors.HexColor('#c8c8c8')),
+                        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                        ('TOPPADDING', (0, 0), (-1, -1), 7),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+                    ]
+                )
+            )
+            story.append(field_table)
+
+            if page.get('accessories_note'):
+                story.append(Spacer(1, 6))
+                accessories_table = Table(
+                    [[build_pdf_multiline_text_value(page['accessories_note'], body_style)]],
+                    colWidths=[178 * mm],
+                )
+                accessories_table.setStyle(
+                    TableStyle(
+                        [
+                            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#b7b7b7')),
+                            ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                            ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                            ('TOPPADDING', (0, 0), (-1, -1), 7),
+                            ('BOTTOMPADDING', (0, 0), (-1, -1), 7),
+                        ]
+                    )
+                )
+                story.append(accessories_table)
+
+            story.append(Spacer(1, 4))
+            story.append(Paragraph('Os campos marcados com * são obrigatórios.', note_style))
+
+    doc.build(story)
+    pdf = buffer.getvalue()
+    buffer.close()
+
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="modelo-fapesp-neevy.pdf"'
+    return response
+
+
+@login_required
 def budget_ready_docx_view(request):
     context = build_budget_ready_context()
     document = Document()
@@ -1749,6 +1905,195 @@ def build_selected_budget_export_rows(topic_blocks):
     return grouped_rows
 
 
+def classify_fapesp_topic(topic_name):
+    normalized = normalize_matching_text(topic_name)
+    if 'material permanente' in normalized:
+        return 'material_permanente'
+    if 'material de consumo' in normalized:
+        return 'material_consumo'
+    if 'servicos de terceiros' in normalized:
+        return 'servicos_terceiros'
+    if normalized == 'transporte' or 'despesas de transporte' in normalized:
+        return 'despesas_transporte'
+    if normalized == 'diarias' or 'diarias' in normalized:
+        return 'diarias'
+    return None
+
+
+def get_selected_budget_group(record_card):
+    return next(
+        (
+            group for group in record_card['detail_groups']
+            if group['children'] and group['is_selected_budget']
+        ),
+        None,
+    )
+
+
+def get_selected_budget_item(selected_group, *, role=None, keywords=(), field_type=None):
+    if not selected_group:
+        return None
+
+    normalized_keywords = tuple(normalize_matching_text(keyword) for keyword in keywords)
+    for item in selected_group['children']:
+        field_name = normalize_matching_text(item['field_name'])
+        if role and item.get('field_role') != role:
+            continue
+        if field_type and item.get('field_type_code') != field_type:
+            continue
+        if normalized_keywords and not any(keyword in field_name for keyword in normalized_keywords):
+            continue
+        return item
+    return None
+
+
+def get_simple_detail_group(record_card, *keywords):
+    normalized_keywords = tuple(normalize_matching_text(keyword) for keyword in keywords)
+    for group in record_card['detail_groups']:
+        if not group['is_simple_field']:
+            continue
+        title = normalize_matching_text(group['title'])
+        if any(keyword in title for keyword in normalized_keywords):
+            return group
+    return None
+
+
+def build_fapesp_description(record_card, selected_group):
+    parts = [record_card['record_title'].strip()]
+    link_item = get_selected_budget_item(selected_group, field_type=CostField.TYPE_LINK)
+    if link_item and link_item.get('raw_value'):
+        parts.append(link_item['raw_value'].strip())
+    return '\n'.join(part for part in parts if part)
+
+
+def build_fapesp_export_pages(topic_blocks):
+    export_pages = []
+    for block in topic_blocks:
+        topic_kind = classify_fapesp_topic(block['topic'].name)
+        if not topic_kind:
+            continue
+
+        for record_card in block['records']:
+            selected_group = get_selected_budget_group(record_card)
+            if not selected_group:
+                continue
+
+            quantity_item = get_selected_budget_item(selected_group, role=CostField.ROLE_MULTIPLIER)
+            unit_price_item = get_selected_budget_item(selected_group, role=CostField.ROLE_UNIT_PRICE)
+            total_value = (
+                format_decimal_br(record_card['selected_total'])
+                if record_card['selected_total'] is not None
+                else (
+                    format_decimal_br(selected_group['group_total'])
+                    if selected_group['group_total'] is not None
+                    else '-'
+                )
+            )
+            quantity_value = quantity_item['display_value'] if quantity_item else '-'
+            unit_price_value = unit_price_item['display_value'] if unit_price_item else '-'
+            description_value = build_fapesp_description(record_card, selected_group)
+
+            if topic_kind == 'material_permanente':
+                rows = [
+                    ('Origem *', 'Brasil'),
+                    ('Quantidade *', quantity_value),
+                    ('Descrição *', description_value),
+                    ('Fabricado no Brasil *', 'Sim'),
+                    ('Valor Unitário *', unit_price_value),
+                    ('Valor Total *', total_value),
+                    ('Justificativa *', ''),
+                ]
+                export_pages.append(
+                    {
+                        'form_title': 'Material Permanente',
+                        'record_title': record_card['record_title'],
+                        'rows': rows,
+                        'accessories_note': (
+                            'Acessórios\n'
+                            'Informe os acessórios que serão necessários para a manutenção do material permanente '
+                            'que está sendo incorporado ao orçamento.\n'
+                            'Nenhum acessório encontrado.'
+                        ),
+                    }
+                )
+                continue
+
+            if topic_kind == 'material_consumo':
+                rows = [
+                    ('Origem *', 'Brasil'),
+                    ('Descrição *', description_value),
+                    ('Valor *', total_value if total_value != '-' else unit_price_value),
+                    ('Justificativa *', ''),
+                ]
+                export_pages.append(
+                    {
+                        'form_title': 'Material de Consumo',
+                        'record_title': record_card['record_title'],
+                        'rows': rows,
+                    }
+                )
+                continue
+
+            if topic_kind == 'servicos_terceiros':
+                rows = [
+                    ('Origem *', 'Brasil'),
+                    ('Quantidade *', quantity_value),
+                    ('Descrição *', description_value),
+                    ('Valor Unitário *', unit_price_value),
+                    ('Valor Total *', total_value),
+                    ('Justificativa *', ''),
+                ]
+                export_pages.append(
+                    {
+                        'form_title': 'Serviços de Terceiros',
+                        'record_title': record_card['record_title'],
+                        'rows': rows,
+                    }
+                )
+                continue
+
+            if topic_kind == 'despesas_transporte':
+                rows = [
+                    ('Origem *', 'Brasil'),
+                    ('Quantidade *', quantity_value),
+                    ('Descrição *', description_value),
+                    ('Valor Unitário *', unit_price_value),
+                    ('Valor Total *', total_value),
+                    ('Justificativa *', ''),
+                ]
+                export_pages.append(
+                    {
+                        'form_title': 'Despesas de Transporte',
+                        'record_title': record_card['record_title'],
+                        'rows': rows,
+                    }
+                )
+                continue
+
+            pernoite_group = get_simple_detail_group(record_card, 'pernoite')
+            pernoite_value = pernoite_group['summary_value'] if pernoite_group else ''
+            rows = [
+                ('Quantidade *', quantity_value),
+                ('Descrição *', description_value),
+                ('Local *', 'Brasil'),
+                ('Pernoite *', pernoite_value),
+                ('Moeda *', 'R$'),
+                ('Valor Unitário *', unit_price_value),
+                ('Data de Referência', timezone.localdate().strftime('%d/%m/%Y')),
+                ('Valor Total *', total_value),
+                ('Justificativa *', ''),
+            ]
+            export_pages.append(
+                {
+                    'form_title': 'Diárias',
+                    'record_title': record_card['record_title'],
+                    'rows': rows,
+                }
+            )
+
+    return export_pages
+
+
 def get_record_title_from_record(record):
     values = [
         {
@@ -2043,6 +2388,11 @@ def build_pdf_link_value(url, style, label):
 
 def build_pdf_text_value(value, style):
     return Paragraph(escape(str(value or '-')), style)
+
+
+def build_pdf_multiline_text_value(value, style):
+    safe_value = escape(str(value or '-')).replace('\n', '<br/>')
+    return Paragraph(safe_value, style)
 
 
 def add_docx_hyperlink(paragraph, url, text):

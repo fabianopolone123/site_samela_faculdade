@@ -303,3 +303,7 @@
 - Na edição de custos já salvos, o seletor booleano respeita os valores existentes e também tolera registros antigos com `não`
 - O salvamento de custos passou a normalizar esse tipo para `sim` e `nao` no banco
 - A visualização dos registros e do orçamento pronto exibe esse tipo com escrita amigável em português: `Sim` e `Não`
+- A tela `Orçamento pronto` ganhou o botão `Exportar modelo FAPESP`
+- Foi criada a rota `orcamento-pronto/pdf-modelo-fapesp/` com um PDF específico no formato dos formulários mostrados pelo usuário
+- Essa exportação monta páginas separadas por cadastro usando o orçamento marcado para orçar, com mapeamento para `Material Permanente`, `Material de Consumo`, `Serviços de Terceiros`, `Despesas de Transporte` e `Diárias`
+- O modelo usa nome do cadastro + link do orçamento selecionado na descrição, fixa `Brasil` como origem quando aplicável, fixa `Fabricado no Brasil = Sim` para material permanente e deixa `Justificativa` em branco

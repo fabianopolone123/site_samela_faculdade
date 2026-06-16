@@ -7,6 +7,7 @@ from io import BytesIO
 
 from .forms import FieldMigrationForm, TopicFieldForm
 from .models import AllowedSignupEmail, AuditLog, CostField, CostRecord, CostRecordValue, CostTopic, SignupCode, User
+from .views import build_budget_ready_context, build_fapesp_export_pages
 
 
 class SignupFlowTests(TestCase):
@@ -436,6 +437,100 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertEqual(response['Content-Type'], 'application/pdf')
         self.assertIn(
             'attachment; filename="orcamentos-selecionados-neevy.pdf"',
+            response['Content-Disposition'],
+        )
+        self.assertTrue(len(response.content) > 0)
+
+    def test_build_fapesp_export_pages_maps_material_permanente(self):
+        topic = CostTopic.objects.create(name='Material permanente adquirido no país e importado')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orçar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
+        budget = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        price = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quantity = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        link = CostField.objects.create(topic=topic, parent=budget, name='Link', field_type='link')
+        total = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Valor total',
+            field_type='valor',
+            calculation_role=CostField.ROLE_CALCULATED_TOTAL,
+        )
+        product = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=product, value='Notebook Lenovo')
+        CostRecordValue.objects.create(record=record, field=selector, value='1')
+        CostRecordValue.objects.create(record=record, field=price, value='1500,00')
+        CostRecordValue.objects.create(record=record, field=quantity, value='2')
+        CostRecordValue.objects.create(record=record, field=link, value='https://example.com/notebook')
+        CostRecordValue.objects.create(record=record, field=total, value='3000,00')
+
+        context = build_budget_ready_context()
+        pages = build_fapesp_export_pages(context['topic_blocks'])
+        page = next(item for item in pages if item['record_title'] == 'Notebook Lenovo')
+
+        self.assertEqual(page['form_title'], 'Material Permanente')
+        self.assertIn(('Origem *', 'Brasil'), page['rows'])
+        self.assertIn(('Quantidade *', '2'), page['rows'])
+        self.assertIn(('Fabricado no Brasil *', 'Sim'), page['rows'])
+        self.assertIn(('Valor Unitário *', '1.500,00'), page['rows'])
+        self.assertIn(('Valor Total *', '3.000,00'), page['rows'])
+        description_row = next(value for label, value in page['rows'] if label == 'Descrição *')
+        self.assertIn('Notebook Lenovo', description_row)
+        self.assertIn('https://example.com/notebook', description_row)
+
+    def test_budget_ready_fapesp_pdf_exports_file(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        selector = CostField.objects.create(
+            topic=topic,
+            name='Selecionar para orçar',
+            field_type='numero',
+            calculation_role=CostField.ROLE_SELECTOR,
+        )
+        budget = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        price = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Preço',
+            field_type='valor',
+            calculation_role=CostField.ROLE_UNIT_PRICE,
+        )
+        quantity = CostField.objects.create(
+            topic=topic,
+            parent=budget,
+            name='Quantidade',
+            field_type='numero',
+            calculation_role=CostField.ROLE_MULTIPLIER,
+        )
+        product = CostField.objects.create(topic=topic, name='Nome do produto', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=product, value='Notebook')
+        CostRecordValue.objects.create(record=record, field=selector, value='1')
+        CostRecordValue.objects.create(record=record, field=price, value='12,50')
+        CostRecordValue.objects.create(record=record, field=quantity, value='2')
+
+        response = self.client.get(reverse('budget_ready_fapesp_pdf'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn(
+            'attachment; filename="modelo-fapesp-neevy.pdf"',
             response['Content-Disposition'],
         )
         self.assertTrue(len(response.content) > 0)
