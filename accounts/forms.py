@@ -213,10 +213,11 @@ class FieldMigrationForm(forms.Form):
                 field for field in topic.fields.all()
                 if field.is_active
             ]
+            parent_ids = {field.parent_id for field in active_fields if field.parent_id}
             source_grouped_choices = self._build_grouped_field_choices(active_fields)
             new_target_fields = [
                 field for field in active_fields
-                if not field.record_values.exists()
+                if not field.record_values.exists() and field.id not in parent_ids
             ]
             target_grouped_choices = self._build_grouped_field_choices(new_target_fields)
             self.fields['source_field_ids'].choices = source_grouped_choices
@@ -228,11 +229,9 @@ class FieldMigrationForm(forms.Form):
             children_map.setdefault(field.parent_id, []).append(field)
 
         def build_option_label(field):
-            if field.parent_id is None:
-                return 'Campo principal'
             path = []
             current = field
-            while current is not None and current.parent_id is not None:
+            while current is not None:
                 path.append(current.name)
                 current = current.parent
             return ' / '.join(reversed(path))

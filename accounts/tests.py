@@ -796,17 +796,19 @@ class DynamicTopicBudgetTests(TestCase):
         record = CostRecord.objects.create(topic=topic)
         CostRecordValue.objects.create(record=record, field=standalone, value='Notebook')
 
-        response = self.client.get(reverse('budget_product_create'), {'topic': topic.id})
+        form = FieldMigrationForm(topic=topic, record_choices=[(str(record.id), 'Notebook')])
+        rendered_source = str(form.fields['source_field_ids'].choices)
 
-        self.assertContains(response, '<optgroup label="Orçamento 1">', html=False)
-        self.assertContains(response, '>Campo principal<', html=False)
-        self.assertContains(response, '>Preço<', html=False)
-        self.assertContains(response, '>Quantidade<', html=False)
-        self.assertContains(response, '<optgroup label="Nome do produto">', html=False)
+        self.assertIn('Orçamento 1', rendered_source)
+        self.assertIn('Orçamento 1 / Preço', rendered_source)
+        self.assertIn('Orçamento 1 / Quantidade', rendered_source)
+        self.assertIn('Nome do produto', rendered_source)
+        self.assertNotIn('Campo principal', rendered_source)
 
     def test_field_migration_target_shows_only_new_fields(self):
         topic = CostTopic.objects.create(name='Material permanente')
-        old_field = CostField.objects.create(topic=topic, name='Campo antigo usado', field_type='texto')
+        old_root = CostField.objects.create(topic=topic, name='Orçamento 1', field_type='texto')
+        old_field = CostField.objects.create(topic=topic, parent=old_root, name='Preço', field_type='valor')
         new_field = CostField.objects.create(topic=topic, name='Campo novo vazio', field_type='texto')
         record = CostRecord.objects.create(topic=topic)
         CostRecordValue.objects.create(record=record, field=old_field, value='Valor antigo')
@@ -817,9 +819,10 @@ class DynamicTopicBudgetTests(TestCase):
         rendered_target = str(target_choices)
         rendered_source = str(form.fields['source_field_ids'].choices)
 
-        self.assertIn('Campo antigo usado', rendered_source)
+        self.assertIn('Orçamento 1 / Preço', rendered_source)
         self.assertIn('Campo novo vazio', rendered_source)
-        self.assertNotIn('Campo antigo usado', rendered_target)
+        self.assertNotIn('Orçamento 1', rendered_target)
+        self.assertNotIn('Orçamento 1 / Preço', rendered_target)
         self.assertIn('Campo novo vazio', rendered_target)
 
     def test_can_apply_field_migration_to_all_records_and_archive_old_fields(self):

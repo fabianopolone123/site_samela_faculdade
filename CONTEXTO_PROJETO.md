@@ -149,6 +149,7 @@
 - Após a migração em lote, os campos antigos podem ser arquivados sem apagar os dados do banco, e o `Orçamento pronto` passa a refletir apenas os campos ativos
 - Na tela de migração, os campos antigos e o campo novo de destino agora aparecem organizados por bloco principal, facilitando identificar a qual orçamento ou grupo cada campo pertence
 - Em `Campo novo de destino`, agora aparecem apenas campos novos ainda sem uso em custos salvos, evitando selecionar por engano campos antigos já preenchidos
+- Os rótulos da migração passaram a mostrar o nome real do campo, como `Orçamento 1 / Preço`, em vez de exibir apenas `Campo principal`
 
 ## Ajustes visuais e textuais
 
