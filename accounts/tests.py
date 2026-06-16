@@ -750,6 +750,89 @@ class DynamicTopicBudgetTests(TestCase):
         updated_value = CostRecordValue.objects.get(record=record, field=link_field)
         self.assertEqual(updated_value.value, 'https://example.com/novo?sku=22')
 
+    def test_can_migrate_old_fields_to_new_field_in_single_record(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        old_field_1 = CostField.objects.create(topic=topic, name='Campo legado A', field_type='texto')
+        old_field_2 = CostField.objects.create(topic=topic, name='Campo legado B', field_type='texto')
+        new_field = CostField.objects.create(topic=topic, name='Resumo novo', field_type='texto')
+
+        record_1 = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record_1, field=old_field_1, value='Primeira linha')
+        CostRecordValue.objects.create(record=record_1, field=old_field_2, value='Segunda linha')
+
+        record_2 = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record_2, field=old_field_1, value='Outro valor')
+        CostRecordValue.objects.create(record=record_2, field=old_field_2, value='Mais um valor')
+
+        response = self.client.post(
+            reverse('migrate_topic_fields', args=[topic.id]),
+            {
+                'source_field_ids': [str(old_field_1.id), str(old_field_2.id)],
+                'target_field_id': str(new_field.id),
+                'record_id': str(record_1.id),
+                'migration_mode': 'single',
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}&open=registro-{record_1.id}",
+        )
+        migrated_value = CostRecordValue.objects.get(record=record_1, field=new_field)
+        self.assertEqual(migrated_value.value, 'Primeira linha\nSegunda linha')
+        self.assertFalse(CostRecordValue.objects.filter(record=record_2, field=new_field).exists())
+        old_field_1.refresh_from_db()
+        old_field_2.refresh_from_db()
+        self.assertTrue(old_field_1.is_active)
+        self.assertTrue(old_field_2.is_active)
+
+    def test_can_apply_field_migration_to_all_records_and_archive_old_fields(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        old_field_1 = CostField.objects.create(topic=topic, name='Campo legado X1', field_type='texto')
+        old_field_2 = CostField.objects.create(topic=topic, name='Campo legado X2', field_type='texto')
+        new_field = CostField.objects.create(topic=topic, name='Resumo consolidado X', field_type='texto')
+
+        record_1 = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record_1, field=old_field_1, value='Linha A')
+        CostRecordValue.objects.create(record=record_1, field=old_field_2, value='Linha B')
+
+        record_2 = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record_2, field=old_field_1, value='Linha C')
+        CostRecordValue.objects.create(record=record_2, field=old_field_2, value='Linha D')
+
+        response = self.client.post(
+            reverse('migrate_topic_fields', args=[topic.id]),
+            {
+                'source_field_ids': [str(old_field_1.id), str(old_field_2.id)],
+                'target_field_id': str(new_field.id),
+                'archive_source_fields': 'on',
+                'migration_mode': 'all',
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            f"{reverse('budget_product_create')}?topic={topic.id}&open=campos",
+        )
+        self.assertEqual(
+            CostRecordValue.objects.get(record=record_1, field=new_field).value,
+            'Linha A\nLinha B',
+        )
+        self.assertEqual(
+            CostRecordValue.objects.get(record=record_2, field=new_field).value,
+            'Linha C\nLinha D',
+        )
+        old_field_1.refresh_from_db()
+        old_field_2.refresh_from_db()
+        self.assertFalse(old_field_1.is_active)
+        self.assertFalse(old_field_2.is_active)
+
+        response = self.client.get(reverse('budget_ready'))
+        self.assertContains(response, 'Resumo consolidado X')
+        self.assertContains(response, 'Linha A')
+        self.assertNotContains(response, 'Campo legado X1', html=False)
+        self.assertNotContains(response, 'Campo legado X2', html=False)
+
     def test_can_transfer_dynamic_cost_record_between_compatible_topics(self):
         source_topic = CostTopic.objects.create(name='Material permanente')
         source_product = CostField.objects.create(topic=source_topic, name='Nome do produto', field_type='texto')

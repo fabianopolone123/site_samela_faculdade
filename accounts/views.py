@@ -26,6 +26,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 from .forms import (
     AllowedSignupEmailForm,
+    FieldMigrationForm,
     LoginForm,
     SignupCodeForm,
     SignupEmailForm,
@@ -253,6 +254,12 @@ def budget_product_create_view(request):
 
     all_topics_total = sum(calculate_topic_total(topic) for topic in topics)
     store_suggestions = get_store_suggestions()
+    migration_record_choices = [
+        (str(record_card['record'].id), record_card['record_title'])
+        for record_card in selected_records
+    ] if selected_topic else []
+    archived_rows = build_topic_rows(selected_topic, include_inactive=True, active_only=False)
+    archived_rows = [row for row in archived_rows if not row['field'].is_active]
 
     context = {
         'topics': topics,
@@ -266,9 +273,14 @@ def budget_product_create_view(request):
         'selected_groups': selected_groups,
         'has_standalone_calculation': has_standalone_calculation,
         'selected_records': selected_records,
+        'archived_rows': archived_rows,
         'topic_grand_total': topic_grand_total,
         'all_topics_total': all_topics_total,
         'store_suggestions': store_suggestions,
+        'migration_form': FieldMigrationForm(
+            topic=selected_topic,
+            record_choices=migration_record_choices,
+        ) if selected_topic else None,
     }
     return render(request, 'accounts/budget_product_form.html', context)
 
@@ -383,6 +395,111 @@ def update_topic_field_view(request, field_id):
 
 
 @login_required
+def restore_topic_field_view(request, field_id):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    field = get_object_or_404(CostField, id=field_id)
+    restore_field_tree(field)
+    register_audit_log(
+        request.user,
+        AuditLog.ACTION_UPDATE,
+        'Campo',
+        field.name,
+        f'Reativação de campo arquivado no tópico {field.topic.name}.',
+    )
+    messages.success(request, 'Campo reativado com sucesso.')
+    return redirect(f"{reverse('budget_product_create')}?topic={field.topic_id}&open=campos")
+
+
+@login_required
+def migrate_topic_fields_view(request, topic_id):
+    if request.method != 'POST':
+        return redirect('budget_product_create')
+
+    topic = get_object_or_404(CostTopic.objects.prefetch_related('fields', 'records__values__field'), id=topic_id)
+    record_choices = [
+        (str(record.id), get_record_title_from_record(record))
+        for record in topic.records.prefetch_related('values__field').all()
+    ]
+    form = FieldMigrationForm(request.POST, topic=topic, record_choices=record_choices)
+    if not form.is_valid():
+        messages.error(request, 'Não foi possível iniciar a migração dos campos antigos.')
+        return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+    source_fields = list(
+        CostField.objects.filter(
+            topic=topic,
+            id__in=form.cleaned_data['source_field_ids'],
+            is_active=True,
+        ).order_by('created_at')
+    )
+    target_field = get_object_or_404(
+        CostField,
+        topic=topic,
+        id=form.cleaned_data['target_field_id'],
+        is_active=True,
+    )
+
+    if not source_fields:
+        messages.error(request, 'Selecione pelo menos um campo antigo para migrar.')
+        return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+    if any(field.id == target_field.id for field in source_fields):
+        messages.error(request, 'O campo novo de destino não pode ser um dos campos antigos selecionados.')
+        return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+    action_mode = request.POST.get('migration_mode', '').strip()
+    if action_mode == 'single':
+        record_id = form.cleaned_data.get('record_id')
+        if not record_id:
+            messages.error(request, 'Selecione um custo para testar a migração.')
+            return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+        record = get_object_or_404(CostRecord.objects.prefetch_related('values__field'), id=record_id, topic=topic)
+        changed = migrate_record_values(record, source_fields, target_field)
+        if changed:
+            register_audit_log(
+                request.user,
+                AuditLog.ACTION_UPDATE,
+                'Custo',
+                get_record_title_from_record(record),
+                f'Teste de migração dos campos para {target_field.name} no tópico {topic.name}.',
+            )
+            messages.success(request, 'Migração de teste aplicada neste custo com sucesso.')
+            return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=registro-{record.id}")
+
+        messages.info(request, 'Nenhum valor antigo foi encontrado nesse custo para migrar.')
+        return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+    if action_mode == 'all':
+        changed_records = 0
+        for record in topic.records.prefetch_related('values__field').all():
+            if migrate_record_values(record, source_fields, target_field):
+                changed_records += 1
+
+        if form.cleaned_data.get('archive_source_fields'):
+            for field in source_fields:
+                archive_field_tree(field)
+
+        register_audit_log(
+            request.user,
+            AuditLog.ACTION_UPDATE,
+            'Campo',
+            target_field.name,
+            f'Migração em lote de campos antigos no tópico {topic.name}.',
+        )
+        messages.success(
+            request,
+            f'Migração aplicada em {changed_records} custo(s) e campos antigos atualizados com segurança.',
+        )
+        return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+    messages.error(request, 'Ação de migração inválida.')
+    return redirect(f"{reverse('budget_product_create')}?topic={topic.id}&open=campos")
+
+
+@login_required
 def update_topic_description_view(request, topic_id):
     if request.method != 'POST':
         return redirect('budget_product_create')
@@ -431,7 +548,7 @@ def create_topic_record_view(request):
         return redirect('budget_product_create')
 
     topic = get_object_or_404(CostTopic, id=request.POST.get('topic_id'))
-    fields = list(topic.fields.order_by('created_at'))
+    fields = get_topic_fields(topic)
 
     if not fields:
         messages.error(request, 'Crie ao menos um campo antes de salvar um novo custo.')
@@ -488,7 +605,7 @@ def update_topic_record_view(request, record_id):
 
     record = get_object_or_404(CostRecord.objects.select_related('topic'), id=record_id)
     topic = record.topic
-    fields = list(topic.fields.order_by('created_at'))
+    fields = get_topic_fields(topic)
 
     raw_values = {}
     for field in fields:
@@ -1296,11 +1413,22 @@ def get_active_signup_code(request):
     return signup_code
 
 
-def build_topic_rows(topic):
+def get_topic_fields(topic, include_inactive=False):
+    if topic is None:
+        return []
+    fields = list(topic.fields.all())
+    if include_inactive:
+        return fields
+    return [field for field in fields if field.is_active]
+
+
+def build_topic_rows(topic, include_inactive=False, active_only=True):
     if topic is None:
         return []
 
-    fields = list(topic.fields.all())
+    fields = get_topic_fields(topic, include_inactive=include_inactive)
+    if active_only:
+        fields = [field for field in fields if field.is_active]
     children_map = {}
     for field in fields:
         children_map.setdefault(field.parent_id, []).append(field)
@@ -1330,7 +1458,7 @@ def build_field_edit_forms(topic):
         return {}
 
     forms_map = {}
-    for field in topic.fields.all():
+    for field in get_topic_fields(topic):
         forms_map[field.id] = TopicFieldForm(
             topic=topic,
             current_field=field,
@@ -1392,7 +1520,7 @@ def build_topic_groups(topic):
 
 
 def calculate_topic_total(topic):
-    all_fields = list(topic.fields.all())
+    all_fields = get_topic_fields(topic)
     total = Decimal('0')
     for record in topic.records.prefetch_related('values__field').all():
         topic_total = get_selected_total_for_record(record, all_fields)
@@ -1438,7 +1566,8 @@ def get_selected_total_for_record(record, topic_fields):
 
 def build_record_cards(topic, selected_rows):
     field_order = {row['field'].id: index for index, row in enumerate(selected_rows)}
-    all_fields = list(topic.fields.all())
+    all_fields = get_topic_fields(topic)
+    active_field_ids = {field.id for field in all_fields}
     selected_groups = build_topic_groups(topic)
     records = []
     grand_total = Decimal('0')
@@ -1458,6 +1587,7 @@ def build_record_cards(topic, selected_rows):
                     'order': field_order.get(value.field_id, 9999),
                 }
                 for value in record.values.all()
+                if value.field_id in active_field_ids
             ],
             key=lambda item: item['order'],
         )
@@ -1620,6 +1750,7 @@ def get_record_title_from_record(record):
             'value': value.value,
         }
         for value in record.values.select_related('field').all()
+        if value.field.is_active
     ]
     return get_record_title(values, record.id or 0)
 
@@ -1654,6 +1785,8 @@ def get_store_suggestions():
     suggestions = {name for name in DEFAULT_STORE_SUGGESTIONS}
     store_values = CostRecordValue.objects.select_related('field').all()
     for record_value in store_values:
+        if not record_value.field.is_active:
+            continue
         if not is_store_field(record_value.field):
             continue
         value = record_value.value.strip()
@@ -1698,7 +1831,10 @@ def get_field_transfer_signature(field):
 
 def build_transferred_record_values(record, target_topic):
     source_values = list(record.values.select_related('field').all())
-    target_fields = list(target_topic.fields.select_related('parent').order_by('created_at'))
+    target_fields = [
+        field for field in target_topic.fields.select_related('parent').order_by('created_at')
+        if field.is_active
+    ]
     target_signature_map = {
         get_field_transfer_signature(field): field
         for field in target_fields
@@ -1740,6 +1876,67 @@ def build_transferred_record_values(record, target_topic):
             values_to_save[field.id] = value
 
     return values_to_save, matched_fields, unmatched_fields
+
+
+def merge_multiline_values(existing_value, source_values):
+    lines = []
+    if existing_value:
+        lines.extend(
+            line.strip() for line in str(existing_value).splitlines()
+            if line.strip()
+        )
+    for value in source_values:
+        cleaned = str(value).strip()
+        if cleaned and cleaned not in lines:
+            lines.append(cleaned)
+    return '\n'.join(lines)
+
+
+def migrate_record_values(record, source_fields, target_field):
+    values_map = {
+        value.field_id: value
+        for value in record.values.select_related('field').all()
+    }
+    source_values = [
+        values_map[field.id].value
+        for field in source_fields
+        if field.id in values_map and values_map[field.id].value.strip()
+    ]
+    if not source_values:
+        return False
+
+    current_target_value = values_map.get(target_field.id).value if target_field.id in values_map else ''
+    merged_value = merge_multiline_values(current_target_value, source_values)
+    if not merged_value:
+        return False
+
+    CostRecordValue.objects.update_or_create(
+        record=record,
+        field=target_field,
+        defaults={'value': merged_value},
+    )
+    return True
+
+
+def set_field_tree_active_state(field, is_active):
+    field_ids = list(
+        CostField.objects.filter(parent=field).values_list('id', flat=True)
+    )
+    field.is_active = is_active
+    field.save(update_fields=['is_active'])
+    for child_id in field_ids:
+        child_field = CostField.objects.get(id=child_id)
+        set_field_tree_active_state(child_field, is_active)
+
+
+def archive_field_tree(field):
+    set_field_tree_active_state(field, False)
+
+
+def restore_field_tree(field):
+    if field.parent_id and not field.parent.is_active:
+        restore_field_tree(field.parent)
+    set_field_tree_active_state(field, True)
 
 
 def get_allowed_signup_emails():

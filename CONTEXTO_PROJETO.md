@@ -145,6 +145,8 @@
 - Campos monetários agora aceitam vírgula na digitação e são exibidos em padrão PT-BR
 - As listas de cadastros agora têm pesquisa instantânea por nome e ordenação alfabética A-Z/Z-A dentro de cada tópico, tanto em `Cadastrar custos` quanto em `Orçamento pronto`
 - No cadastro e na edição de custos com múltiplos orçamentos, a escolha automática do menor orçamento agora ignora totais zerados
+- Os campos do tópico agora podem ser migrados com segurança: é possível juntar vários campos antigos em um campo novo, testar em um único custo e depois aplicar em todos os custos antigos
+- Após a migração em lote, os campos antigos podem ser arquivados sem apagar os dados do banco, e o `Orçamento pronto` passa a refletir apenas os campos ativos
 
 ## Ajustes visuais e textuais
 

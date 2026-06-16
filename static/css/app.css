@@ -2064,6 +2064,20 @@ tr.is-selected {
     padding-top: 24px;
 }
 
+.migration-helper-box {
+    display: grid;
+    gap: 6px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(215, 240, 239, 0.7), rgba(255, 255, 255, 0.94));
+    border: 1px solid rgba(10, 147, 150, 0.14);
+}
+
+.migration-helper-box strong,
+.migration-helper-box p {
+    margin: 0;
+}
+
 .campos-section-header {
     display: flex;
     align-items: center;
@@ -2085,6 +2099,23 @@ tr.is-selected {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
+}
+
+.field-full {
+    grid-column: 1 / -1;
+}
+
+.checkbox-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.migration-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
 }
 
 /* Form de exclusão inline */

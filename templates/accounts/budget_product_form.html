@@ -313,6 +313,78 @@
                     {% endif %}
                 </div>
 
+                <div class="campos-section">
+                    <div class="campos-section-header">
+                        <h3>Migrar dados dos campos antigos</h3>
+                        <span>Seguro para testar antes</span>
+                    </div>
+                    <div class="migration-helper-box">
+                        <strong>Como usar</strong>
+                        <p>Selecione um ou mais campos antigos, escolha o campo novo de destino e teste primeiro em um único custo. Se o resultado ficar certo, aplique em todos e arquive os campos antigos.</p>
+                    </div>
+                    <form method="post" action="{% url 'migrate_topic_fields' selected_topic.id %}" class="form-stack">
+                        {% csrf_token %}
+                        <div class="campos-add-grid">
+                            <div class="field field-full">
+                                <label for="{{ migration_form.source_field_ids.id_for_label }}">{{ migration_form.source_field_ids.label }}</label>
+                                {{ migration_form.source_field_ids }}
+                            </div>
+                            <div class="field">
+                                <label for="{{ migration_form.target_field_id.id_for_label }}">{{ migration_form.target_field_id.label }}</label>
+                                {{ migration_form.target_field_id }}
+                            </div>
+                            <div class="field">
+                                <label for="{{ migration_form.record_id.id_for_label }}">{{ migration_form.record_id.label }}</label>
+                                {{ migration_form.record_id }}
+                            </div>
+                            <div class="field field-full">
+                                <label class="checkbox-inline">
+                                    {{ migration_form.archive_source_fields }}
+                                    <span>Arquivar os campos antigos quando aplicar em todos</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="migration-action-row">
+                            <button type="submit" name="migration_mode" value="single" class="button-secondary dashboard-secondary">Testar em um custo</button>
+                            <button
+                                type="submit"
+                                name="migration_mode"
+                                value="all"
+                                class="button-primary"
+                                onclick="return confirm('Aplicar a migração em todos os custos antigos deste tópico?')"
+                            >
+                                Aplicar em todos os custos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {% if archived_rows %}
+                <div class="campos-section">
+                    <div class="campos-section-header">
+                        <h3>Campos arquivados</h3>
+                        <span>{{ archived_rows|length }} item(ns)</span>
+                    </div>
+                    <div class="structure-list">
+                        {% for row in archived_rows %}
+                            <article class="structure-item level-{{ row.level }}">
+                                <div class="structure-item-copy">
+                                    <strong>{{ row.field.name }}</strong>
+                                    <small>{{ row.type_label }}</small>
+                                </div>
+                                <div class="structure-item-actions">
+                                    <span class="structure-tag">Arquivado</span>
+                                    <form method="post" action="{% url 'restore_topic_field' row.field.id %}" class="inline-delete-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="button-text">Reativar</button>
+                                    </form>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
                 <div class="campos-section campos-section--add">
                     <div class="campos-section-header">
                         <h3>Adicionar campo</h3>

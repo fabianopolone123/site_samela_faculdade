@@ -112,7 +112,7 @@ class TopicFieldForm(forms.Form):
                 excluded_ids.update(self._get_descendant_ids(current_field))
             self.fields['parent_id'].choices += [
                 (str(field.id), field.name) for field in topic.fields.all()
-                if field.id not in excluded_ids
+                if field.id not in excluded_ids and field.is_active
             ]
 
     def clean(self):
@@ -177,3 +177,44 @@ class AllowedSignupEmailForm(forms.Form):
             }
         ),
     )
+
+
+class FieldMigrationForm(forms.Form):
+    source_field_ids = forms.MultipleChoiceField(
+        label='Campos antigos que serão unidos',
+        choices=[],
+        widget=forms.SelectMultiple(attrs={'size': 8}),
+    )
+    target_field_id = forms.ChoiceField(
+        label='Campo novo de destino',
+        choices=[],
+    )
+    record_id = forms.ChoiceField(
+        label='Custo para teste',
+        required=False,
+        choices=[],
+    )
+    archive_source_fields = forms.BooleanField(
+        label='Arquivar os campos antigos ao aplicar em todos',
+        required=False,
+        initial=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        topic = kwargs.pop('topic', None)
+        record_choices = kwargs.pop('record_choices', None)
+        super().__init__(*args, **kwargs)
+        self.fields['record_id'].choices = [('', 'Selecione um custo para testar')]
+        if record_choices:
+            self.fields['record_id'].choices += record_choices
+
+        if topic is not None:
+            active_fields = [
+                field for field in topic.fields.all()
+                if field.is_active
+            ]
+            field_choices = [
+                (str(field.id), field.name) for field in active_fields
+            ]
+            self.fields['source_field_ids'].choices = field_choices
+            self.fields['target_field_id'].choices = [('', 'Selecione o campo novo')] + field_choices
