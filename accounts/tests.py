@@ -5,6 +5,7 @@ from django.urls import reverse
 from docx import Document
 from io import BytesIO
 
+from .forms import FieldMigrationForm
 from .models import AllowedSignupEmail, AuditLog, CostField, CostRecord, CostRecordValue, CostTopic, SignupCode, User
 
 
@@ -802,6 +803,24 @@ class DynamicTopicBudgetTests(TestCase):
         self.assertContains(response, '>Preço<', html=False)
         self.assertContains(response, '>Quantidade<', html=False)
         self.assertContains(response, '<optgroup label="Nome do produto">', html=False)
+
+    def test_field_migration_target_shows_only_new_fields(self):
+        topic = CostTopic.objects.create(name='Material permanente')
+        old_field = CostField.objects.create(topic=topic, name='Campo antigo usado', field_type='texto')
+        new_field = CostField.objects.create(topic=topic, name='Campo novo vazio', field_type='texto')
+        record = CostRecord.objects.create(topic=topic)
+        CostRecordValue.objects.create(record=record, field=old_field, value='Valor antigo')
+
+        form = FieldMigrationForm(topic=topic, record_choices=[(str(record.id), 'Teste')])
+
+        target_choices = form.fields['target_field_id'].choices
+        rendered_target = str(target_choices)
+        rendered_source = str(form.fields['source_field_ids'].choices)
+
+        self.assertIn('Campo antigo usado', rendered_source)
+        self.assertIn('Campo novo vazio', rendered_source)
+        self.assertNotIn('Campo antigo usado', rendered_target)
+        self.assertIn('Campo novo vazio', rendered_target)
 
     def test_can_apply_field_migration_to_all_records_and_archive_old_fields(self):
         topic = CostTopic.objects.create(name='Material permanente')

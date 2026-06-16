@@ -148,6 +148,7 @@
 - Os campos do tópico agora podem ser migrados com segurança: é possível juntar vários campos antigos em um campo novo, testar em um único custo e depois aplicar em todos os custos antigos
 - Após a migração em lote, os campos antigos podem ser arquivados sem apagar os dados do banco, e o `Orçamento pronto` passa a refletir apenas os campos ativos
 - Na tela de migração, os campos antigos e o campo novo de destino agora aparecem organizados por bloco principal, facilitando identificar a qual orçamento ou grupo cada campo pertence
+- Em `Campo novo de destino`, agora aparecem apenas campos novos ainda sem uso em custos salvos, evitando selecionar por engano campos antigos já preenchidos
 
 ## Ajustes visuais e textuais
 

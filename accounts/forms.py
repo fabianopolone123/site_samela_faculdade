@@ -213,9 +213,14 @@ class FieldMigrationForm(forms.Form):
                 field for field in topic.fields.all()
                 if field.is_active
             ]
-            grouped_choices = self._build_grouped_field_choices(active_fields)
-            self.fields['source_field_ids'].choices = grouped_choices
-            self.fields['target_field_id'].choices = [('', 'Selecione o campo novo')] + grouped_choices
+            source_grouped_choices = self._build_grouped_field_choices(active_fields)
+            new_target_fields = [
+                field for field in active_fields
+                if not field.record_values.exists()
+            ]
+            target_grouped_choices = self._build_grouped_field_choices(new_target_fields)
+            self.fields['source_field_ids'].choices = source_grouped_choices
+            self.fields['target_field_id'].choices = [('', 'Selecione o campo novo')] + target_grouped_choices
 
     def _build_grouped_field_choices(self, fields):
         children_map = {}
