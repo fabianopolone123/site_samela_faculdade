@@ -284,3 +284,12 @@
 - Isso permite cenários como `valor por estudante × duração em meses × quantidade de estudantes`
 - Campos de topo sem subcampos também entram no cálculo automático quando têm função de preço, multiplicador, frete ou total calculado
 - Custos já registrados passaram a poder ser editados, com recálculo automático dos campos `Total calculado` e registro da alteração na auditoria
+
+### 2026-06-15
+
+- A migração de campos antigos para campos novos passou a expor no backend as listas agrupadas de origem e destino para a interface da tela
+- O campo novo de destino continua limitado apenas a campos ativos, sem uso em custos salvos e que não sejam blocos-pai
+- Os rótulos da migração passaram a mostrar o caminho real do campo, como `Orçamento 1 / Preço`, em vez de descrições genéricas
+- A tela `Campos do tópico` ganhou uma nova interface de migração em duas colunas, com `Campos antigos` à esquerda e `Campos novos` à direita
+- A seleção agora funciona por botões visuais, mantendo os campos reais ocultos no formulário e exibindo no centro um resumo do que foi escolhido para migrar
+- A área de migração ficou responsiva para celular, empilhando as colunas e preservando a lógica de teste em um custo ou aplicação em todos

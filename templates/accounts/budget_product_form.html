@@ -320,19 +320,88 @@
                     </div>
                     <div class="migration-helper-box">
                         <strong>Como usar</strong>
-                        <p>Os campos antigos aparecem organizados por bloco principal. Selecione um ou mais campos antigos, escolha o campo novo de destino e teste primeiro em um único custo. Se o resultado ficar certo, aplique em todos e arquive os campos antigos.</p>
+                        <p>Escolha os campos antigos na coluna da esquerda e o campo novo de destino na coluna da direita. Depois teste em um custo e, se ficar certo, aplique em todos e arquive os campos antigos.</p>
                     </div>
                     <form method="post" action="{% url 'migrate_topic_fields' selected_topic.id %}" class="form-stack">
                         {% csrf_token %}
+                        <div class="migration-hidden-inputs">
+                            {{ migration_form.source_field_ids }}
+                            {{ migration_form.target_field_id }}
+                        </div>
+                        <div class="migration-dual-panel">
+                            <section class="migration-panel">
+                                <div class="migration-panel-header">
+                                    <h4>Campos antigos</h4>
+                                    <span>Selecione um ou mais</span>
+                                </div>
+                                <div class="migration-group-list">
+                                    {% for group_label, options in migration_form.source_grouped_choices %}
+                                        <article class="migration-group-card">
+                                            <strong>{{ group_label }}</strong>
+                                            <div class="migration-option-list">
+                                                {% for option_value, option_label in options %}
+                                                    <button
+                                                        type="button"
+                                                        class="migration-option-button"
+                                                        data-source-choice="{{ option_value }}"
+                                                        data-option-label="{{ option_label }}"
+                                                    >
+                                                        {{ option_label }}
+                                                    </button>
+                                                {% endfor %}
+                                            </div>
+                                        </article>
+                                    {% endfor %}
+                                </div>
+                            </section>
+
+                            <div class="migration-middle">
+                                <div class="migration-arrow">→</div>
+                                <div class="migration-selection-box">
+                                    <span>Campos antigos escolhidos</span>
+                                    <div class="migration-selected-list" id="migration-selected-sources">
+                                        <small>Nenhum campo antigo selecionado.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <section class="migration-panel">
+                                <div class="migration-panel-header">
+                                    <h4>Campos novos</h4>
+                                    <span>Escolha apenas um destino</span>
+                                </div>
+                                <div class="migration-group-list">
+                                    {% if migration_form.target_grouped_choices %}
+                                        {% for group_label, options in migration_form.target_grouped_choices %}
+                                            <article class="migration-group-card">
+                                                <strong>{{ group_label }}</strong>
+                                                <div class="migration-option-list">
+                                                    {% for option_value, option_label in options %}
+                                                        <button
+                                                            type="button"
+                                                            class="migration-option-button migration-option-button--target"
+                                                            data-target-choice="{{ option_value }}"
+                                                            data-option-label="{{ option_label }}"
+                                                        >
+                                                            {{ option_label }}
+                                                        </button>
+                                                    {% endfor %}
+                                                </div>
+                                            </article>
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="empty-inline-note">Nenhum campo novo disponível para destino.</div>
+                                    {% endif %}
+                                </div>
+                                <div class="migration-selection-box">
+                                    <span>Campo novo escolhido</span>
+                                    <div class="migration-selected-single" id="migration-selected-target">
+                                        <small>Nenhum campo novo selecionado.</small>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
                         <div class="campos-add-grid">
-                            <div class="field field-full">
-                                <label for="{{ migration_form.source_field_ids.id_for_label }}">{{ migration_form.source_field_ids.label }}</label>
-                                {{ migration_form.source_field_ids }}
-                            </div>
-                            <div class="field">
-                                <label for="{{ migration_form.target_field_id.id_for_label }}">{{ migration_form.target_field_id.label }}</label>
-                                {{ migration_form.target_field_id }}
-                            </div>
                             <div class="field">
                                 <label for="{{ migration_form.record_id.id_for_label }}">{{ migration_form.record_id.label }}</label>
                                 {{ migration_form.record_id }}
@@ -966,6 +1035,68 @@
         document.querySelectorAll('[data-budget-total-group]').forEach((item) => {
             updateBudgetSelector(item.dataset.budgetTotalGroup);
         });
+
+        const sourceSelect = document.getElementById('{{ migration_form.source_field_ids.id_for_label|default:"id_source_field_ids" }}');
+        const targetSelect = document.getElementById('{{ migration_form.target_field_id.id_for_label|default:"id_target_field_id" }}');
+        const selectedSourcesBox = document.getElementById('migration-selected-sources');
+        const selectedTargetBox = document.getElementById('migration-selected-target');
+
+        function renderMigrationSelections() {
+            if (selectedSourcesBox && sourceSelect) {
+                const labels = Array.from(sourceSelect.selectedOptions).map((option) => option.textContent.trim());
+                selectedSourcesBox.innerHTML = labels.length
+                    ? labels.map((label) => `<span class="migration-chip">${label}</span>`).join('')
+                    : '<small>Nenhum campo antigo selecionado.</small>';
+            }
+
+            if (selectedTargetBox && targetSelect) {
+                const selectedOption = targetSelect.selectedOptions[0];
+                selectedTargetBox.innerHTML = selectedOption && selectedOption.value
+                    ? `<span class="migration-chip migration-chip--target">${selectedOption.textContent.trim()}</span>`
+                    : '<small>Nenhum campo novo selecionado.</small>';
+            }
+        }
+
+        document.querySelectorAll('[data-source-choice]').forEach((button) => {
+            button.addEventListener('click', () => {
+                if (!sourceSelect) return;
+                const option = Array.from(sourceSelect.options).find((item) => item.value === button.dataset.sourceChoice);
+                if (!option) return;
+                option.selected = !option.selected;
+                button.classList.toggle('is-selected', option.selected);
+                renderMigrationSelections();
+            });
+        });
+
+        document.querySelectorAll('[data-target-choice]').forEach((button) => {
+            button.addEventListener('click', () => {
+                if (!targetSelect) return;
+                Array.from(targetSelect.options).forEach((option) => {
+                    option.selected = option.value === button.dataset.targetChoice;
+                });
+                document.querySelectorAll('[data-target-choice]').forEach((item) => {
+                    item.classList.toggle('is-selected', item.dataset.targetChoice === button.dataset.targetChoice);
+                });
+                renderMigrationSelections();
+            });
+        });
+
+        if (sourceSelect) {
+            Array.from(sourceSelect.selectedOptions).forEach((option) => {
+                const button = document.querySelector(`[data-source-choice="${option.value}"]`);
+                if (button) button.classList.add('is-selected');
+            });
+        }
+
+        if (targetSelect) {
+            const selectedOption = Array.from(targetSelect.options).find((option) => option.selected && option.value);
+            if (selectedOption) {
+                const button = document.querySelector(`[data-target-choice="${selectedOption.value}"]`);
+                if (button) button.classList.add('is-selected');
+            }
+        }
+
+        renderMigrationSelections();
 
         function normalizeRecordText(value) {
             return String(value || '')

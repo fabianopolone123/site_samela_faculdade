@@ -220,6 +220,8 @@ class FieldMigrationForm(forms.Form):
                 if not field.record_values.exists() and field.id not in parent_ids
             ]
             target_grouped_choices = self._build_grouped_field_choices(new_target_fields)
+            self.source_grouped_choices = source_grouped_choices
+            self.target_grouped_choices = target_grouped_choices
             self.fields['source_field_ids'].choices = source_grouped_choices
             self.fields['target_field_id'].choices = [('', 'Selecione o campo novo')] + target_grouped_choices
 

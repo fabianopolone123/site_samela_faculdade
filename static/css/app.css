@@ -1561,7 +1561,9 @@ tr.is-selected {
     .field-grid.two-columns,
     .quote-grid,
     .workspace-grid-wide,
-    .record-toolbar {
+    .record-toolbar,
+    .campos-add-grid,
+    .migration-dual-panel {
         grid-template-columns: 1fr;
     }
 
@@ -1591,6 +1593,22 @@ tr.is-selected {
     .dynamic-entry-field.level-3,
     .record-value.level-3 {
         margin-left: 0;
+    }
+
+    .migration-middle {
+        order: 2;
+    }
+
+    .migration-panel:first-child {
+        order: 1;
+    }
+
+    .migration-panel:last-child {
+        order: 3;
+    }
+
+    .migration-arrow {
+        transform: rotate(90deg);
     }
 }
 
@@ -2076,6 +2094,172 @@ tr.is-selected {
 .migration-helper-box strong,
 .migration-helper-box p {
     margin: 0;
+}
+
+.migration-hidden-inputs {
+    display: none;
+}
+
+.migration-dual-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 180px minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+.migration-panel {
+    display: grid;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 22px;
+    border: 1px solid rgba(0, 95, 115, 0.12);
+    background: rgba(255, 255, 255, 0.9);
+    min-height: 100%;
+}
+
+.migration-panel-header {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.migration-panel-header h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.migration-panel-header span {
+    color: var(--muted);
+    font-size: 0.86rem;
+    text-align: right;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.migration-group-list {
+    display: grid;
+    gap: 12px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.migration-group-card {
+    display: grid;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid rgba(0, 95, 115, 0.1);
+    background: linear-gradient(180deg, rgba(247, 251, 252, 0.96), rgba(255, 255, 255, 0.98));
+}
+
+.migration-group-card strong {
+    font-size: 0.96rem;
+    color: var(--ink);
+}
+
+.migration-option-list {
+    display: grid;
+    gap: 8px;
+}
+
+.migration-option-button {
+    width: 100%;
+    border: 1px solid rgba(0, 95, 115, 0.16);
+    border-radius: 14px;
+    padding: 11px 13px;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--ink);
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.migration-option-button:hover {
+    transform: translateY(-1px);
+    border-color: rgba(10, 147, 150, 0.34);
+    box-shadow: 0 14px 24px rgba(7, 24, 38, 0.08);
+}
+
+.migration-option-button.is-selected {
+    background: linear-gradient(135deg, rgba(10, 147, 150, 0.18), rgba(148, 210, 189, 0.24));
+    border-color: rgba(10, 147, 150, 0.5);
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.migration-middle {
+    display: grid;
+    gap: 14px;
+    align-content: center;
+    justify-items: center;
+    min-height: 100%;
+}
+
+.migration-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(0, 95, 115, 0.14), rgba(10, 147, 150, 0.24));
+    color: var(--accent);
+    font-size: 1.55rem;
+    font-weight: 700;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.migration-selection-box {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px dashed rgba(0, 95, 115, 0.18);
+    background: rgba(247, 251, 252, 0.94);
+}
+
+.migration-selection-box > span {
+    color: var(--muted);
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.migration-selected-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.migration-selected-single {
+    min-height: 42px;
+}
+
+.migration-selected-list small,
+.migration-selected-single small {
+    color: var(--muted);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.migration-chip,
+.migration-chip--target {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(10, 147, 150, 0.12);
+    color: var(--accent);
+    font-size: 0.88rem;
+    font-weight: 700;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.migration-chip--target {
+    background: rgba(148, 210, 189, 0.22);
 }
 
 .campos-section-header {
